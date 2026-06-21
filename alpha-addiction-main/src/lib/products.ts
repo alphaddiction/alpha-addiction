@@ -23,7 +23,7 @@ export const products: Product[] = [
         colors: ['Black', 'Cream'],
         sizes: ['XS', 'S', 'M', 'L'],
         descriptionShort: 'Camiseta esencial de algodón premium. Corte relajado y minimalista, perfecta para el día a día.',
-        status: 'in_stock',
+        status: 'sold_out',
         images: ['/images/essential-tee-1.jpg'],
     },
     {
