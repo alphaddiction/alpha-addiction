@@ -46,8 +46,8 @@ export const products: Product[] = [
         category: 'Hoodies',
         colors: ['Black', 'Gray'],
         sizes: ['XS', 'S', 'M', 'L', 'XL'],
-        descriptionShort: 'La sudadera definitiva. Peso medio, interior suave y capucha estructurada para una silueta moderna.',
-        status: 'in_stock',
+        descriptionShort: 'La sudadera definitiva. Peso medio, interior suave y sin capucha para que puedas utilizarla en cualquier momento.',
+        status: 'sold_out',
         images: ['/images/core-hoodie-1.jpg'],
     },
     {
