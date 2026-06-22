@@ -23,7 +23,7 @@ export const products: Product[] = [
         colors: ['Black', 'Cream'],
         sizes: ['XS', 'S', 'M', 'L'],
         descriptionShort: 'Camiseta esencial de algodón premium. Corte relajado y minimalista, perfecta para el día a día.',
-        status: 'sold_out', // Testing Waitlist
+        status: 'in_stock',
         images: ['/images/essential-tee-1.jpg'],
     },
     {
@@ -46,7 +46,7 @@ export const products: Product[] = [
         category: 'Hoodies',
         colors: ['Black', 'Gray'],
         sizes: ['XS', 'S', 'M', 'L', 'XL'],
-        descriptionShort: 'La sudadera definitiva. Peso medio, interior suave y capucha estructurada para una silueta moderna.',
+        descriptionShort: 'La sudadera definitiva. Peso medio, interior suave. Perfecta para cualquier momento del día.',
         status: 'in_stock',
         images: ['/images/core-hoodie-1.jpg'],
     },
