@@ -21,7 +21,7 @@ export default function Home() {
         <div className="w-20 h-px bg-[var(--primary)] opacity-60"></div>
 
         <p className="text-[10px] md:text-xs text-[var(--muted)] tracking-[0.3em] uppercase font-medium">
-          CANTIDADES LIMITADAS DISPONIBLES
+          20 UNIDADES POR DROP
         </p>
       </div>
 
