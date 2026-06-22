@@ -30,7 +30,7 @@ export default function Home() {
         href="/genesis"
         className="group relative inline-flex items-center gap-2 px-8 py-4 bg-[#d4af37] text-black font-bold tracking-widest text-sm uppercase overflow-hidden hover:bg-white transition-colors duration-300 animate-in fade-in zoom-in duration-1000 delay-500"
       >
-        <span className="relative z-10">Entrar al Drop</span>
+        <span className="relative z-10">Conviértete en Alpha</span>
         <ArrowRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
       </Link>
     </div>
