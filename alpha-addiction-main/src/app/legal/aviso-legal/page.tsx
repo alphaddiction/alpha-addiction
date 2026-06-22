@@ -6,8 +6,8 @@ export default function LegalNoticePage() {
                 AlphaAddiction is a registered trademark.
             </p>
             <p>
-                Address: [Your Address Here]<br />
-                Contact: legal@alphaaddiction.com
+                Address: [Cádiz, Spain]<br />
+                Contact: [staff.alphaddiction@gmail.com]
             </p>
         </>
     );
