@@ -48,7 +48,7 @@ export const products: Product[] = [
         sizes: ['XS', 'S', 'M', 'L', 'XL'],
         descriptionShort: 'La sudadera definitiva. Peso medio, interior suave y sin capucha para que puedas utilizarla en cualquier momento.',
         status: 'in_stock',
-        images: ['/images/sudadera.png'],
+        images: ['/images/hoodies/sudadera.png'],
     },
     {
         id: 'p4',

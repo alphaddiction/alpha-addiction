@@ -70,7 +70,7 @@ export default async function ProductPage({
                 <div className="mt-12 space-y-3 text-[10px] tracking-widest text-[var(--muted)] uppercase opacity-70">
                     <p>AUTENTICIDAD GARANTIZADA</p>
                     <p>PRODUCCIÓN LIMITADA</p>
-                    <p>ENVÍO DESDE GENESIS HQ</p>
+                    <p>ENVÍO DESDE ALPHA ADDICTION HQ</p>
                 </div>
             </div>
         </div>

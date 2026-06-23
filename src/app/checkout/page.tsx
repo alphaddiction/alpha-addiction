@@ -332,7 +332,7 @@ export default function CheckoutPage() {
                             </button>
 
                             <p className="text-[10px] text-center text-[var(--foreground)]/40 mt-5 tracking-widest">
-                                PAGO SEGURO CON STRIPE · TRANSACCIÓN PROTEGIDA POR SSL
+                                PAGO SEGURO CON PAYPAL · TRANSACCIÓN PROTEGIDA POR SSL
                             </p>
                         </div>
                     </form>
