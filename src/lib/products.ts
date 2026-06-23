@@ -47,8 +47,8 @@ export const products: Product[] = [
         colors: ['Black', 'Gray'],
         sizes: ['XS', 'S', 'M', 'L', 'XL'],
         descriptionShort: 'La sudadera definitiva. Peso medio, interior suave y sin capucha para que puedas utilizarla en cualquier momento.',
-        status: 'sold_out',
-        images: ['/images/core-hoodie-1.jpg'],
+        status: 'in_stock',
+        images: ['/images/sudadera.png'],
     },
     {
         id: 'p4',
@@ -59,7 +59,7 @@ export const products: Product[] = [
         colors: ['Cream', 'Gray'],
         sizes: ['XS', 'S', 'M', 'L', 'XL'],
         descriptionShort: 'Equilibrio entre confort y estilo. Corte oversize sutil en tonos neutros para cualquier ocasión.',
-        status: 'sold_out', // Testing Waitlist
+        status: 'in_stock', // Testing Waitlist
         images: ['/images/balance-hoodie-1.jpg'],
     },
     {
