@@ -1,13 +1,13 @@
 export default function LegalNoticePage() {
     return (
         <>
-            <h1>Legal Notice</h1>
+            <h1>Aviso Legal</h1>
             <p>
-                AlphaAddiction is a registered trademark.
+                AlphaAddiction es una marca registrada
             </p>
             <p>
-                Address: [Your Address Here]<br />
-                Contact: legal@alphaaddiction.com
+                Dirección: [Cádiz, Spain]<br />
+                Contacto: [staff.alphaddiction@gmail.com]
             </p>
         </>
     );
