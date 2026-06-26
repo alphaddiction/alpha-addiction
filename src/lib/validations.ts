@@ -53,6 +53,8 @@ export const cartItemSchema = z.object({
   name: z.string(),
   priceEUR: z.number().positive(),
   size: z.string(),
+  color: z.string().optional(),
+  printfulVariantId: z.number().optional(),
   qty: z.number().int().positive(),
 });
 

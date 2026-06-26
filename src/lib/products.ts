@@ -26,6 +26,22 @@ export interface ProductMockup {
     order: number;
 }
 
+export interface SizeVariant {
+    size: string;
+    printfulVariantId: number;
+    sku: string;
+    available: boolean;
+    retailPrice?: string;
+}
+
+export interface ColorVariant {
+    id: string;
+    name: string;
+    hex: string;
+    mockups: ProductMockup[];
+    sizes: SizeVariant[];
+}
+
 /**
  * Representa un producto en el e-commerce local.
  */
@@ -43,6 +59,7 @@ export interface Product {
     printfulProductId?: number;  // TODO: ID asignado por la base de datos de Printful
     variants?: ProductVariant[];  // TODO: Listado de variantes físicas enlazadas
     mockups?: ProductMockup[];
+    colorVariants?: ColorVariant[];
 }
 
 /**

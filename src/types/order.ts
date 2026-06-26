@@ -1,16 +1,24 @@
 export type OrderStatus =
   | 'pending'
+  | 'payment_pending'
   | 'paid'
-  | 'fulfillment_submitted'
-  | 'fulfillment_failed'
+  | 'processing'
+  | 'printful_submitted'
+  | 'printful_production'
   | 'shipped'
-  | 'canceled';
+  | 'delivered'
+  | 'canceled'
+  | 'refunded'
+  | 'fulfillment_submitted'
+  | 'fulfillment_failed';
 
 export interface OrderItem {
   slug: string;
   name: string;
   priceEUR: number;
   size: string;
+  color?: string;
+  printfulVariantId?: number;
   qty: number;
 }
 
@@ -26,21 +34,33 @@ export interface ShippingAddress {
   country: string;
 }
 
+export interface OrderEvent {
+  timestamp: string;
+  event: string;
+  notes?: string;
+}
+
 export interface Order {
-  id: string; // Local Order ID
-  paypalOrderId: string;
-  paypalCaptureId?: string;
-  printfulOrderId?: number;
+  id: string; // ID interno del pedido (E.g. AA-123456)
+  status: OrderStatus;
   shippingAddress: ShippingAddress;
   items: OrderItem[];
   subtotal: number;
   shippingPrice: number;
   totalPrice: number;
-  status: OrderStatus;
+  discount?: number; // Descuentos
+  paymentMethod?: string; // Método de pago (E.g. PayPal)
+  paymentStatus?: 'pending' | 'paid' | 'refunded' | 'failed'; // Estado del pago
+  printfulOrderId?: number; // ID de pedido en Printful
+  paypalOrderId?: string; // ID de pedido en PayPal
+  paypalCaptureId?: string;
   trackingNumber?: string;
+  trackingCarrier?: string; // Tracking carrier (E.g. DHL)
+  carrier?: string; // Legacy/Alias para compatibilidad
   trackingUrl?: string;
-  carrier?: string;
   createdAt: string;
   updatedAt: string;
+  internalNotes?: string; // Notas internas del administrador
+  history?: OrderEvent[]; // Historial de eventos del pedido
   errorMessage?: string;
 }

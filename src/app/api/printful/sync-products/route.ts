@@ -89,6 +89,7 @@ export async function POST() {
                 sku: remoteVariant.sku,
                 printfulVariantId: remoteVariant.variant_id,
                 syncVariantId: remoteVariant.id,
+                files: remoteVariant.files || [],
               });
             } else {
               variantsComparison.push({

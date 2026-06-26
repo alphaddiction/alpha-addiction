@@ -110,6 +110,8 @@ export interface PrintfulSyncVariant {
   sku: string | null;
   retail_price: string;
   currency: string;
+  color?: string | null;
+  size?: string | null;
   files?: PrintfulFile[];
 }
 

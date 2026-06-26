@@ -197,10 +197,10 @@ export async function createPrintfulOrder(
       email: shippingAddress.email,
     },
     items: items.map(item => ({
-      external_id: `${localOrderId}-${item.slug}-${item.size}`,
-      variant_id: getPrintfulVariantId(item.slug, item.size),
+      external_id: `${localOrderId}-${item.slug}-${item.color ? item.color.toLowerCase().replace(/\s+/g, '-') : 'default'}-${item.size}`,
+      variant_id: item.printfulVariantId || getPrintfulVariantId(item.slug, item.size),
       quantity: item.qty,
-      name: `${item.name} (${item.size})`,
+      name: item.color ? `${item.name} (${item.color} / ${item.size})` : `${item.name} (${item.size})`,
     })),
   };
 

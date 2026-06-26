@@ -88,3 +88,21 @@ export function generateLocalOrderId(): string {
   const random = Math.floor(1000 + Math.random() * 9000);
   return `AA-${timestamp}-${random}`;
 }
+
+export async function deleteOrder(id: string): Promise<boolean> {
+  await ensureStore();
+  const orders = await getOrders();
+  const index = orders.findIndex(o => o.id === id);
+  if (index >= 0) {
+    orders.splice(index, 1);
+    inMemoryOrders = orders;
+    try {
+      await fs.writeFile(FILE_PATH, JSON.stringify(orders, null, 2));
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to delete order:', error);
+      return false;
+    }
+  }
+  return false;
+}

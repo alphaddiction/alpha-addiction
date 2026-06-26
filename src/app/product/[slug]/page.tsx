@@ -1,9 +1,7 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import { products } from '@/lib/products';
-import { formatPrice } from '@/lib/utils';
-import ProductActions from '@/components/product/product-actions';
-import { ArrowLeft } from 'lucide-react';
+import { getDynamicProduct } from '@/lib/products-server';
+import ProductDetailClient from '@/components/product/product-detail-client';
 
 export default async function ProductPage({
     params,
@@ -11,107 +9,12 @@ export default async function ProductPage({
     params: Promise<{ slug: string }>;
 }) {
     const { slug } = await params;
-    const product = products.find((p) => p.slug === slug);
+    const rawProduct = products.find((p) => p.slug === slug);
 
-    if (!product) notFound();
+    if (!rawProduct) notFound();
 
-    const activeMockups = (product.mockups || [])
-        .filter((m) => m.enabled)
-        .sort((a, b) => a.order - b.order);
+    // Fetch dynamic variants and mockups from Printful on the server-side
+    const product = await getDynamicProduct(rawProduct);
 
-    const activeLocalImages = (product.images || [])
-        .filter((img) => (typeof img === 'string' ? true : img.enabled));
-
-    let imageSources: string[] = [];
-    let imageAlts: string[] = [];
-
-    if (activeMockups.length > 0) {
-        imageSources = activeMockups.map((m) => m.url);
-        imageAlts = activeMockups.map((m) => m.alt);
-    } else if (activeLocalImages.length > 0) {
-        const sortedLocalImages = [...activeLocalImages].sort((a, b) => {
-            const orderA = typeof a === 'string' ? 0 : a.order;
-            const orderB = typeof b === 'string' ? 0 : b.order;
-            return orderA - orderB;
-        });
-        imageSources = sortedLocalImages.map((img) => (typeof img === 'string' ? img : img.src));
-        imageAlts = sortedLocalImages.map((img) => (typeof img === 'string' ? product.name : img.alt));
-    }
-
-    return (
-        <div className="min-h-screen pt-32 px-6 max-w-7xl mx-auto flex flex-col md:flex-row gap-12 lg:gap-24 mb-24">
-
-            {/* Back Link */}
-            <Link href="/genesis" className="absolute top-24 left-6 md:left-auto md:ml-0 flex items-center text-xs text-[var(--muted)] hover:text-[var(--primary)] transition-colors tracking-widest">
-                <ArrowLeft className="w-3 h-3 mr-2" />
-                VOLVER
-            </Link>
-
-            {/* Image Gallery (Left) */}
-            <div className="w-full md:w-1/2 mt-8 md:mt-0">
-                <div className="aspect-[3/4] bg-[var(--surface)] w-full relative overflow-hidden shadow-sm flex items-center justify-center border-2 border-[var(--primary)]">
-                    {imageSources.length > 0 ? (
-                        <img 
-                            src={imageSources[0]} 
-                            alt={imageAlts[0]} 
-                            className="object-cover w-full h-full"
-                        />
-                    ) : (
-                        /* Placeholder for Image */
-                        <div className="absolute inset-0 flex items-end p-8">
-                            <span className="text-white/20 text-xs tracking-[0.2em] uppercase">
-                                AlphaAddiction
-                            </span>
-                        </div>
-                    )}
-                </div>
-                {imageSources.length > 1 && (
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                        {imageSources.slice(1).map((src, index) => (
-                            <div key={index} className="aspect-square bg-[var(--surface)] overflow-hidden border-2 border-[var(--primary)]/60">
-                                <img 
-                                    src={src} 
-                                    alt={imageAlts[index + 1]} 
-                                    className="object-cover w-full h-full"
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Product Info (Right) */}
-            <div className="w-full md:w-1/2 flex flex-col max-w-md">
-                <h1 className="text-4xl md:text-5xl font-serif mb-2 leading-tight text-[var(--foreground)]">{product.name}</h1>
-                <p className="text-xl text-[var(--muted)] mb-8 font-light tracking-wide">{formatPrice(product.priceEUR)}</p>
-
-                <div className="h-px w-full bg-[var(--border)] mb-8 opacity-50" />
-
-                <p className="text-[var(--foreground)]/80 leading-relaxed mb-8 font-light text-sm md:text-base">
-                    {product.descriptionShort}
-                </p>
-
-                {/* Variations (Mocked for display) */}
-                {product.colors.length > 0 && (
-                    <div className="mb-6">
-                        <span className="text-[10px] text-[var(--muted)] tracking-widest uppercase block mb-2 font-medium">COLOR</span>
-                        <div className="flex gap-2 text-sm text-[var(--foreground)]">
-                            {product.colors.join(' / ')}
-                        </div>
-                    </div>
-                )}
-
-
-                {/* Dynamic Actions */}
-                <ProductActions product={product} />
-
-                {/* Additional Info */}
-                <div className="mt-12 space-y-3 text-[10px] tracking-widest text-[var(--muted)] uppercase opacity-70">
-                    <p>AUTENTICIDAD GARANTIZADA</p>
-                    <p>PRODUCCIÓN LIMITADA</p>
-                    <p>ENVÍO DESDE ALPHA ADDICTION HQ</p>
-                </div>
-            </div>
-        </div>
-    );
+    return <ProductDetailClient product={product} />;
 }

@@ -6,13 +6,12 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📋 Estado general del proyecto
 
-*   **Porcentaje aproximado completado:** 80%
-*   **Última actualización:** 26/06/2026 21:35
+*   **Porcentaje aproximado completado:** 85%
+*   **Última actualización:** 26/06/2026 22:55
 *   **Próximos objetivos:**
-    1. Implementar autenticación del administrador (Fase 3) con protección de rutas e historial de sesiones.
-    2. Desarrollar la monitorización activa y Health Checks en tiempo real (Fase 4).
-    3. Registrar y configurar los Webhooks de producción de PayPal y Printful.
-    4. Integrar servicio de envío de correos transaccionales (por ejemplo, Resend o SendGrid).
+    1. Desarrollar la monitorización activa y Health Checks en tiempo real (Fase 4).
+    2. Registrar y configurar los Webhooks de producción de PayPal y Printful.
+    3. Integrar servicio de envío de correos transaccionales (por ejemplo, Resend o SendGrid).
 
 ---
 
@@ -75,7 +74,7 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ## 🔒 Seguridad
 
 *   **Protección de Webhooks**: 🟡 En progreso (Implementada firma criptográfica HMAC en Printful y llamadas de verificación en PayPal. Requiere configurar variables secretas de firma en producción).
-*   **Protección de Rutas de Administración**: 🔴 Pendiente (Asegurar endpoints sensibles con autenticación JWT o sesión de usuario administrador).
+*   **Protección de Rutas de Administración**: ✅ Completada (Implementado firmado criptográfico HMAC SHA-256 en cookies HttpOnly y protección a nivel de Next.js proxy middleware).
 
 ---
 
@@ -97,6 +96,91 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📝 Historial de cambios
+
+### 26/06/2026 22:55 (Fase 3 - Opción A: Autenticación del Administrador y Protección de Rutas)
+
+Archivos creados:
+*   `src/lib/auth-tokens.ts` (Servicio de tokens firmado criptográficamente con HMAC-SHA256 y Web Crypto API)
+*   `src/lib/auth-node.ts` (Servicios de contraseñas PBKDF2, persistencia en base de datos con Prisma y fallback en memoria)
+*   `src/app/api/admin/login/route.ts` (API de autenticación del administrador)
+*   `src/app/api/admin/logout/route.ts` (API de invalidación de sesión y borrado de cookie)
+
+Archivos modificados:
+*   `src/proxy.ts` (Middleware de Next.js 16 actualizado para la verificación de firmas criptográficas y redirección a login)
+*   `src/components/admin/sidebar.tsx` (Refactorizado el botón "Salir del Panel" para consumir la API de logout)
+*   `src/app/admin/login/page.tsx` (Actualizado el formulario de login para llamar a la API y el placeholder de correo mock)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Se ha implementado el control de acceso administrativo robusto y la autenticación segura para el panel Alpha Control Center. Las sesiones se firman criptográficamente mediante HMAC-SHA256, lo que permite verificarlas eficientemente en el Edge runtime (Middleware proxy.ts) sin golpear la base de datos por cada asset estático. Se incluye soporte resiliente de base de datos con fallback automático en memoria para entornos locales sin PostgreSQL activo.
+
+Tareas completadas:
+*   [x] Generación y validación de firmas criptográficas HMAC SHA-256 compatibles con Edge.
+*   [x] Hashing de contraseñas con PBKDF2 y salting aleatorio.
+*   [x] Endpoints API de login y logout con cookies HttpOnly y SameSite: Strict.
+*   [x] Interceptación global de rutas /admin/* y redireccionamiento seguro.
+*   [x] Verificación de la compilación de producción y de lints sin errores.
+*   [x] Validación automatizada del flujo completo mediante browser subagent.
+
+### 26/06/2026 22:45 (Fase 3 - Crear el núcleo del sistema de gestión de la tienda (OMS))
+
+Archivos creados:
+*   `src/app/api/orders/[id]/route.ts` (Nuevos endpoints dinámicos GET/PATCH/DELETE de pedidos)
+*   `src/lib/config.ts` (Archivo de configuración central del OMS para monedas, proveedores y envíos)
+
+Archivos modificados:
+*   `src/types/order.ts` (Ampliados tipos `OrderStatus`, `Order` y añadidos `OrderEvent` para auditoría y notas internas)
+*   `src/lib/orders.ts` (Añadido helper `deleteOrder` para posibilitar el borrado desde API)
+*   `src/app/api/orders/route.ts` (Implementado endpoint POST para crear pedidos OMS con cálculo de totales y logs iniciales)
+*   `src/app/admin/orders/page.tsx` (Refactorizado para ser el panel interactivo de gestión OMS de pedidos con listado, detalle en modal, cambio de estados y simulador)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Se ha implementado el núcleo central de gestión de la tienda (OMS). Todos los flujos de negocio futuros (PayPal, Printful, Emails) dependerán de este módulo interno y no directamente entre sí. El panel de administración permite listar los pedidos, ver su historial de eventos en una línea de tiempo interactiva, añadir notas internas y cambiar estados. Se habilitó un simulador de creación de pedidos en el panel para pruebas inmediatas del OMS.
+
+Tareas completadas:
+*   [x] Diseño del modelo y estados ampliados de pedidos.
+*   [x] Creación de endpoints API locales y dinámicos para operaciones CRUD.
+*   [x] Panel de administración OMS con tabla de pedidos y modal de detalles.
+*   [x] Historial de eventos y línea de tiempo de auditoría por pedido.
+*   [x] Módulo central de configuración para futuros parámetros de tienda.
+*   [x] Verificación de compilación Next.js 16 exitosa.
+
+### 26/06/2026 21:55 (Fase 1.5 - Variantes de producto y mockups dinámicos por color)
+
+Producto afectado:
+*   Todos los productos vinculados con Printful de forma genérica (incluyendo `core-hoodie`).
+
+Archivos modificados/creados:
+*   `src/types/printful.ts` (Añadidas propiedades `color` y `size` en `PrintfulSyncVariant` para consistencia de tipos)
+*   `src/lib/validations.ts` (Modificado `cartItemSchema` de Zod para admitir propiedades opcionales `color` y `printfulVariantId`)
+*   `src/context/cart-context.tsx` (Actualizada interfaz `CartItem` y la firma de `addItem` para registrar y diferenciar colores y variant IDs en el carrito)
+*   `src/lib/products.ts` (Declaradas interfaces `SizeVariant` y `ColorVariant` y soporte de `colorVariants` en la estructura de `Product`)
+*   `src/lib/products-server.ts` (Nuevo archivo para contener la lógica del mapeador dinámico `mapPrintfulSyncVariantsToColors` y `getDynamicProduct`)
+*   `src/lib/printful.ts` (Actualizado `createPrintfulOrder` para enlazar variantes directamente mediante el ID dinámico de variante de Printful)
+*   `src/components/product/product-detail-client.tsx` (Nuevo componente interactivo de cliente para selector visual de colores y tallas por disponibilidad y mockups de color correspondientes)
+*   `src/app/product/[slug]/page.tsx` (Refactorizado para resolver los productos dinámicos de forma genérica en el servidor y delegar al componente interactivo)
+*   `src/app/admin/printful/page.tsx` (Añadido el panel de diagnóstico de desglose jerárquico de variantes y mockups por color/talla)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Se ha implementado el soporte genérico de variantes de producto y mockups dinámicos organizados por color. El frontend realiza la agrupación de variantes en base a las respuestas de la API de Printful de forma dinámica y no hardcodeada. Al cambiar de color en la tienda, el selector filtra las tallas y disponibilidad en tiempo real, así como el listado de imágenes expuestas por el color correspondiente en el carrusel de mockups, previniendo fallos de renderizado y ofreciendo una experiencia altamente premium.
+
+Colores detectados para core-hoodie:
+*   Navy, Maroon, Forest Green, Dark Heather, Indigo Blue, Light Blue, Sand, Light Pink.
+
+Tallas detectadas:
+*   S, M, L, XL, 2XL.
+
+Total de Variants de Printful mapeadas:
+*   40 variantes físicas dinámicamente vinculadas.
+
+Tareas completadas:
+*   [x] Agrupación y mapeo genérico de variantes y previsualizaciones por color.
+*   [x] Selectores visuales interactivos de color (hexadecimal) y talla (disponibilidad).
+*   [x] Actualización de la cesta y órdenes de la API con IDs de variante dinámicos de Printful.
+*   [x] Sección de diagnóstico jerárquico del catálogo en el panel de administración.
+*   [x] Validación de tipos TypeScript y build exitosa en Next.js 16.
 
 ### 26/06/2026 21:45 (Fase 1.4 - Obtener mockups de Printful y hacerlos activables)
 

@@ -1,1 +1,57 @@
-[]
+[
+  {
+    "id": "AA-702821-5234",
+    "status": "paid",
+    "shippingAddress": {
+      "firstName": "Alejandro",
+      "lastName": "Gómez",
+      "email": "cliente.mock.83@ejemplo.com",
+      "phone": "+34 600 123 456",
+      "address": "Calle del Lujo Silencioso 42, 3B",
+      "city": "Madrid",
+      "postalCode": "28001",
+      "province": "Madrid",
+      "country": "España"
+    },
+    "items": [
+      {
+        "slug": "core-hoodie",
+        "name": "Core Hoodie",
+        "priceEUR": 45,
+        "size": "M",
+        "color": "Maroon",
+        "printfulVariantId": 5491,
+        "qty": 1
+      },
+      {
+        "slug": "essential-tee",
+        "name": "Essential Tee",
+        "priceEUR": 25,
+        "size": "L",
+        "color": "Black",
+        "qty": 2
+      }
+    ],
+    "subtotal": 95,
+    "shippingPrice": 0,
+    "totalPrice": 90,
+    "discount": 5,
+    "paymentMethod": "PayPal Sandbox",
+    "paymentStatus": "paid",
+    "createdAt": "2026-06-26T20:45:02.821Z",
+    "updatedAt": "2026-06-26T20:45:55.142Z",
+    "history": [
+      {
+        "timestamp": "2026-06-26T20:45:02.822Z",
+        "event": "Pedido creado",
+        "notes": "Pedido inicializado en el sistema central de gestión (OMS)."
+      },
+      {
+        "timestamp": "2026-06-26T20:45:55.130Z",
+        "event": "Estado cambiado: paid",
+        "notes": "Pago verificado exitosamente desde el panel"
+      }
+    ],
+    "internalNotes": ""
+  }
+]

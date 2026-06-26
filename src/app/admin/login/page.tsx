@@ -11,21 +11,30 @@ export default function AdminLoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
-    // Flujo simulado de login para la Fase 2
-    setTimeout(() => {
-      if (email === 'admin@alpha.com' && password === 'alpha123') {
-        document.cookie = 'alpha_session=active; path=/admin; max-age=86400; SameSite=Strict';
-        router.push('/admin/dashboard');
-      } else {
-        setError('Las credenciales proporcionadas no son válidas. Revisa e inténtalo de nuevo.');
-        setIsSubmitting(false);
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Credenciales inválidas.');
       }
-    }, 1200);
+
+      router.push('/admin/dashboard');
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Error al verificar credenciales.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -66,7 +75,7 @@ export default function AdminLoginPage() {
                 id="email"
                 type="email"
                 required
-                placeholder="admin@alpha.com"
+                placeholder="admin@alpha-addiction.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 className="

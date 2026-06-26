@@ -4,17 +4,19 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Product } from '@/lib/products';
 
 export interface CartItem {
-    cartItemId: string; // combination of slug and size, e.g. "product-slug-M"
+    cartItemId: string; // combination of slug, color and size, e.g. "product-slug-navy-M"
     slug: string;
     name: string;
     priceEUR: number;
     size: string;
+    color?: string;
+    printfulVariantId?: number;
     qty: number;
 }
 
 interface CartContextType {
     items: CartItem[];
-    addItem: (product: Product, size: string, qty?: number) => void;
+    addItem: (product: Product, size: string, color?: string, printfulVariantId?: number, qty?: number) => void;
     removeItem: (cartItemId: string) => void;
     updateQty: (cartItemId: string, qty: number) => void;
     clearCart: () => void;
@@ -49,9 +51,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }, [items, isInitialized]);
 
-    const addItem = (product: Product, size: string, qty = 1) => {
+    const addItem = (product: Product, size: string, color?: string, printfulVariantId?: number, qty = 1) => {
         setItems((prevItems) => {
-            const cartItemId = `${product.slug}-${size}`;
+            const colorPart = color ? color.toLowerCase().replace(/\s+/g, '-') : 'default';
+            const cartItemId = `${product.slug}-${colorPart}-${size}`;
             const existingItem = prevItems.find((item) => item.cartItemId === cartItemId);
 
             if (existingItem) {
@@ -68,6 +71,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     name: product.name,
                     priceEUR: product.priceEUR,
                     size,
+                    color,
+                    printfulVariantId,
                     qty,
                 },
             ];

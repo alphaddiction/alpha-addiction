@@ -43,7 +43,13 @@ export default function Sidebar() {
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('❌ Error al cerrar sesión en el servidor:', error);
+    }
+    // Borrar cookies del lado del cliente por redundancia
     document.cookie = 'alpha_session=; path=/admin; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict';
     router.push('/admin/login');
   };
