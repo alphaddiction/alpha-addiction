@@ -18,7 +18,7 @@ export interface PrintfulItemInput {
 }
 
 export interface PrintfulOrderInput {
-  external_id: string; // Internal Order ID
+  external_id: string; // ID interno de pedido local
   recipient: PrintfulRecipient;
   items: PrintfulItemInput[];
 }
@@ -69,5 +69,44 @@ export interface PrintfulWebhookEvent {
       tracking_url: string;
       carrier: string;
     };
+  };
+}
+
+// NUEVOS TIPOS PARA LA FASE 1: PRODUCTOS, VARIANTES, RESPUESTAS Y ERRORES DE API
+
+export interface PrintfulSyncProduct {
+  id: number;
+  external_id: string | null;
+  name: string;
+  variants: number;
+  synced: number;
+}
+
+export interface PrintfulSyncVariant {
+  id: number;
+  parent_product_id: number;
+  external_id: string | null;
+  variant_id: number;
+  name: string;
+  synced: boolean;
+  sku: string | null;
+  retail_price: string;
+  currency: string;
+}
+
+export interface PrintfulProductDetails {
+  sync_product: PrintfulSyncProduct;
+  sync_variants: PrintfulSyncVariant[];
+}
+
+export interface PrintfulApiResponse<T> {
+  code: number;
+  result: T;
+}
+
+export interface PrintfulApiError {
+  error: {
+    message: string;
+    type: string;
   };
 }

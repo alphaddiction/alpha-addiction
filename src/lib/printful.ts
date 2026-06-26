@@ -1,11 +1,72 @@
 import crypto from 'crypto';
-import { getEnv } from './validations';
-import { PrintfulOrderInput, PrintfulOrderResponse } from '@/types/printful';
+import { PrintfulOrderInput, PrintfulOrderResponse, PrintfulApiError } from '@/types/printful';
 import { OrderItem, ShippingAddress } from '@/types/order';
 
-// Map local product slugs & sizes to Printful catalog Variant IDs.
-// In a real environment, these would be the specific Printful variants (e.g. Bella+Canvas 3001, Gildan 18500, etc.)
-// that are linked to the store's sync products.
+/**
+ * Cliente reutilizable de la API de Printful.
+ * Realiza peticiones HTTP autenticadas usando únicamente PRINTFUL_API_KEY.
+ *
+ * @param endpoint Ruta del recurso de la API (por ejemplo, 'sync/products' o 'orders')
+ * @param options Opciones para la petición fetch (método, cuerpo, cabeceras personalizadas)
+ * @returns Promesa con los datos tipados de la respuesta
+ */
+export async function printfulFetch<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const apiKey = process.env.PRINTFUL_API_KEY;
+
+  // Validación de seguridad de la API Key en el servidor
+  if (!apiKey) {
+    console.error('❌ Error de configuración: PRINTFUL_API_KEY no definida en el entorno.');
+    throw new Error('La variable de entorno PRINTFUL_API_KEY no está configurada.');
+  }
+
+  const cleanEndpoint = endpoint.replace(/^\//, '');
+  const url = `https://api.printful.com/${cleanEndpoint}`;
+
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    if (!response.ok) {
+      let errorBody: PrintfulApiError | null = null;
+      try {
+        errorBody = await response.json();
+      } catch {
+        // Ignorar si la respuesta de error no es JSON válido
+      }
+
+      const status = response.status;
+      const errorMsg = errorBody?.error?.message || response.statusText || 'Error desconocido';
+      const errorType = errorBody?.error?.type || 'API_ERROR';
+
+      console.error(`❌ Error en la API de Printful [HTTP ${status}]: ${errorMsg} (Tipo: ${errorType})`);
+      throw new Error(`Error en la API de Printful (${status}): ${errorMsg}`);
+    }
+
+    const data = await response.json();
+    return data as T;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(`Error de red al conectar con Printful: ${String(error)}`);
+  }
+}
+
+/**
+ * Mapas locales de slugs y tamaños a Variant IDs de Printful.
+ * Permite resolver la variante correspondiente antes de enviar a producción.
+ */
 export function getPrintfulVariantId(slug: string, size: string): number {
   const mapping: Record<string, Record<string, number>> = {
     'essential-tee': {
@@ -44,14 +105,15 @@ export function getPrintfulVariantId(slug: string, size: string): number {
 
   const productVariants = mapping[slug];
   if (!productVariants) {
-    return 4012; // Fallback default variant ID (e.g., standard Unisex Tee Medium)
+    return 4012; // Variante por defecto de camiseta si no se encuentra
   }
 
   return productVariants[size] || productVariants['M'] || 4012;
 }
 
-// Convert Spain's region name/province to a ISO-like state code if needed
-// (Printful accepts alphanumeric state code, but for Spain it is optional)
+/**
+ * Convierte el nombre de una provincia en España en un código de estado ISO-like.
+ */
 function getStateCode(province: string): string {
   const provLower = province.toLowerCase();
   if (provLower.includes('madrid')) return 'M';
@@ -61,15 +123,16 @@ function getStateCode(province: string): string {
   return '';
 }
 
-// Create a Printful order
+/**
+ * Crea un pedido de producción en la API de Printful.
+ * Utilizado por los controladores del checkout para lanzar la producción tras el cobro.
+ */
 export async function createPrintfulOrder(
   localOrderId: string,
   shippingAddress: ShippingAddress,
   items: OrderItem[]
 ): Promise<PrintfulOrderResponse> {
-  const env = getEnv();
-
-  // Convert standard country names to ISO 3166-1 alpha-2 codes
+  // Convertir el nombre del país a código ISO 3166-1 alpha-2
   let countryCode = 'ES';
   const c = shippingAddress.country.toLowerCase();
   if (c.includes('portugal')) countryCode = 'PT';
@@ -97,51 +160,40 @@ export async function createPrintfulOrder(
     })),
   };
 
-  const url = 'https://api.printful.com/orders';
-  console.log(`Sending order ${localOrderId} to Printful API at ${url}...`);
+  console.log(`[Printful] Enviando pedido ${localOrderId} mediante printfulFetch...`);
 
-  const response = await fetch(url, {
+  return await printfulFetch<PrintfulOrderResponse>('orders', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.PRINTFUL_API_TOKEN}`,
-      'X-Printful-Store-Id': env.PRINTFUL_STORE_ID,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(orderPayload),
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('❌ Printful Order Submission Error:', errorText);
-    throw new Error(`Printful Order creation failed: ${errorText}`);
-  }
-
-  return (await response.json()) as PrintfulOrderResponse;
 }
 
-// Verify Printful Webhook Signature
+/**
+ * Verifica la firma criptográfica HMAC SHA256 enviada por los webhooks de Printful.
+ * Previene la suplantación de identidad en callbacks de cambios de estado (envíos, cancelaciones).
+ */
 export function verifyPrintfulWebhookSignature(
   rawBody: string,
   signature: string | null
 ): boolean {
-  const env = getEnv();
+  const secret = process.env.PRINTFUL_WEBHOOK_SIGNING_SECRET;
 
-  // If secret not configured in env, warn and return true for testing
-  if (!env.PRINTFUL_WEBHOOK_SIGNING_SECRET) {
+  // Si no está configurado el secreto del webhook, omitimos en local/pruebas
+  if (!secret) {
     console.warn(
-      '⚠️ PRINTFUL_WEBHOOK_SIGNING_SECRET not configured. Skipping webhook signature validation.'
+      '⚠️ Advertencia: PRINTFUL_WEBHOOK_SIGNING_SECRET no configurada en el entorno. Omitiendo validación de firma.'
     );
     return true;
   }
 
   if (!signature) {
-    console.error('❌ Printful Webhook validation error: Signature is missing from headers');
+    console.error('❌ Error de webhook de Printful: Firma vacía en x-printful-signature.');
     return false;
   }
 
   try {
     const expectedSignature = crypto
-      .createHmac('sha256', env.PRINTFUL_WEBHOOK_SIGNING_SECRET)
+      .createHmac('sha256', secret)
       .update(rawBody)
       .digest('hex');
 
@@ -154,7 +206,7 @@ export function verifyPrintfulWebhookSignature(
 
     return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
   } catch (error) {
-    console.error('❌ Printful Webhook validation error during signature verification:', error);
+    console.error('❌ Excepción al validar firma de webhook de Printful:', error);
     return false;
   }
 }

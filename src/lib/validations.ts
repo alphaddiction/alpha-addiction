@@ -6,8 +6,9 @@ export const envSchema = z.object({
   PAYPAL_CLIENT_SECRET: z.string().min(1, 'PAYPAL_CLIENT_SECRET is required'),
   PAYPAL_API: z.string().url('PAYPAL_API must be a valid URL'),
   PAYPAL_WEBHOOK_ID: z.string().optional(), // Optional, but recommended for webhook verification
-  PRINTFUL_API_TOKEN: z.string().min(1, 'PRINTFUL_API_TOKEN is required'),
-  PRINTFUL_STORE_ID: z.string().min(1, 'PRINTFUL_STORE_ID is required'),
+  PRINTFUL_API_KEY: z.string().min(1, 'PRINTFUL_API_KEY is required'),
+  PRINTFUL_API_TOKEN: z.string().optional(),
+  PRINTFUL_STORE_ID: z.string().optional(),
   PRINTFUL_WEBHOOK_SIGNING_SECRET: z.string().optional(), // Used if verifying Printful webhook signature
 });
 
@@ -18,6 +19,7 @@ export function getEnv() {
     PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET,
     PAYPAL_API: process.env.PAYPAL_API || 'https://api-m.sandbox.paypal.com',
     PAYPAL_WEBHOOK_ID: process.env.PAYPAL_WEBHOOK_ID,
+    PRINTFUL_API_KEY: process.env.PRINTFUL_API_KEY || process.env.PRINTFUL_API_TOKEN,
     PRINTFUL_API_TOKEN: process.env.PRINTFUL_API_TOKEN,
     PRINTFUL_STORE_ID: process.env.PRINTFUL_STORE_ID,
     PRINTFUL_WEBHOOK_SIGNING_SECRET: process.env.PRINTFUL_WEBHOOK_SIGNING_SECRET,

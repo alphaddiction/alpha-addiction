@@ -35,10 +35,10 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ## 📦 Printful
 
 *   **API**: ✅ Completada (Módulo de comunicación HTTP nativo e integrado en `src/lib/printful.ts`).
-*   **Tokens**: 🟡 En progreso (Configurado para leer `PRINTFUL_API_TOKEN` de forma dinámica, requiere clave productiva).
-*   **Productos**: 🟡 En progreso (Mapeo inicial de variantes completado, requiere sincronización física en catálogo de Printful).
+*   **Tokens**: ✅ Completada (Transicionado al uso exclusivo de `PRINTFUL_API_KEY` en `src/lib/printful.ts` y validador global).
+*   **Productos**: ✅ Completada (Actualizado `src/lib/products.ts` para soportar `printfulProductId`, `printfulVariantId`, `sku`, `size`, `color` con comentarios TODO).
 *   **Variant IDs**: ✅ Completada (Mapeo estático de tamaños y artículos configurado).
-*   **Sincronización**: 🟡 En progreso (Pruebas de envío de pedidos de pruebas completadas con datos de sandbox).
+*   **Sincronización**: ✅ Completada (Endpoint POST `/api/printful/sync-products` creado para realizar reporte lógico de comparación remota vs local).
 *   **Webhooks**: 🟡 En progreso (Endpoint preparado para firmas HMAC, requiere registro de webhook público en Printful).
 *   **Tracking**: ✅ Completada (La API de webhook parsea la información de transporte y actualiza el pedido).
 *   **Producción**: 🔴 Pendiente (Pruebas finales con cobros reales antes de activar la producción automatizada).
@@ -90,6 +90,33 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📝 Historial de cambios
+
+### 26/06/2026 18:15 (Fase 1 - Integración base de Printful)
+
+Archivos creados:
+*   `src/types/printful.ts` (Actualizado con modelos de datos para productos y variantes de Printful)
+*   `src/app/api/printful/test/route.ts` (Endpoint GET de verificación de conexión y credenciales)
+*   `src/app/api/printful/products/route.ts` (Endpoint GET para consultar el catálogo de Printful)
+*   `src/app/api/printful/product/route.ts` (Endpoint GET para consultar detalles de un producto por ID)
+*   `src/app/api/printful/sync-products/route.ts` (Endpoint POST de reporte de sincronización de catálogo)
+
+Archivos modificados:
+*   `src/lib/printful.ts` (Reescrito el cliente usando `printfulFetch` y `PRINTFUL_API_KEY`)
+*   `src/lib/products.ts` (Agregado soporte para mapeo de Printful con campos opcionales y TODOs)
+*   `src/lib/validations.ts` (Actualizada validación de variables de entorno globales para admitir `PRINTFUL_API_KEY`)
+*   `src/lib/env/admin-env.ts` (Modificado para remover `PRINTFUL_STORE_ID` como variable crítica obligatoria)
+*   `src/lib/integrations/index.ts` (Actualizado el estado de monitorización de Printful)
+*   `.env.example` (Removido `PRINTFUL_STORE_ID` y mantenido únicamente `PRINTFUL_API_KEY`)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Desplegada la infraestructura base para conectar con la API de Printful usando de forma segura `PRINTFUL_API_KEY` mediante cabecera Bearer, descartando `PRINTFUL_API_TOKEN` y `PRINTFUL_STORE_ID` de acuerdo con los requerimientos. Se crearon endpoints para realizar comprobaciones del estado de la API, listar productos detallados y generar informes de comparación lógica entre el inventario local y remoto. No se altera la interfaz gráfica ni se realizan modificaciones en la base de datos local.
+
+Tareas actualizadas:
+*   ✅ Integración base del cliente de Printful completada.
+*   ✅ Endpoints de consulta y tests base completados.
+*   ✅ Resumen de comparación lógica de catálogos completada.
+*   ✅ Catálogo de productos local preparado.
 
 ### 26/06/2026 16:20
 

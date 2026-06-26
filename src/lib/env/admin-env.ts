@@ -9,7 +9,7 @@ export const envVarSpecs: EnvVarSpec[] = [
   { key: 'DATABASE_URL', isCritical: true, isServerOnly: true, description: 'URL de conexión a la base de datos PostgreSQL (Prisma).' },
   { key: 'AUTH_SECRET', isCritical: true, isServerOnly: true, description: 'Clave secreta utilizada para firmar cookies de sesión encriptadas.' },
   { key: 'ADMIN_ENCRYPTION_KEY', isCritical: true, isServerOnly: true, description: 'Clave simétrica de cifrado maestro AES-256-GCM para datos administrativos.' },
-  { key: 'PRINTFUL_API_KEY', isCritical: true, isServerOnly: true, description: 'Token o clave de autenticación Bearer para comunicar con la API REST de Printful.' },
+  { key: 'PRINTFUL_API_KEY', isCritical: true, isServerOnly: true, description: 'Clave de API Bearer para comunicar con la API REST de Printful.' },
   { key: 'PAYPAL_CLIENT_ID', isCritical: true, isServerOnly: false, description: 'ID de cliente público para inicializar los botones de pago del SDK de PayPal.' },
   { key: 'PAYPAL_CLIENT_SECRET', isCritical: true, isServerOnly: true, description: 'Clave secreta privada para llamadas de backend e inicio de OAuth en PayPal.' },
   { key: 'PAYPAL_WEBHOOK_ID', isCritical: false, isServerOnly: true, description: 'Identificador del webhook de PayPal necesario para verificar firmas HMAC.' },
