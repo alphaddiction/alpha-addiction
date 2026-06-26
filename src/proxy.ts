@@ -18,8 +18,8 @@ export async function proxy(request: NextRequest) {
 
     // 1. Si no hay cookie de sesión
     if (!sessionToken) {
-      if (!isLoginPage) {
-        // Redirigir a login si intenta ver el panel protegido
+      // En producción redirigir forzosamente, en desarrollo permitir acceso para pruebas cómodas
+      if (process.env.NODE_ENV === 'production' && !isLoginPage) {
         const loginUrl = new URL('/admin/login', request.url);
         return NextResponse.redirect(loginUrl);
       }
@@ -31,13 +31,13 @@ export async function proxy(request: NextRequest) {
 
     if (!verified) {
       // Token inválido, corrupto o expirado
-      if (!isLoginPage) {
+      if (process.env.NODE_ENV === 'production' && !isLoginPage) {
         const response = NextResponse.redirect(new URL('/admin/login', request.url));
         // Limpiar cookie corrupta/expirada
         response.cookies.set('alpha_session', '', { path: '/admin', maxAge: 0 });
         return response;
       }
-      // Si está en login con token inválido, dejar que cargue la página limpia
+      // En desarrollo, limpiar la cookie inválida y permitir el paso
       const response = NextResponse.next();
       response.cookies.set('alpha_session', '', { path: '/admin', maxAge: 0 });
       return response;
