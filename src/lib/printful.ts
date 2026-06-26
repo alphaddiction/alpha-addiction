@@ -1,9 +1,16 @@
 import crypto from 'crypto';
-import { PrintfulOrderInput, PrintfulOrderResponse, PrintfulApiError } from '@/types/printful';
+import { 
+  PrintfulOrderInput, 
+  PrintfulOrderResponse, 
+  PrintfulApiError,
+  PrintfulSyncProduct,
+  PrintfulSyncVariant,
+  PrintfulProductDetails
+} from '@/types/printful';
 import { OrderItem, ShippingAddress } from '@/types/order';
 
 /**
- * Cliente reutilizable de la API de Printful.
+ * Cliente de la API de Printful.
  * Realiza peticiones HTTP autenticadas usando únicamente PRINTFUL_API_KEY.
  *
  * @param endpoint Ruta del recurso de la API (por ejemplo, 'sync/products' o 'orders')
@@ -61,6 +68,43 @@ export async function printfulFetch<T>(
     }
     throw new Error(`Error de red al conectar con Printful: ${String(error)}`);
   }
+}
+
+/**
+ * Comprueba de forma inocua que la API responde y que la clave de API (PRINTFUL_API_KEY)
+ * es válida consultando el endpoint de tiendas del usuario.
+ */
+export async function testPrintfulConnection(): Promise<{ success: boolean; message: string; code: number }> {
+  try {
+    const response = await printfulFetch<{ code: number }>('stores');
+    return {
+      success: true,
+      message: 'Conexión con la API de Printful establecida con éxito.',
+      code: response.code,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Error de comunicación con la API de Printful.',
+      code: 500,
+    };
+  }
+}
+
+/**
+ * Obtiene la lista completa de productos sincronizados de la tienda de Printful.
+ */
+export async function getPrintfulProducts(): Promise<PrintfulSyncProduct[]> {
+  const response = await printfulFetch<{ result: PrintfulSyncProduct[] }>('sync/products');
+  return response.result || [];
+}
+
+/**
+ * Obtiene todas las variantes sincronizadas correspondientes a un producto de Printful por su ID.
+ */
+export async function getPrintfulProductVariants(productId: number): Promise<PrintfulSyncVariant[]> {
+  const response = await printfulFetch<{ result: PrintfulProductDetails }>(`sync/products/${productId}`);
+  return response.result.sync_variants || [];
 }
 
 /**

@@ -1,31 +1,31 @@
-import { printfulFetch } from '@/lib/printful';
+import { getPrintfulProducts, getPrintfulProductVariants } from '@/lib/printful';
 import { products as localProducts } from '@/lib/products';
-import { PrintfulSyncProduct, PrintfulProductDetails } from '@/types/printful';
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/printful/sync-products
  * 
- * Descarga todo el catálogo sincronizado de la API de Printful y lo contrasta
- * de manera lógica con el catálogo de productos local (definido en src/lib/products.ts).
+ * Descarga el catálogo de Printful y realiza un mapeo lógico y reporte cruzado 
+ * con el catálogo local de Alpha Addiction.
  * 
- * Devuelve un resumen de estado de vinculación y diferencias en variantes
- * sin guardar cambios en la base de datos (según las restricciones de la Fase 1).
+ * Detecta discrepancias de productos, variantes y duplicados de SKUs o Variant IDs.
  */
 export async function POST() {
   try {
-    // 1. Obtener la lista base de productos en Printful
-    console.log('[Sync API] Recuperando productos base desde Printful...');
-    const printfulListResponse = await printfulFetch<{ result: PrintfulSyncProduct[] }>('sync/products');
-    const printfulSyncProducts = printfulListResponse.result || [];
+    console.log('[Sync API] Descargando catálogo remoto para diagnóstico...');
+    const printfulSyncProducts = await getPrintfulProducts();
 
-    // 2. Obtener detalles de variantes para cada producto en paralelo
-    console.log(`[Sync API] Descargando detalles para ${printfulSyncProducts.length} productos remotos...`);
+    // Obtener detalles de cada producto en paralelo
     const printfulDetails = await Promise.all(
       printfulSyncProducts.map(async (product) => {
         try {
-          const detailResponse = await printfulFetch<{ result: PrintfulProductDetails }>(`sync/products/${product.id}`);
-          return detailResponse.result;
+          const variants = await getPrintfulProductVariants(product.id);
+          return {
+            sync_product: product,
+            sync_variants: variants,
+          };
         } catch (err) {
           console.error(`❌ [Sync API] Error al recuperar detalles del producto ${product.id}:`, err);
           return null;
@@ -33,15 +33,19 @@ export async function POST() {
       })
     );
 
-    const activePrintfulProducts = detailedProductsFilter(printfulDetails);
+    const activePrintfulProducts = printfulDetails.filter((p): p is any => p !== null);
 
-    // 3. Realizar comparación cruzada (local vs remoto)
     const comparisonList: any[] = [];
+    const duplicateSkus: string[] = [];
+    const duplicatePrintfulVariantIds: number[] = [];
 
+    const skuSet = new Set<string>();
+    const variantIdSet = new Set<number>();
+
+    // Cruzar catálogo local
     for (const localProduct of localProducts) {
-      // Intentar encontrar el producto equivalente en Printful a través del slug (external_id)
       const remoteProduct = activePrintfulProducts.find(
-        (p) => p.sync_product.external_id === localProduct.slug
+        (p: any) => p.sync_product.external_id === localProduct.slug
       );
 
       if (remoteProduct) {
@@ -51,17 +55,30 @@ export async function POST() {
         const variantsComparison: any[] = [];
         let matchedCount = 0;
 
-        // Evaluar cada combinación teórica de Talla + Color definida localmente
         for (const color of localProduct.colors) {
           for (const size of localProduct.sizes) {
-            // Buscar la variante correspondiente en Printful por coincidencia de nombre
-            const remoteVariant = remoteVariants.find((rv) => {
+            const remoteVariant = remoteVariants.find((rv: any) => {
               const nameLower = rv.name.toLowerCase();
               return nameLower.includes(color.toLowerCase()) && nameLower.includes(`/${size.toLowerCase()}`);
             });
 
             if (remoteVariant) {
               matchedCount++;
+              
+              if (remoteVariant.sku) {
+                if (skuSet.has(remoteVariant.sku)) {
+                  duplicateSkus.push(remoteVariant.sku);
+                }
+                skuSet.add(remoteVariant.sku);
+              }
+
+              if (remoteVariant.variant_id) {
+                if (variantIdSet.has(remoteVariant.variant_id)) {
+                  duplicatePrintfulVariantIds.push(remoteVariant.variant_id);
+                }
+                variantIdSet.add(remoteVariant.variant_id);
+              }
+
               variantsComparison.push({
                 color,
                 size,
@@ -83,15 +100,14 @@ export async function POST() {
           }
         }
 
-        // Buscar variantes remotas en Printful que no correspondan a combinaciones del catálogo local
-        const orphanedRemoteVariants = remoteVariants.filter((rv) => {
+        const orphanedRemoteVariants = remoteVariants.filter((rv: any) => {
           return !localProduct.colors.some((color) =>
             localProduct.sizes.some((size) => {
               const nameLower = rv.name.toLowerCase();
               return nameLower.includes(color.toLowerCase()) && nameLower.includes(`/${size.toLowerCase()}`);
             })
           );
-        }).map((rv) => ({
+        }).map((rv: any) => ({
           name: rv.name,
           sku: rv.sku,
           syncVariantId: rv.id,
@@ -112,7 +128,7 @@ export async function POST() {
           orphanedRemoteVariants,
         });
       } else {
-        // Producto local que no existe en el catálogo remoto de Printful
+        // Producto local que no existe en Printful
         comparisonList.push({
           slug: localProduct.slug,
           name: localProduct.name,
@@ -129,22 +145,20 @@ export async function POST() {
       }
     }
 
-    // Identificar productos en Printful que no están mapeados con ningún slug local
+    // Identificar productos remotos huérfanos sin slug local
     const orphanedRemoteProducts = activePrintfulProducts
-      .filter((p) => p.sync_product.external_id === null || !localProducts.some((lp) => lp.slug === p.sync_product.external_id))
-      .map((p) => ({
+      .filter((p: any) => p.sync_product.external_id === null || !localProducts.some((lp) => lp.slug === p.sync_product.external_id))
+      .map((p: any) => ({
         printfulProductId: p.sync_product.id,
         externalId: p.sync_product.external_id,
         name: p.sync_product.name,
         variantsCount: p.sync_product.variants,
       }));
 
-    // 4. Calcular estadísticas generales del reporte
     const totalLocalProducts = localProducts.length;
     const totalRemoteProducts = activePrintfulProducts.length;
     const matchedProducts = comparisonList.filter((c) => c.status === 'vinculado').length;
     const missingProducts = comparisonList.filter((c) => c.status === 'no_vinculado_en_printful').length;
-    const orphanedProducts = orphanedRemoteProducts.length;
 
     const summaryReport = {
       timestamp: new Date().toISOString(),
@@ -153,8 +167,10 @@ export async function POST() {
         totalRemoteProducts,
         matchedProducts,
         missingProducts,
-        orphanedProducts,
+        orphanedProducts: orphanedRemoteProducts.length,
       },
+      duplicateSkus,
+      duplicatePrintfulVariantIds,
       comparison: comparisonList,
       orphanedRemoteProducts,
     };
@@ -176,11 +192,4 @@ export async function POST() {
       { status: 500 }
     );
   }
-}
-
-/**
- * Filtro auxiliar de tipos para limpiar productos no cargados.
- */
-function detailedProductsFilter(products: (PrintfulProductDetails | null)[]): PrintfulProductDetails[] {
-  return products.filter((p): p is PrintfulProductDetails => p !== null);
 }

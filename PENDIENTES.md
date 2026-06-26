@@ -44,7 +44,8 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
     *   `balance-hoodie` (p4) — ⚠️ Requiere revisión (0/10 variantes vinculadas)
     *   `form-legging` (p5) — ⚠️ Requiere revisión (0/4 variantes vinculadas)
 *   **Variant IDs**: ✅ Completada (Mapeo estático de tamaños y artículos configurado).
-*   **Sincronización**: ✅ Completada (Endpoint POST `/api/printful/sync-products` creado para realizar reporte lógico de comparación remota vs local).
+*   **Sincronización**: ✅ Completada (Endpoint POST `/api/printful/sync-products` y panel interactivo `/admin/printful` creados para realizar reporte y visualización de diagnóstico en tiempo real).
+*   **Panel de Diagnóstico**: ✅ Completada (Diseño premium interactivo desplegado en `/admin/printful` con comprobación de estado de conexión, variables, duplicados y reporte de mapeo).
 *   **Webhooks**: 🟡 En progreso (Endpoint preparado para firmas HMAC, requiere registro de webhook público en Printful).
 *   **Tracking**: ✅ Completada (La API de webhook parsea la información de transporte y actualiza el pedido).
 *   **Producción**: 🔴 Pendiente (Pruebas finales con cobros reales antes de activar la producción automatizada).
@@ -96,6 +97,26 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📝 Historial de cambios
+
+### 26/06/2026 19:15 (Fase 1.3 - Diagnóstico y Sincronización Interactiva)
+
+Archivos creados:
+*   `src/app/admin/printful/page.tsx` (Panel interactivo de diagnóstico del estado de la API de Printful y cruce de catálogos)
+
+Archivos modificados:
+*   `src/lib/printful.ts` (Implementadas funciones `testPrintfulConnection`, `getPrintfulProducts` y `getPrintfulProductVariants` con soporte tipado)
+*   `src/app/api/printful/test/route.ts` (Refactorizado para llamar a la utilidad de conectividad unificada)
+*   `src/app/api/printful/products/route.ts` (Refactorizado para consumir helpers y reportar estadísticas de tallas/colores)
+*   `src/app/api/printful/sync-products/route.ts` (Refactorizado para emplear helpers del cliente y reportar duplicados de SKUs o Variant IDs)
+*   `src/components/admin/sidebar.tsx` (Agregado enlace de navegación a "Printful Status" con el icono de Layers)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Completada la infraestructura para el monitoreo y sincronización lógica en tiempo real de Printful. Se expandieron las utilidades de cliente en `src/lib/printful.ts` para resolver peticiones remanescentes de productos y variantes. Se rediseñaron los endpoints del API correspondientes y se creó una vista de administrador interactiva en `/admin/printful` que reporta el estado de la conexión, anomalías (SKUs o Variant IDs duplicados) y el estado de la variable privada `PRINTFUL_API_KEY` (sin revelar su valor), protegida mediante el middleware de sesión de la administración.
+
+Tareas actualizadas:
+*   ✅ Panel interactivo de diagnóstico de Printful desplegado y funcional.
+*   ✅ Endpoint de catálogo y sincronización lógica refactorizados con los helpers.
 
 ### 26/06/2026 18:45 (Fase 1.2 - Vinculación de Productos)
 

@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   Lock,
+  Layers,
 } from 'lucide-react';
 
 const navItems = [
@@ -29,6 +30,7 @@ const navItems = [
   { href: '/admin/finance', label: 'Finanzas', icon: DollarSign },
   { href: '/admin/marketing', label: 'Marketing', icon: Megaphone },
   { href: '/admin/ai', label: 'IA Interna', icon: Brain },
+  { href: '/admin/printful', label: 'Printful Status', icon: Layers },
   { href: '/admin/security', label: 'Seguridad', icon: Shield },
   { href: '/admin/logs', label: 'Auditoría', icon: FileText },
   { href: '/admin/settings', label: 'Configuración', icon: Settings },
