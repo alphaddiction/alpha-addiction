@@ -113,7 +113,7 @@ export async function getIntegrationsStatus(): Promise<IntegrationStatus[]> {
       status: vercelStatus,
       requiredVars: vercelVars,
       lastChecked: timestamp,
-      description: 'Enrutamiento del proxy de middleware y hosting de la aplicación e-commerce optimizada.',
+      description: 'Enrutamiento del proxy del sistema (proxy.ts) y hosting de la aplicación e-commerce optimizada.',
       nextStep: vercelStatus === 'configured'
         ? 'Entorno configurado correctamente para hosting y callbacks de producción.'
         : 'Inserta NEXT_PUBLIC_APP_URL con la URL base de tu tienda para asegurar que los redireccionamientos de PayPal y webhooks operen sin incidentes.',

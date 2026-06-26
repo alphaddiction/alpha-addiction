@@ -10,6 +10,13 @@ export interface ProductVariant {
     color: string;              // Color (ej. Black, Cream, Gray)
 }
 
+export interface ProductImage {
+    src: string;
+    alt: string;
+    enabled: boolean;
+    order: number;
+}
+
 /**
  * Representa un producto en el e-commerce local.
  */
@@ -23,7 +30,7 @@ export interface Product {
     sizes: string[];
     descriptionShort: string;
     status: ProductStatus;
-    images: string[];
+    images: string[] | ProductImage[];
     printfulProductId?: number;  // TODO: ID asignado por la base de datos de Printful
     variants?: ProductVariant[];  // TODO: Listado de variantes físicas enlazadas
 }
@@ -84,23 +91,96 @@ export const products: Product[] = [
         name: 'Core Hoodie',
         priceEUR: 45,
         category: 'Hoodies',
-        colors: ['Black', 'Gray'],
-        sizes: ['XS', 'S', 'M', 'L', 'XL'],
+        colors: ['Navy', 'Maroon', 'Forest Green', 'Dark Heather', 'Indigo Blue', 'Light Blue', 'Sand', 'Light Pink'],
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
         descriptionShort: 'La sudadera definitiva. Peso medio, interior suave y sin capucha para que puedas utilizarla en cualquier momento.',
         status: 'in_stock',
-        images: ['/images/hoodies/sudadera.png'],
-        printfulProductId: undefined, // TODO: Enlazar con printfulProductId de la tienda de producción en la siguiente fase
+        images: [
+          {
+            src: "/images/products/core-hoodie/imagen-1.png",
+            alt: "Alpha Addiction Core Hoodie - imagen 1",
+            enabled: true,
+            order: 1,
+          },
+          {
+            src: "/images/products/core-hoodie/imagen-2.png",
+            alt: "Alpha Addiction Core Hoodie - imagen 2",
+            enabled: false,
+            order: 2,
+          },
+          {
+            src: "/images/products/core-hoodie/imagen-3.png",
+            alt: "Alpha Addiction Core Hoodie - imagen 3",
+            enabled: false,
+            order: 3,
+          },
+          {
+            src: "/images/products/core-hoodie/imagen-4.png",
+            alt: "Alpha Addiction Core Hoodie - imagen 4",
+            enabled: false,
+            order: 4,
+          },
+          {
+            src: "/images/products/core-hoodie/imagen-5.png",
+            alt: "Alpha Addiction Core Hoodie - imagen 5",
+            enabled: false,
+            order: 5,
+          },
+          {
+            src: "/images/products/core-hoodie/imagen-6.png",
+            alt: "Alpha Addiction Core Hoodie - imagen 6",
+            enabled: false,
+            order: 6,
+          },
+          {
+            src: "/images/products/core-hoodie/imagen-7.png",
+            alt: "Alpha Addiction Core Hoodie - imagen 7",
+            enabled: false,
+            order: 7,
+          },
+        ],
+        printfulProductId: 442791728,
         variants: [
-            { color: 'Black', size: 'XS', printfulVariantId: undefined, sku: undefined },
-            { color: 'Black', size: 'S', printfulVariantId: undefined, sku: undefined },
-            { color: 'Black', size: 'M', printfulVariantId: undefined, sku: undefined },
-            { color: 'Black', size: 'L', printfulVariantId: undefined, sku: undefined },
-            { color: 'Black', size: 'XL', printfulVariantId: undefined, sku: undefined },
-            { color: 'Gray', size: 'XS', printfulVariantId: undefined, sku: undefined },
-            { color: 'Gray', size: 'S', printfulVariantId: undefined, sku: undefined },
-            { color: 'Gray', size: 'M', printfulVariantId: undefined, sku: undefined },
-            { color: 'Gray', size: 'L', printfulVariantId: undefined, sku: undefined },
-            { color: 'Gray', size: 'XL', printfulVariantId: undefined, sku: undefined },
+            { color: 'Navy', size: 'S', printfulVariantId: 5498, sku: '6A3EB1CD7C6E1_Navy-S' },
+            { color: 'Navy', size: 'M', printfulVariantId: 5499, sku: '6A3EB1CD7C6E1_Navy-M' },
+            { color: 'Navy', size: 'L', printfulVariantId: 5500, sku: '6A3EB1CD7C6E1_Navy-L' },
+            { color: 'Navy', size: 'XL', printfulVariantId: 5501, sku: '6A3EB1CD7C6E1_Navy-XL' },
+            { color: 'Navy', size: '2XL', printfulVariantId: 5502, sku: '6A3EB1CD7C6E1_Navy-2XL' },
+            { color: 'Maroon', size: 'S', printfulVariantId: 5490, sku: '6A3EB1CD7C6E1_Maroon-S' },
+            { color: 'Maroon', size: 'M', printfulVariantId: 5491, sku: '6A3EB1CD7C6E1_Maroon-M' },
+            { color: 'Maroon', size: 'L', printfulVariantId: 5492, sku: '6A3EB1CD7C6E1_Maroon-L' },
+            { color: 'Maroon', size: 'XL', printfulVariantId: 5493, sku: '6A3EB1CD7C6E1_Maroon-XL' },
+            { color: 'Maroon', size: '2XL', printfulVariantId: 5494, sku: '6A3EB1CD7C6E1_Maroon-2XL' },
+            { color: 'Forest Green', size: 'S', printfulVariantId: 18763, sku: '6A3EB1CD7C6E1_Forest-Green-S' },
+            { color: 'Forest Green', size: 'M', printfulVariantId: 18764, sku: '6A3EB1CD7C6E1_Forest-Green-M' },
+            { color: 'Forest Green', size: 'L', printfulVariantId: 18765, sku: '6A3EB1CD7C6E1_Forest-Green-L' },
+            { color: 'Forest Green', size: 'XL', printfulVariantId: 18766, sku: '6A3EB1CD7C6E1_Forest-Green-XL' },
+            { color: 'Forest Green', size: '2XL', printfulVariantId: 18767, sku: '6A3EB1CD7C6E1_Forest-Green-2XL' },
+            { color: 'Dark Heather', size: 'S', printfulVariantId: 10833, sku: '6A3EB1CD7C6E1_Dark-Heather-S' },
+            { color: 'Dark Heather', size: 'M', printfulVariantId: 10834, sku: '6A3EB1CD7C6E1_Dark-Heather-M' },
+            { color: 'Dark Heather', size: 'L', printfulVariantId: 10835, sku: '6A3EB1CD7C6E1_Dark-Heather-L' },
+            { color: 'Dark Heather', size: 'XL', printfulVariantId: 10836, sku: '6A3EB1CD7C6E1_Dark-Heather-XL' },
+            { color: 'Dark Heather', size: '2XL', printfulVariantId: 10837, sku: '6A3EB1CD7C6E1_Dark-Heather-2XL' },
+            { color: 'Indigo Blue', size: 'S', printfulVariantId: 5466, sku: '6A3EB1CD7C6E1_Indigo-Blue-S' },
+            { color: 'Indigo Blue', size: 'M', printfulVariantId: 5467, sku: '6A3EB1CD7C6E1_Indigo-Blue-M' },
+            { color: 'Indigo Blue', size: 'L', printfulVariantId: 5468, sku: '6A3EB1CD7C6E1_Indigo-Blue-L' },
+            { color: 'Indigo Blue', size: 'XL', printfulVariantId: 5469, sku: '6A3EB1CD7C6E1_Indigo-Blue-XL' },
+            { color: 'Indigo Blue', size: '2XL', printfulVariantId: 5470, sku: '6A3EB1CD7C6E1_Indigo-Blue-2XL' },
+            { color: 'Light Blue', size: 'S', printfulVariantId: 7860, sku: '6A3EB1CD7C6E1_Light-Blue-S' },
+            { color: 'Light Blue', size: 'M', printfulVariantId: 7861, sku: '6A3EB1CD7C6E1_Light-Blue-M' },
+            { color: 'Light Blue', size: 'L', printfulVariantId: 7862, sku: '6A3EB1CD7C6E1_Light-Blue-L' },
+            { color: 'Light Blue', size: 'XL', printfulVariantId: 7863, sku: '6A3EB1CD7C6E1_Light-Blue-XL' },
+            { color: 'Light Blue', size: '2XL', printfulVariantId: 7864, sku: '6A3EB1CD7C6E1_Light-Blue-2XL' },
+            { color: 'Sand', size: 'S', printfulVariantId: 16876, sku: '6A3EB1CD7C6E1_Sand-S' },
+            { color: 'Sand', size: 'M', printfulVariantId: 16877, sku: '6A3EB1CD7C6E1_Sand-M' },
+            { color: 'Sand', size: 'L', printfulVariantId: 16878, sku: '6A3EB1CD7C6E1_Sand-L' },
+            { color: 'Sand', size: 'XL', printfulVariantId: 16879, sku: '6A3EB1CD7C6E1_Sand-XL' },
+            { color: 'Sand', size: '2XL', printfulVariantId: 16880, sku: '6A3EB1CD7C6E1_Sand-2XL' },
+            { color: 'Light Pink', size: 'S', printfulVariantId: 7868, sku: '6A3EB1CD7C6E1_Light-Pink-S' },
+            { color: 'Light Pink', size: 'M', printfulVariantId: 7869, sku: '6A3EB1CD7C6E1_Light-Pink-M' },
+            { color: 'Light Pink', size: 'L', printfulVariantId: 7870, sku: '6A3EB1CD7C6E1_Light-Pink-L' },
+            { color: 'Light Pink', size: 'XL', printfulVariantId: 7871, sku: '6A3EB1CD7C6E1_Light-Pink-XL' },
+            { color: 'Light Pink', size: '2XL', printfulVariantId: 7872, sku: '6A3EB1CD7C6E1_Light-Pink-2XL' },
         ]
     },
     {

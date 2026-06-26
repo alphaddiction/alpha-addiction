@@ -7,7 +7,7 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ## 📋 Estado general del proyecto
 
 *   **Porcentaje aproximado completado:** 80%
-*   **Última actualización:** 26/06/2026 16:15
+*   **Última actualización:** 26/06/2026 21:35
 *   **Próximos objetivos:**
     1. Implementar autenticación del administrador (Fase 3) con protección de rutas e historial de sesiones.
     2. Desarrollar la monitorización activa y Health Checks en tiempo real (Fase 4).
@@ -40,7 +40,7 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 *   **Vínculo de Productos**: 🟡 En progreso (Catálogo local preparado. Requiere crear los productos en Printful y actualizar los Variant IDs y SKUs locales - ⚠️ Requiere revisión).
     *   `essential-tee` (p1) — ⚠️ Requiere revisión (0/8 variantes vinculadas)
     *   `pure-tee` (p2) — ⚠️ Requiere revisión (0/8 variantes vinculadas)
-    *   `core-hoodie` (p3) — ⚠️ Requiere revisión (0/10 variantes vinculadas)
+    *   `core-hoodie` (p3) — ✅ Vinculado (40/40 variantes vinculadas, ID: 442791728)
     *   `balance-hoodie` (p4) — ⚠️ Requiere revisión (0/10 variantes vinculadas)
     *   `form-legging` (p5) — ⚠️ Requiere revisión (0/4 variantes vinculadas)
 *   **Variant IDs**: ✅ Completada (Mapeo estático de tamaños y artículos configurado).
@@ -97,6 +97,59 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📝 Historial de cambios
+
+### 26/06/2026 21:35 (Fase 1.6 - Imágenes de core-hoodie)
+
+Producto actualizado:
+*   `core-hoodie` (p3)
+
+Archivos modificados:
+*   `src/lib/products.ts` (Modificado el tipo `images` en la interfaz `Product` y actualizada la definición de `core-hoodie` para usar array de objetos habilitables/deshabilitables)
+*   `src/app/product/[slug]/page.tsx` (Adaptado el renderizador del catálogo para filtrar por `enabled: true` y pintar las imágenes/placeholders dinámicamente)
+*   `PENDIENTES.md` (Este archivo)
+
+Imágenes creadas/pendientes:
+*   Directorio de assets preparado en `public/images/products/core-hoodie/`.
+*   `imagen-1.png` configurada como **Activa (enabled: true)** (archivo real pendiente de carga).
+*   `imagen-2.png` a `imagen-7.png` configuradas como **Inactivas (enabled: false)** (archivos reales pendientes de carga).
+
+Estado de vinculación con Printful:
+*   ✅ **Totalmente vinculado** (40/40 variantes enlazadas con ID de producto `442791728`).
+
+Tareas completadas:
+*   [x] Estructuración de datos del producto `core-hoodie` en `products.ts`.
+*   [x] Soporte de imágenes habilitadas/deshabilitadas en detalle del producto.
+*   [x] Directorio local preparado para la subida de assets.
+
+### 26/06/2026 21:25 (Fase 1.5 - Sincronización de Catálogo)
+
+Archivos modificados:
+*   `src/lib/products.ts` (Mapeados ID remoto, colores, tallas y 40 variantes físicas para `core-hoodie`)
+*   `src/app/api/printful/sync-products/route.ts` (Refactorizado el buscador de productos y variantes por ID y propiedades físicas directas, evitando discrepancias de sintaxis de nombres)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Completada la sincronización del producto "Core Hoodie" (p3) con la tienda remota de Printful. Se modificó el algoritmo de cruce para soportar comparación por ID interno de Printful y campos físicos `color`/`size` en minúscula de forma directa. Al reevaluar, el panel muestra a "Core Hoodie" como completamente enlazado con estado exitoso (40/40 variantes).
+
+### 26/06/2026 20:35 (Fase 1.4 - Migración Next.js 16)
+
+Archivos creados:
+*   `src/proxy.ts` (Implementa el nuevo enrutamiento y control de acceso utilizando la convención `proxy` de Next.js 16)
+
+Archivos modificados:
+*   `src/lib/integrations/index.ts` (Actualizadas descripciones para coincidir con la nomenclatura de proxy.ts)
+*   `src/app/admin/printful/page.tsx` (Actualizados comentarios y notas para reflejar el uso de proxy.ts)
+*   `PENDIENTES.md` (Este archivo)
+
+Archivos eliminados:
+*   `src/middleware.ts` (Eliminada convención obsoleta de middleware)
+
+Descripción:
+Completada la adaptación del enrutador intermedio a la especificación de Next.js 16. Se renombró `src/middleware.ts` a `src/proxy.ts` y se actualizó la declaración de la función exportada a `proxy(request: NextRequest)`. Se eliminó exitosamente el aviso de deprecación `The "middleware" file convention is deprecated` en la compilación de producción.
+
+Tareas actualizadas:
+*   ✅ Adaptación de enrutador y eliminación de warning de middleware completada.
+*   ✅ Compatibilidad de compilación Next.js 16 validada.
 
 ### 26/06/2026 19:15 (Fase 1.3 - Diagnóstico y Sincronización Interactiva)
 

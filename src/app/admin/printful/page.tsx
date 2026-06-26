@@ -291,7 +291,7 @@ export default function PrintfulDiagnosticPage() {
             <div className="text-xs">
               <h4 className="font-semibold text-[#f5f5f0] tracking-wide uppercase text-[9px] text-[var(--primary)]">Seguridad y Acceso (TODO):</h4>
               <p className="text-[10px] text-[var(--muted)] mt-1.5 leading-relaxed font-mono">
-                // TODO: Rutas de diagnóstico admin protegidas de forma básica por middleware de autenticación (alpha_session cookie). Asegurar control de accesos IAM de producción antes del lanzamiento.
+                // TODO: Rutas de diagnóstico admin protegidas de forma básica por proxy de autenticación (alpha_session cookie en proxy.ts). Asegurar control de accesos IAM de producción antes del lanzamiento.
               </p>
             </div>
           </div>

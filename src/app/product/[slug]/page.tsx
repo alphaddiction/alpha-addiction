@@ -15,6 +15,21 @@ export default async function ProductPage({
 
     if (!product) notFound();
 
+    const enabledImages = product.images.filter((img) => {
+        if (typeof img === 'string') return true;
+        return img.enabled;
+    });
+
+    const imageSources = enabledImages.map((img) => {
+        if (typeof img === 'string') return img;
+        return img.src;
+    });
+
+    const imageAlts = enabledImages.map((img) => {
+        if (typeof img === 'string') return product.name;
+        return img.alt;
+    });
+
     return (
         <div className="min-h-screen pt-32 px-6 max-w-7xl mx-auto flex flex-col md:flex-row gap-12 lg:gap-24 mb-24">
 
@@ -26,19 +41,35 @@ export default async function ProductPage({
 
             {/* Image Gallery (Left) */}
             <div className="w-full md:w-1/2 mt-8 md:mt-0">
-                <div className="aspect-[3/4] bg-[var(--surface)] w-full relative overflow-hidden shadow-sm">
-                    {/* Placeholder for Image */}
-                    <div className="absolute inset-0 flex items-end p-8">
-                        <span className="text-white/20 text-xs tracking-[0.2em] uppercase">
-                            AlphaAddiction
-                        </span>
+                <div className="aspect-[3/4] bg-[var(--surface)] w-full relative overflow-hidden shadow-sm flex items-center justify-center">
+                    {imageSources.length > 0 ? (
+                        <img 
+                            src={imageSources[0]} 
+                            alt={imageAlts[0]} 
+                            className="object-cover w-full h-full"
+                        />
+                    ) : (
+                        /* Placeholder for Image */
+                        <div className="absolute inset-0 flex items-end p-8">
+                            <span className="text-white/20 text-xs tracking-[0.2em] uppercase">
+                                AlphaAddiction
+                            </span>
+                        </div>
+                    )}
+                </div>
+                {imageSources.length > 1 && (
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                        {imageSources.slice(1).map((src, index) => (
+                            <div key={index} className="aspect-square bg-[var(--surface)] overflow-hidden">
+                                <img 
+                                    src={src} 
+                                    alt={imageAlts[index + 1]} 
+                                    className="object-cover w-full h-full"
+                                />
+                            </div>
+                        ))}
                     </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                    {/* Additional mock thumbnails - using Surface color */}
-                    <div className="aspect-square bg-[var(--surface)] opacity-80" />
-                    <div className="aspect-square bg-[var(--surface)] opacity-60" />
-                </div>
+                )}
             </div>
 
             {/* Product Info (Right) */}

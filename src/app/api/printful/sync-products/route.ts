@@ -45,7 +45,9 @@ export async function POST() {
     // Cruzar catálogo local
     for (const localProduct of localProducts) {
       const remoteProduct = activePrintfulProducts.find(
-        (p: any) => p.sync_product.external_id === localProduct.slug
+        (p: any) => 
+          p.sync_product.external_id === localProduct.slug ||
+          p.sync_product.id === localProduct.printfulProductId
       );
 
       if (remoteProduct) {
@@ -58,8 +60,9 @@ export async function POST() {
         for (const color of localProduct.colors) {
           for (const size of localProduct.sizes) {
             const remoteVariant = remoteVariants.find((rv: any) => {
-              const nameLower = rv.name.toLowerCase();
-              return nameLower.includes(color.toLowerCase()) && nameLower.includes(`/${size.toLowerCase()}`);
+              const rvColor = (rv.color || '').toLowerCase();
+              const rvSize = (rv.size || '').toLowerCase();
+              return rvColor === color.toLowerCase() && rvSize === size.toLowerCase();
             });
 
             if (remoteVariant) {
