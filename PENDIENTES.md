@@ -37,6 +37,12 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 *   **API**: ✅ Completada (Módulo de comunicación HTTP nativo e integrado en `src/lib/printful.ts`).
 *   **Tokens**: ✅ Completada (Transicionado al uso exclusivo de `PRINTFUL_API_KEY` en `src/lib/printful.ts` y validador global).
 *   **Productos**: ✅ Completada (Actualizado `src/lib/products.ts` para soportar `printfulProductId`, `printfulVariantId`, `sku`, `size`, `color` con comentarios TODO).
+*   **Vínculo de Productos**: 🟡 En progreso (Catálogo local preparado. Requiere crear los productos en Printful y actualizar los Variant IDs y SKUs locales - ⚠️ Requiere revisión).
+    *   `essential-tee` (p1) — ⚠️ Requiere revisión (0/8 variantes vinculadas)
+    *   `pure-tee` (p2) — ⚠️ Requiere revisión (0/8 variantes vinculadas)
+    *   `core-hoodie` (p3) — ⚠️ Requiere revisión (0/10 variantes vinculadas)
+    *   `balance-hoodie` (p4) — ⚠️ Requiere revisión (0/10 variantes vinculadas)
+    *   `form-legging` (p5) — ⚠️ Requiere revisión (0/4 variantes vinculadas)
 *   **Variant IDs**: ✅ Completada (Mapeo estático de tamaños y artículos configurado).
 *   **Sincronización**: ✅ Completada (Endpoint POST `/api/printful/sync-products` creado para realizar reporte lógico de comparación remota vs local).
 *   **Webhooks**: 🟡 En progreso (Endpoint preparado para firmas HMAC, requiere registro de webhook público en Printful).
@@ -90,6 +96,21 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📝 Historial de cambios
+
+### 26/06/2026 18:45 (Fase 1.2 - Vinculación de Productos)
+
+Archivos creados:
+*   `src/app/api/products/validate/route.ts` (Endpoint GET de validación e integridad del catálogo)
+
+Archivos modificados:
+*   `src/lib/products.ts` (Estructuradas todas las variantes físicas locales e implementadas funciones de resolución por ID, SKU y VariantID)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Definido el listado teórico completo de variantes físicas (Talla + Color) para todos los productos de Alpha Addiction en `src/lib/products.ts`. Se implementaron las funciones auxiliares de búsqueda por SKU, ID y VariantID, y se creó el endpoint `/api/products/validate` para analizar la consistencia lógica del catálogo local (duplicados, variantes sin padre o huérfanas). Como el catálogo remoto de Printful se encuentra actualmente vacío, todos los productos se mantienen provisionalmente como no vinculados con anotaciones TODO en español y se registran como pendientes de revisión.
+
+Tareas de revisión añadidas:
+*   ⚠️ Requiere revisión: Mapear códigos SKU y IDs reales de Printful en `src/lib/products.ts` para todos los productos (`essential-tee`, `pure-tee`, `core-hoodie`, `balance-hoodie`, `form-legging`) una vez creados en la interfaz de la tienda de Printful.
 
 ### 26/06/2026 18:15 (Fase 1 - Integración base de Printful)
 

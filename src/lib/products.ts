@@ -43,9 +43,17 @@ export const products: Product[] = [
         descriptionShort: 'Camiseta esencial de algodón premium. Corte relajado y minimalista, perfecta para el día a día.',
         status: 'in_stock',
         images: ['/images/essential-tee-1.jpg'],
-        // TODO: Enlazar con printfulProductId de la tienda de producción en la Fase 2
-        printfulProductId: undefined,
-        variants: undefined,
+        printfulProductId: undefined, // TODO: Enlazar con printfulProductId de la tienda de producción en la siguiente fase
+        variants: [
+            { color: 'Black', size: 'XS', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'S', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'M', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'L', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'XS', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'S', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'M', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'L', printfulVariantId: undefined, sku: undefined },
+        ]
     },
     {
         id: 'p2',
@@ -58,9 +66,17 @@ export const products: Product[] = [
         descriptionShort: 'Pureza en el diseño. Tejido suave y transpirable que se siente como una segunda piel.',
         status: 'in_stock',
         images: ['/images/pure-tee-1.jpg'],
-        // TODO: Enlazar con printfulProductId de la tienda de producción en la Fase 2
-        printfulProductId: undefined,
-        variants: undefined,
+        printfulProductId: undefined, // TODO: Enlazar con printfulProductId de la tienda de producción en la siguiente fase
+        variants: [
+            { color: 'Black', size: 'XS', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'S', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'M', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'L', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'XS', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'S', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'M', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'L', printfulVariantId: undefined, sku: undefined },
+        ]
     },
     {
         id: 'p3',
@@ -73,9 +89,19 @@ export const products: Product[] = [
         descriptionShort: 'La sudadera definitiva. Peso medio, interior suave y sin capucha para que puedas utilizarla en cualquier momento.',
         status: 'in_stock',
         images: ['/images/hoodies/sudadera.png'],
-        // TODO: Enlazar con printfulProductId de la tienda de producción en la Fase 2
-        printfulProductId: undefined,
-        variants: undefined,
+        printfulProductId: undefined, // TODO: Enlazar con printfulProductId de la tienda de producción en la siguiente fase
+        variants: [
+            { color: 'Black', size: 'XS', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'S', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'M', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'L', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'XL', printfulVariantId: undefined, sku: undefined },
+            { color: 'Gray', size: 'XS', printfulVariantId: undefined, sku: undefined },
+            { color: 'Gray', size: 'S', printfulVariantId: undefined, sku: undefined },
+            { color: 'Gray', size: 'M', printfulVariantId: undefined, sku: undefined },
+            { color: 'Gray', size: 'L', printfulVariantId: undefined, sku: undefined },
+            { color: 'Gray', size: 'XL', printfulVariantId: undefined, sku: undefined },
+        ]
     },
     {
         id: 'p4',
@@ -88,9 +114,19 @@ export const products: Product[] = [
         descriptionShort: 'Equilibrio entre confort y estilo. Corte oversize sutil en tonos neutros para cualquier ocasión.',
         status: 'in_stock',
         images: ['/images/balance-hoodie-1.jpg'],
-        // TODO: Enlazar con printfulProductId de la tienda de producción en la Fase 2
-        printfulProductId: undefined,
-        variants: undefined,
+        printfulProductId: undefined, // TODO: Enlazar con printfulProductId de la tienda de producción en la siguiente fase
+        variants: [
+            { color: 'Cream', size: 'XS', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'S', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'M', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'L', printfulVariantId: undefined, sku: undefined },
+            { color: 'Cream', size: 'XL', printfulVariantId: undefined, sku: undefined },
+            { color: 'Gray', size: 'XS', printfulVariantId: undefined, sku: undefined },
+            { color: 'Gray', size: 'S', printfulVariantId: undefined, sku: undefined },
+            { color: 'Gray', size: 'M', printfulVariantId: undefined, sku: undefined },
+            { color: 'Gray', size: 'L', printfulVariantId: undefined, sku: undefined },
+            { color: 'Gray', size: 'XL', printfulVariantId: undefined, sku: undefined },
+        ]
     },
     {
         id: 'p5',
@@ -103,8 +139,49 @@ export const products: Product[] = [
         descriptionShort: 'Soporte y flexibilidad. Cintura alta que esculpe sin oprimir, ideal para movimiento o descanso.',
         status: 'in_stock',
         images: ['/images/form-legging-1.jpg'],
-        // TODO: Enlazar con printfulProductId de la tienda de producción en la Fase 2
-        printfulProductId: undefined,
-        variants: undefined,
+        printfulProductId: undefined, // TODO: Enlazar con printfulProductId de la tienda de producción en la siguiente fase
+        variants: [
+            { color: 'Black', size: 'XS', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'S', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'M', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'L', printfulVariantId: undefined, sku: undefined },
+        ]
     },
 ];
+
+/**
+ * Obtiene un producto por su ID local único.
+ */
+export function getProductById(id: string): Product | undefined {
+  return products.find(p => p.id === id);
+}
+
+/**
+ * Obtiene un producto y la variante correspondiente a partir de un código de SKU.
+ */
+export function getProductBySku(sku: string): { product: Product; variant: ProductVariant } | undefined {
+  for (const product of products) {
+    if (product.variants) {
+      const variant = product.variants.find(v => v.sku === sku);
+      if (variant) {
+        return { product, variant };
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Obtiene un producto y la variante correspondiente a partir del ID de variante física de Printful.
+ */
+export function getProductByPrintfulVariantId(variantId: number): { product: Product; variant: ProductVariant } | undefined {
+  for (const product of products) {
+    if (product.variants) {
+      const variant = product.variants.find(v => v.printfulVariantId === variantId);
+      if (variant) {
+        return { product, variant };
+      }
+    }
+  }
+  return undefined;
+}
