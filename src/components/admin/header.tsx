@@ -1,11 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertOctagon, Bell, User, AlertTriangle, ShieldAlert, RefreshCw } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { AlertOctagon, Bell, User, AlertTriangle, ShieldAlert, RefreshCw, LogOut } from 'lucide-react';
 
 export default function Header() {
+  const router = useRouter();
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [isActivatingEmergency, setIsActivatingEmergency] = useState<string | null>(null);
+
+  const handleLogout = () => {
+    document.cookie = 'alpha_session=; path=/admin; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict';
+    router.push('/admin/login');
+  };
 
   const emergencyActions = [
     { id: 'kill_sessions', label: 'Cerrar todas las sesiones activas', desc: 'Desconecta de forma remota a todos los usuarios del panel administrativo.' },
@@ -67,6 +74,15 @@ export default function Header() {
             </div>
             <button className="h-8 w-8 bg-white/5 rounded-full flex items-center justify-center text-[#f5f5f0]/70 hover:text-[var(--primary)] hover:bg-white/10 transition-colors" aria-label="Perfil de usuario">
               <User className="w-4 h-4" />
+            </button>
+            <div className="h-8 w-px bg-white/5" />
+            <button
+              onClick={handleLogout}
+              className="h-8 w-8 bg-white/5 rounded flex items-center justify-center text-[#f5f5f0]/60 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
+              title="Cerrar sesión"
+              aria-label="Cerrar sesión"
+            >
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
