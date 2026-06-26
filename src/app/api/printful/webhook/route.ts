@@ -87,10 +87,10 @@ export async function POST(req: Request) {
     }
 
     return new Response('Webhook processed successfully', { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Error processing Printful Webhook:', error);
     return Response.json(
-      { error: 'Printful Webhook processing failed', message: error.message },
+      { error: 'Printful Webhook processing failed', message: (error as Error).message },
       { status: 500 }
     );
   }

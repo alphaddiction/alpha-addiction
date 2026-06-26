@@ -27,8 +27,8 @@ function SuccessContent() {
         if (!res.ok) throw new Error('No se pudieron recuperar los detalles del pedido.');
         const data = await res.json();
         setOrder(data);
-      } catch (err: any) {
-        setError(err.message || 'Error al cargar los detalles del pedido.');
+      } catch (err) {
+        setError((err as Error).message || 'Error al cargar los detalles del pedido.');
       } finally {
         setIsLoading(false);
       }

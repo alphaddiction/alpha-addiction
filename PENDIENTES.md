@@ -6,13 +6,13 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📋 Estado general del proyecto
 
-*   **Porcentaje aproximado completado:** 75%
-*   **Última actualización:** 26/06/2026 15:58
+*   **Porcentaje aproximado completado:** 80%
+*   **Última actualización:** 26/06/2026 16:15
 *   **Próximos objetivos:**
-    1. Registrar y configurar los Webhooks de producción de PayPal y Printful.
-    2. Migrar de base de datos local en JSON a una base de datos relacional (por ejemplo, PostgreSQL/Supabase con Prisma).
-    3. Integrar servicio de envío de correos transaccionales (por ejemplo, Resend o SendGrid).
-    4. Implementar los cálculos dinámicos de impuestos (IVA/VAT) y envíos basados en la dirección de destino.
+    1. Implementar autenticación del administrador (Fase 3) con protección de rutas e historial de sesiones.
+    2. Desarrollar la monitorización activa y Health Checks en tiempo real (Fase 4).
+    3. Registrar y configurar los Webhooks de producción de PayPal y Printful.
+    4. Integrar servicio de envío de correos transaccionales (por ejemplo, Resend o SendGrid).
 
 ---
 
@@ -61,7 +61,7 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 🗄️ Base de datos
 
-*   **Migración a PostgreSQL/Supabase**: 🔴 Pendiente (Reemplazar la persistencia simulada de `orders.json` por un cliente robusto tipo Prisma u ORM equivalente para entornos serverless multi-instancia).
+*   **Migración a PostgreSQL/Supabase**: 🟡 En progreso (Instalado Prisma ORM, definido el cliente de base de datos global `src/lib/db.ts` y modelado inicial de esquema para usuarios, sesiones, auditoría y pedidos en `prisma/schema.prisma` listo para migrar).
 
 ---
 
@@ -90,6 +90,61 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📝 Historial de cambios
+
+### 26/06/2026 16:20
+
+Archivos modificados:
+*   `eslint.config.mjs`
+*   `src/app/checkout/page.tsx`
+*   `src/app/account/orders/page.tsx`
+*   `src/app/api/orders/route.ts`
+*   `src/app/api/paypal/create-order/route.ts`
+*   `src/app/api/paypal/config/route.ts`
+*   `src/app/api/paypal/capture-order/route.ts`
+*   `src/app/api/paypal/webhook/route.ts`
+*   `src/app/api/printful/create-order/route.ts`
+*   `src/app/api/printful/webhook/route.ts`
+*   `src/app/checkout/success/page.tsx`
+*   `src/components/paypal/paypal-button.tsx`
+*   `src/context/cart-context.tsx`
+*   `src/types/paypal.ts`
+*   `src/components/admin/dashboard-cards.tsx`
+*   `src/components/admin/header.tsx`
+*   `src/components/layout/conditional-layout.tsx`
+*   `src/app/admin/layout.tsx`
+*   `src/app/admin/dashboard/page.tsx`
+
+Descripción:
+Auditoría y corrección exhaustiva de advertencias y errores de ESLint y TypeScript. Se excluyó la carpeta `_backup_deleted/` en las comprobaciones de ESLint. Se solucionaron violaciones de la regla `rules-of-hooks` reubicando hooks al inicio de los componentes y se añadieron comentarios de exclusión para evitar advertencias de renderizado en cascada de estados hidratados (`react-hooks/set-state-in-effect`). Se eliminaron todas las referencias a tipados implícitos `any` en bloques `try-catch`, promesas e interfaces reemplazándolas por casteo seguro (`(error as Error).message`) o tipados rigurosos. Se limpiaron todas las importaciones y variables declaradas inactivas.
+
+Tareas actualizadas:
+*   ✅ Auditoría y solución de fallos de compilación e imports completada.
+*   ✅ Limpieza completa de avisos de ESLint (0 advertencias, 0 errores).
+
+### 26/06/2026 16:15
+
+Archivos modificados:
+*   `package.json`
+*   `package-lock.json`
+*   `prisma/schema.prisma`
+*   `src/lib/db.ts`
+*   `src/components/layout/conditional-layout.tsx`
+*   `src/app/layout.tsx`
+*   `src/app/admin/layout.tsx`
+*   `src/app/admin/page.tsx`
+*   `src/app/admin/login/page.tsx`
+*   `src/app/admin/dashboard/page.tsx`
+*   `src/components/admin/sidebar.tsx`
+*   `src/components/admin/header.tsx`
+*   `src/components/admin/dashboard-cards.tsx`
+*   `.env.example`
+
+Descripción:
+Desplegada la arquitectura base y diseño visual premium ("lujo silencioso") para el centro de mando Alpha Control Center (/admin). Se configuró e integró Prisma ORM (PostgreSQL), creando modelos para la monitorización de servicios, sesiones activas y auditoría de eventos. Se implementó una cabecera y barra de navegación lateral responsive en tema oscuro, tarjetas de rendimiento conectadas a la base de datos de órdenes y la ventana modal interactiva para la Consola de Emergencias (Botón de pánico).
+
+Tareas actualizadas:
+*   ✅ Arquitectura de interfaz del administrador (/admin) completada.
+*   🟡 Integración de base de datos relacional con Prisma (Fase 2) en progreso.
 
 ### 26/06/2026 15:45
 

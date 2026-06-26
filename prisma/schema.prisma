@@ -1,0 +1,67 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Roles: SUPER_ADMIN, ADMIN, GESTOR, SOPORTE, READ_ONLY
+model AdminUser {
+  id               String         @id @default(uuid())
+  email            String         @unique
+  passwordHash     String
+  role             String         @default("ADMIN")
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean        @default(false)
+  recoveryCodes    String?        // Guardados encriptados/hasheados o separados por comas
+  passwordChangedAt DateTime      @default(now())
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  sessions         AdminSession[]
+  auditLogs        AuditLog[]
+}
+
+model AdminSession {
+  id          String    @id @default(uuid())
+  userId      String
+  user        AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress   String?
+  userAgent   String?
+  deviceType  String?   // Mobile, Desktop, Tablet, etc.
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+}
+
+model AuditLog {
+  id        String     @id @default(uuid())
+  userId    String?
+  user      AdminUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String     // E.g., "LOGIN_SUCCESS", "PRODUCT_EDIT", "EMERGENCY_SHUTDOWN"
+  details   String?    // JSON o texto con detalles adicionales
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime   @default(now())
+}
+
+model SystemHealth {
+  id           String   @id @default(uuid())
+  serviceName  String   @unique // "paypal", "printful", "database", "smtp"
+  status       String   // "online", "offline", "degraded"
+  responseTime Int      // En milisegundos
+  lastChecked  DateTime @default(now())
+}
+
+model OrderRecord {
+  id             String   @id // ID local del pedido (E.g. AA-123456)
+  paypalOrderId  String   @unique
+  paypalCaptureId String?
+  printfulOrderId Int?
+  status         String   // paid, fulfillment_submitted, fulfillment_failed, shipped, canceled
+  shippingName   String
+  shippingEmail  String
+  totalPrice     Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

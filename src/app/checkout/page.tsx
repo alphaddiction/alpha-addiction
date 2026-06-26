@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
 import { formatPrice } from '@/lib/utils';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PayPalButton from '@/components/paypal/paypal-button';
@@ -26,8 +26,10 @@ export default function CheckoutPage() {
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [paymentError, setPaymentError] = useState<string | null>(null);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 
@@ -62,8 +64,6 @@ export default function CheckoutPage() {
             });
         }
     };
-
-    const [paymentError, setPaymentError] = useState<string | null>(null);
 
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};

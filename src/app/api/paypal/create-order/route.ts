@@ -27,10 +27,10 @@ export async function POST(req: Request) {
       paypalOrderId: paypalOrder.id,
       status: paypalOrder.status,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Error creating PayPal order:', error);
     return Response.json(
-      { error: 'Failed to create PayPal order', message: error.message },
+      { error: 'Failed to create PayPal order', message: (error as Error).message },
       { status: 500 }
     );
   }

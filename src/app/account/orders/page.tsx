@@ -46,8 +46,8 @@ export default function AccountOrdersPage() {
       if (!res.ok) throw new Error('Error al buscar los pedidos.');
       const data = await res.json();
       setOrders(data);
-    } catch (err: any) {
-      setError(err.message || 'Hubo un problema al recuperar tus pedidos.');
+    } catch (err) {
+      setError((err as Error).message || 'Hubo un problema al recuperar tus pedidos.');
     } finally {
       setIsLoading(false);
     }

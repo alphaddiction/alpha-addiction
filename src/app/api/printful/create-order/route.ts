@@ -54,26 +54,26 @@ export async function POST(req: Request) {
         printfulOrderId: updatedOrder.printfulOrderId,
         status: updatedOrder.status,
       });
-    } catch (printfulError: any) {
+    } catch (printfulError) {
       console.error(`❌ Printful retry failed for ${orderId}:`, printfulError);
       
       await updateOrder(orderId, {
         status: 'fulfillment_failed',
-        errorMessage: printfulError.message || 'Retry submission failed',
+        errorMessage: (printfulError as Error).message || 'Retry submission failed',
       });
 
       return Response.json(
         {
           error: 'Printful order creation failed',
-          message: printfulError.message,
+          message: (printfulError as Error).message,
         },
         { status: 500 }
       );
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Error in retry fulfillment API:', error);
     return Response.json(
-      { error: 'Internal server error', message: error.message },
+      { error: 'Internal server error', message: (error as Error).message },
       { status: 500 }
     );
   }

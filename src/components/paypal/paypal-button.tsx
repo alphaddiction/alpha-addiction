@@ -33,7 +33,7 @@ export default function PayPalButton({
         if (!response.ok) throw new Error('Failed to load PayPal client configuration');
         const data = await response.json();
         setClientId(data.clientId);
-      } catch (err: any) {
+      } catch (err) {
         console.error('❌ Error loading PayPal Config:', err);
         onError('No se pudo cargar la configuración de PayPal. Por favor, inténtelo de nuevo.');
       } finally {
@@ -119,13 +119,13 @@ export default function PayPalButton({
 
               const data = await res.json();
               return data.paypalOrderId;
-            } catch (err: any) {
+            } catch (err) {
               console.error('❌ PayPal button createOrder error:', err);
-              onError(err.message || 'Error al iniciar la transacción con PayPal.');
+              onError((err as Error).message || 'Error al iniciar la transacción con PayPal.');
               throw err;
             }
           }}
-          onApprove={async (data, actions) => {
+          onApprove={async (data) => {
             setIsProcessing(true);
             try {
               const res = await fetch('/api/paypal/capture-order', {
@@ -147,14 +147,14 @@ export default function PayPalButton({
 
               const result = await res.json();
               onSuccess(result.orderId);
-            } catch (err: any) {
+            } catch (err) {
               console.error('❌ PayPal button onApprove error:', err);
-              onError(err.message || 'Error al capturar el pago. Contacta con soporte.');
+              onError((err as Error).message || 'Error al capturar el pago. Contacta con soporte.');
             } finally {
               setIsProcessing(false);
             }
           }}
-          onError={(err: any) => {
+          onError={(err: unknown) => {
             console.error('❌ PayPal button onError:', err);
             onError('Se produjo un error durante el proceso de pago. Vuelve a intentarlo.');
           }}

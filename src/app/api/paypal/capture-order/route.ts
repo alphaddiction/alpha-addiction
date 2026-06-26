@@ -70,10 +70,10 @@ export async function POST(req: Request) {
       printfulOrderId = printfulResponse.result.id;
       fulfillmentStatus = 'fulfillment_submitted';
       console.log(`✅ Printful order created successfully. ID: ${printfulOrderId}`);
-    } catch (printfulError: any) {
+    } catch (printfulError) {
       console.error(`❌ Printful order creation failed for ${localOrderId}:`, printfulError);
       fulfillmentStatus = 'fulfillment_failed';
-      errorMessage = printfulError.message || 'Failed to submit order to Printful';
+      errorMessage = (printfulError as Error).message || 'Failed to submit order to Printful';
     }
 
     // 4. Update order status in DB with Printful ID/errors
@@ -95,10 +95,10 @@ export async function POST(req: Request) {
       status: fulfillmentStatus,
       errorMessage,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Error capturing PayPal order:', error);
     return Response.json(
-      { error: 'Failed to capture PayPal order', message: error.message },
+      { error: 'Failed to capture PayPal order', message: (error as Error).message },
       { status: 500 }
     );
   }

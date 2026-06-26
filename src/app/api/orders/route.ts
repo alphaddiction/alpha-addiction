@@ -31,10 +31,10 @@ export async function GET(req: Request) {
     );
 
     return Response.json(sortedOrders);
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Error fetching orders:', error);
     return Response.json(
-      { error: 'Failed to retrieve orders', message: error.message },
+      { error: 'Failed to retrieve orders', message: (error as Error).message },
       { status: 500 }
     );
   }

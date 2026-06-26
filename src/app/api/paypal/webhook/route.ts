@@ -17,7 +17,17 @@ export async function POST(req: Request) {
     const event = JSON.parse(rawBody) as PayPalWebhookEvent;
     console.log(`📥 Received PayPal Webhook [${event.event_type}] (ID: ${event.id})`);
 
-    const resource = event.resource;
+    interface PayPalResource {
+      id?: string;
+      billing_agreement_id?: string;
+      supplementary_data?: {
+        related_ids?: {
+          order_id?: string;
+        };
+      };
+    }
+
+    const resource = event.resource as PayPalResource;
     let paypalOrderId: string | undefined;
 
     // Retrieve PayPal Order ID depending on resource type
@@ -69,10 +79,10 @@ export async function POST(req: Request) {
     }
 
     return new Response('Webhook received and processed', { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Error handling PayPal Webhook:', error);
     return Response.json(
-      { error: 'PayPal Webhook processing failed', message: error.message },
+      { error: 'PayPal Webhook processing failed', message: (error as Error).message },
       { status: 500 }
     );
   }

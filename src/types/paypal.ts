@@ -96,5 +96,5 @@ export interface PayPalWebhookEvent {
   resource_type: string;
   event_type: string;
   summary: string;
-  resource: any;
+  resource: unknown;
 }
