@@ -5,9 +5,12 @@ import { useCart } from '@/context/cart-context';
 import { formatPrice } from '@/lib/utils';
 import { ArrowLeft, Lock } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import PayPalButton from '@/components/paypal/paypal-button';
 
 export default function CheckoutPage() {
-    const { items, subtotal } = useCart();
+    const router = useRouter();
+    const { items, subtotal, clearCart } = useCart();
     const [mounted, setMounted] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -60,9 +63,9 @@ export default function CheckoutPage() {
         }
     };
 
-    const handleCheckout = (e: React.FormEvent) => {
-        e.preventDefault();
+    const [paymentError, setPaymentError] = useState<string | null>(null);
 
+    const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};
 
         // Validaciones requeridas
@@ -80,11 +83,16 @@ export default function CheckoutPage() {
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
-            return;
+            // Scroll to the first error field
+            const firstErrorKey = Object.keys(newErrors)[0];
+            const errorElement = document.getElementById(firstErrorKey);
+            if (errorElement) {
+                errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return false;
         }
 
-        console.log('Validación exitosa, listos para enviar:', formData);
-        console.log('TODO: Redirigir a pasarela de pago Stripe');
+        return true;
     };
 
     return (
@@ -151,7 +159,7 @@ export default function CheckoutPage() {
 
                 {/* Columna Derecha: Formulario completo */}
                 <div className="lg:col-span-7 order-1 lg:order-2">
-                    <form onSubmit={handleCheckout} className="space-y-12 animate-in fade-in">
+                    <form onSubmit={(e) => e.preventDefault()} className="space-y-12 animate-in fade-in">
 
                         {/* Datos Personales */}
                         <section>
@@ -317,19 +325,25 @@ export default function CheckoutPage() {
                         </section>
 
                         {/* Pagar ahora Action */}
-                        <div className="pt-8 flex flex-col items-center">
-                            <button
-                                type="submit"
-                                className="
-                                    w-full py-4 md:py-5 bg-[var(--foreground)] text-[var(--background)]
-                                    uppercase tracking-widest text-sm font-medium transition-colors hover:bg-[var(--primary)]
-                                "
-                            >
-                                <span className="flex items-center justify-center gap-3">
-                                    <Lock className="w-4 h-4" />
-                                    Pagar ahora
-                                </span>
-                            </button>
+                        <div className="pt-8 space-y-6">
+                            {paymentError && (
+                                <div className="text-center text-xs tracking-widest text-red-500 uppercase py-3 px-4 border border-red-500/20 bg-red-500/5">
+                                    {paymentError}
+                                </div>
+                            )}
+
+                            <PayPalButton
+                                shippingAddress={formData}
+                                items={items}
+                                onValidate={validateForm}
+                                onSuccess={(localOrderId) => {
+                                    clearCart();
+                                    router.push(`/checkout/success?orderId=${localOrderId}`);
+                                }}
+                                onError={(msg) => {
+                                    setPaymentError(msg);
+                                }}
+                            />
 
                             <p className="text-[10px] text-center text-[var(--foreground)]/40 mt-5 tracking-widest">
                                 PAGO SEGURO CON PAYPAL · TRANSACCIÓN PROTEGIDA POR SSL
