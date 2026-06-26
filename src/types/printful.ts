@@ -82,6 +82,24 @@ export interface PrintfulSyncProduct {
   synced: number;
 }
 
+export interface PrintfulFile {
+  id: number;
+  type: string;
+  hash: string;
+  url: string | null;
+  filename: string;
+  mime_type: string;
+  size: number;
+  width: number | null;
+  height: number | null;
+  dpi: number | null;
+  status: string;
+  created: number;
+  thumbnail_url: string | null;
+  preview_url: string | null;
+  visible: boolean;
+}
+
 export interface PrintfulSyncVariant {
   id: number;
   parent_product_id: number;
@@ -92,6 +110,7 @@ export interface PrintfulSyncVariant {
   sku: string | null;
   retail_price: string;
   currency: string;
+  files?: PrintfulFile[];
 }
 
 export interface PrintfulProductDetails {

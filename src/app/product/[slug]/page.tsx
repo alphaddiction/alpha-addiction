@@ -15,20 +15,28 @@ export default async function ProductPage({
 
     if (!product) notFound();
 
-    const enabledImages = product.images.filter((img) => {
-        if (typeof img === 'string') return true;
-        return img.enabled;
-    });
+    const activeMockups = (product.mockups || [])
+        .filter((m) => m.enabled)
+        .sort((a, b) => a.order - b.order);
 
-    const imageSources = enabledImages.map((img) => {
-        if (typeof img === 'string') return img;
-        return img.src;
-    });
+    const activeLocalImages = (product.images || [])
+        .filter((img) => (typeof img === 'string' ? true : img.enabled));
 
-    const imageAlts = enabledImages.map((img) => {
-        if (typeof img === 'string') return product.name;
-        return img.alt;
-    });
+    let imageSources: string[] = [];
+    let imageAlts: string[] = [];
+
+    if (activeMockups.length > 0) {
+        imageSources = activeMockups.map((m) => m.url);
+        imageAlts = activeMockups.map((m) => m.alt);
+    } else if (activeLocalImages.length > 0) {
+        const sortedLocalImages = [...activeLocalImages].sort((a, b) => {
+            const orderA = typeof a === 'string' ? 0 : a.order;
+            const orderB = typeof b === 'string' ? 0 : b.order;
+            return orderA - orderB;
+        });
+        imageSources = sortedLocalImages.map((img) => (typeof img === 'string' ? img : img.src));
+        imageAlts = sortedLocalImages.map((img) => (typeof img === 'string' ? product.name : img.alt));
+    }
 
     return (
         <div className="min-h-screen pt-32 px-6 max-w-7xl mx-auto flex flex-col md:flex-row gap-12 lg:gap-24 mb-24">
@@ -41,7 +49,7 @@ export default async function ProductPage({
 
             {/* Image Gallery (Left) */}
             <div className="w-full md:w-1/2 mt-8 md:mt-0">
-                <div className="aspect-[3/4] bg-[var(--surface)] w-full relative overflow-hidden shadow-sm flex items-center justify-center">
+                <div className="aspect-[3/4] bg-[var(--surface)] w-full relative overflow-hidden shadow-sm flex items-center justify-center border-2 border-[var(--primary)]">
                     {imageSources.length > 0 ? (
                         <img 
                             src={imageSources[0]} 
@@ -60,7 +68,7 @@ export default async function ProductPage({
                 {imageSources.length > 1 && (
                     <div className="grid grid-cols-2 gap-4 mt-4">
                         {imageSources.slice(1).map((src, index) => (
-                            <div key={index} className="aspect-square bg-[var(--surface)] overflow-hidden">
+                            <div key={index} className="aspect-square bg-[var(--surface)] overflow-hidden border-2 border-[var(--primary)]/60">
                                 <img 
                                     src={src} 
                                     alt={imageAlts[index + 1]} 

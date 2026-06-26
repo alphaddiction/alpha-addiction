@@ -98,6 +98,30 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📝 Historial de cambios
 
+### 26/06/2026 21:45 (Fase 1.4 - Obtener mockups de Printful y hacerlos activables)
+
+Producto afectado:
+*   `core-hoodie` (p3)
+
+Archivos modificados/creados:
+*   `src/types/printful.ts` (Modificado para soportar la interfaz `PrintfulFile` en variantes sincronizadas de Printful)
+*   `src/lib/products.ts` (Añadido el tipo `ProductMockup` y registrada la lista de mockups para `core-hoodie` con URLs del CDN de Printful)
+*   `next.config.ts` (Configurado `remotePatterns` para admitir `files.cdn.printful.com` y `static.cdn.printful.com`)
+*   `src/app/api/printful/product/core-hoodie/mockups/route.ts` (Nuevo endpoint dinámico para extraer y ordenar las imágenes de previsualización de Printful)
+*   `src/app/api/products/core-hoodie/mockups/route.ts` (Nuevo endpoint para exponer los mockups del archivo local con estado activo/inactivo)
+*   `src/app/product/[slug]/page.tsx` (Actualizado para renderizar con precedencia: mockups habilitados de Printful -> imágenes locales habilitadas -> placeholder)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Se ha implementado el soporte completo para mockups dinámicos desde la API de Printful para el producto `core-hoodie`. Cada mockup o archivo de previsualización se puede marcar de forma activa o inactiva en el catálogo local. El frontend prioriza el renderizado de mockups remotos válidos del CDN de Printful si están activos, haciendo fallback a imágenes locales habilitadas de no haber mockups dinámicos activos.
+
+Tareas completadas:
+*   [x] Integración de interfaces y tipos para archivos de previsualización (`PrintfulFile`).
+*   [x] Configuración de dominios del CDN en Next.js.
+*   [x] Creación de endpoints API locales y de Printful para consultar mockups.
+*   [x] Lógica de precedencia de imágenes en el detalle del producto.
+*   [x] Compilación y verificación de compilación Next.js 16 exitosa.
+
 ### 26/06/2026 21:35 (Fase 1.6 - Imágenes de core-hoodie)
 
 Producto actualizado:

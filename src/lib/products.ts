@@ -17,6 +17,15 @@ export interface ProductImage {
     order: number;
 }
 
+export interface ProductMockup {
+    id: string;
+    url: string;
+    alt: string;
+    source: 'printful';
+    enabled: boolean;
+    order: number;
+}
+
 /**
  * Representa un producto en el e-commerce local.
  */
@@ -33,6 +42,7 @@ export interface Product {
     images: string[] | ProductImage[];
     printfulProductId?: number;  // TODO: ID asignado por la base de datos de Printful
     variants?: ProductVariant[];  // TODO: Listado de variantes físicas enlazadas
+    mockups?: ProductMockup[];
 }
 
 /**
@@ -140,6 +150,24 @@ export const products: Product[] = [
           },
         ],
         printfulProductId: 442791728,
+        mockups: [
+          {
+            id: "core-hoodie-mockup-1",
+            url: "https://files.cdn.printful.com/files/b05/b0568f1f49d88fb265c7f9bd8c3bfafe_preview.png",
+            alt: "Alpha Addiction Core Hoodie - mockup frontal",
+            source: "printful",
+            enabled: true,
+            order: 1,
+          },
+          {
+            id: "core-hoodie-mockup-2",
+            url: "https://files.cdn.printful.com/files/4b2/4b2874093708d36c1bfdcb61cb11c06e_preview.png",
+            alt: "Alpha Addiction Core Hoodie - mockup trasero",
+            source: "printful",
+            enabled: false,
+            order: 2,
+          }
+        ],
         variants: [
             { color: 'Navy', size: 'S', printfulVariantId: 5498, sku: '6A3EB1CD7C6E1_Navy-S' },
             { color: 'Navy', size: 'M', printfulVariantId: 5499, sku: '6A3EB1CD7C6E1_Navy-M' },
