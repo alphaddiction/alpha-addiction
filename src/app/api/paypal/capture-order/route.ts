@@ -53,7 +53,7 @@ export async function POST(req: Request) {
         events: {
           create: {
             type: 'PAYMENT_CONFIRMED',
-            message: 'Pago confirmado por PayPal',
+            message: 'Pago PayPal confirmado',
           },
         },
       },

@@ -63,6 +63,7 @@ export async function POST(req: Request) {
 
     // 5. Crear la orden de PayPal consumiendo el subtotal y descuento del servidor
     const paypalOrder = await createPayPalOrder(
+      orderId,
       order.orderNumber,
       orderItems,
       shippingAddress,
@@ -70,11 +71,17 @@ export async function POST(req: Request) {
       order.discount
     );
 
-    // 6. Guardar el ID de PayPal de forma segura en Neon
+    // 6. Guardar el ID de PayPal de forma segura en Neon y registrar el evento
     await db.order.update({
       where: { id: orderId },
       data: {
         paypalOrderId: paypalOrder.id,
+        events: {
+          create: {
+            type: 'PAYMENT_PENDING',
+            message: `Orden de pago PayPal creada: ${paypalOrder.id}`,
+          },
+        },
       },
     });
 

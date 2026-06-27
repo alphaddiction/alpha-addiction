@@ -11,6 +11,7 @@ export interface PayPalOrderCreationRequest {
   intent: 'CAPTURE' | 'AUTHORIZE';
   purchase_units: Array<{
     reference_id?: string;
+    custom_id?: string;
     amount: {
       currency_code: string;
       value: string;

@@ -22,7 +22,7 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 *   **PayPal Sandbox**: ✅ Completada (El entorno de pruebas de PayPal está completamente integrado, con botones dinámicos en frontend y llamadas API funcionales en backend).
 *   **PayPal Producción**: 🔴 Pendiente (Requiere credenciales productivas `PAYPAL_CLIENT_ID` y `PAYPAL_CLIENT_SECRET` en variables de entorno, y cambiar la URL de la API a `https://api-m.paypal.com`).
-*   **Webhooks**: 🟡 En progreso (Las rutas del webhook de PayPal están completas y validan firmas. Falta registrar la URL pública en el panel de desarrollador de PayPal y configurar `PAYPAL_WEBHOOK_ID`).
+*   **Webhooks**: ✅ Completada (Receptor oficial en `/api/webhooks/paypal` implementado con validación criptográfica a través de PayPal, soporte de disputas, reembolsos e idempotencia).
 *   **Validación del pago**: ✅ Completada (El backend recalcula el total de los productos del carrito durante la captura del pago para evitar manipulaciones de precios desde el cliente).
 *   **Reembolsos**: 🔴 Pendiente (Lógica de reembolso manual/automático desde un panel de administración o escucha completa de eventos de reembolso en webhooks).
 *   **Errores**: ✅ Completada (Manejo estructurado de errores y fallos en peticiones API con respuestas HTTP semánticas).
@@ -100,6 +100,23 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📝 Historial de cambios
  
+### 27/06/2026 14:35 (Fase 9 — PayPal Sandbox + Webhooks de pago)
+
+Archivos creados:
+*   `src/app/api/webhooks/paypal/route.ts` (Endpoint POST para recibir webhooks oficiales de PayPal con firma digital, soporte de disputas, reembolsos e idempotencia)
+
+Archivos modificados:
+*   `src/lib/paypal.ts` (Actualizada `createPayPalOrder` para mapear el UUID de Neon al campo `custom_id` de PayPal)
+*   `src/app/api/paypal/create-order/route.ts` (Suministrar `orderId` al crear la orden y registrar evento en Neon)
+*   `src/app/api/paypal/capture-order/route.ts` (Actualizado el mensaje de confirmación de pago)
+*   `src/app/api/admin/system/health/route.ts` (Añadido chequeo de secretos y visualización de webhooks de PayPal)
+*   `src/app/admin/monitoring/page.tsx` (Actualizado el Health Center para mostrar detalles de PayPal)
+*   `src/app/admin/orders/page.tsx` (Actualizado el modal de detalles para mostrar Order ID, Capture ID y estados avanzados de PayPal)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Se ha integrado de forma completa PayPal Sandbox con soporte de webhooks oficiales para mantener sincronizados los pagos en Neon PostgreSQL. Soporta eventos de creación, aprobación de pagos, reembolsos, denegaciones, reversiones y la apertura/resolución de disputas del cliente. Cuenta con idempotencia basada en el ID único de evento de PayPal.
+
 ### 27/06/2026 13:45 (Fase 7 — Webhooks de Printful y actualización automática de pedidos)
 
 Archivos creados:

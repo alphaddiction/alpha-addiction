@@ -27,6 +27,7 @@ export async function GET() {
   let printfulLastSync = 'Desconocida';
   let printfulLastWebhook = 'Ninguno';
   let printfulLastOrder = 'Ninguno';
+  let paypalLastWebhook = 'Ninguno';
 
   try {
     const printfulCheck = await printfulFetch<any>('store');
@@ -67,13 +68,20 @@ export async function GET() {
       if (lastOrderSubmitted) {
         printfulLastOrder = `#${lastOrderSubmitted.orderNumber} (Printful ID: #${lastOrderSubmitted.printfulOrderId})`;
       }
+      // Último webhook de PayPal recibido
+      const lastPaypalEvent = await db.orderEvent.findFirst({
+        where: { type: { startsWith: 'PAYPAL_' } },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (lastPaypalEvent) {
+        paypalLastWebhook = `${lastPaypalEvent.createdAt.toLocaleString('es-ES')} (${lastPaypalEvent.type.replace('PAYPAL_', '')})`;
+      }
     } catch (dbError) {
-      console.warn('⚠️ [Health API] Error recuperando detalles de Printful de la base de datos:', dbError);
+      console.warn('⚠️ [Health API] Error recuperando detalles de la base de datos:', dbError);
     }
   }
 
   // 3. Diagnóstico de PayPal
-  // Se marca como "Pendiente de configurar" para producción hasta que las variables reales se activen
   const paypalConfigured = !!(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET);
   const paypalStatus = paypalConfigured ? 'configured' : 'pending_setup';
 
@@ -84,6 +92,7 @@ export async function GET() {
     PRINTFUL_WEBHOOK_SECRET: (process.env.PRINTFUL_WEBHOOK_SECRET || process.env.PRINTFUL_WEBHOOK_SIGNING_SECRET) ? 'configured' : 'missing',
     PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID ? 'configured' : 'missing',
     PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET ? 'configured' : 'missing',
+    PAYPAL_WEBHOOK_ID: process.env.PAYPAL_WEBHOOK_ID ? 'configured' : 'missing',
     JWT_SECRET: process.env.JWT_SECRET ? 'configured' : 'missing',
     ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET ? 'configured' : 'missing',
   };
@@ -166,7 +175,9 @@ export async function GET() {
     },
     paypal: {
       status: paypalStatus,
-      mode: process.env.PAYPAL_API?.includes('sandbox') ? 'sandbox' : 'production',
+      mode: (process.env.PAYPAL_API || 'sandbox').toLowerCase().includes('sandbox') ? 'sandbox' : 'production',
+      webhookIdConfigured: !!process.env.PAYPAL_WEBHOOK_ID,
+      lastWebhook: paypalLastWebhook,
       setupInfo: 'Pendiente de configurar credenciales reales de producción.',
     },
     envVariables: envStatus,

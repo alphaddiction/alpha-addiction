@@ -39,6 +39,7 @@ export async function getPayPalAccessToken(): Promise<string> {
 
 // Create PayPal Order
 export async function createPayPalOrder(
+  orderId: string,
   orderNumber: string,
   items: OrderItem[],
   shippingAddress: ShippingAddress,
@@ -63,6 +64,7 @@ export async function createPayPalOrder(
     purchase_units: [
       {
         reference_id: orderNumber,
+        custom_id: orderId,
         amount: {
           currency_code: 'EUR',
           value: totalValue.toFixed(2),

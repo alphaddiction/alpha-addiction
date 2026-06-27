@@ -626,6 +626,42 @@ export default function OrdersPage() {
                   </button>
                 </form>
 
+                {/* Detalles de Pago (PayPal) */}
+                {selectedOrder.paymentMethod === 'paypal' && (
+                  <div className="border border-white/5 p-4 bg-indigo-500/5 space-y-3 text-xs">
+                    <h4 className="text-[10px] tracking-widest text-[var(--muted)] uppercase font-bold flex items-center gap-1.5 font-sans">
+                      <DollarSign className="w-3.5 h-3.5 text-indigo-400" /> Detalles de Pago (PayPal)
+                    </h4>
+                    <div className="flex justify-between font-mono">
+                      <span className="text-[var(--muted)]">PayPal Order ID:</span>
+                      <span className="text-indigo-400 font-bold select-all">{selectedOrder.paypalOrderId || 'Pendiente'}</span>
+                    </div>
+                    <div className="flex justify-between font-mono">
+                      <span className="text-[var(--muted)]">Capture ID:</span>
+                      <span className="text-indigo-400 select-all">{selectedOrder.paypalCaptureId || 'Pendiente'}</span>
+                    </div>
+                    <div className="flex justify-between font-mono">
+                      <span className="text-[var(--muted)]">Estado Pago:</span>
+                      <span className={`font-bold uppercase tracking-wider ${
+                        selectedOrder.paymentStatus === 'paid' ? 'text-green-400' :
+                        selectedOrder.paymentStatus === 'disputed' ? 'text-amber-500 animate-pulse' :
+                        selectedOrder.paymentStatus === 'refunded' ? 'text-yellow-500' :
+                        selectedOrder.paymentStatus === 'reversed' ? 'text-red-400' :
+                        'text-[#f5f5f0]'
+                      }`}>
+                        {selectedOrder.paymentStatus === 'paid' ? 'Pagado' :
+                         selectedOrder.paymentStatus === 'pago_pendiente' ? 'Pago Pendiente' :
+                         selectedOrder.paymentStatus === 'payment_pending' ? 'Pendiente en PayPal' :
+                         selectedOrder.paymentStatus === 'disputed' ? 'Disputado (Dispute)' :
+                         selectedOrder.paymentStatus === 'refunded' ? 'Reembolsado' :
+                         selectedOrder.paymentStatus === 'reversed' ? 'Revertido' :
+                         selectedOrder.paymentStatus === 'payment_failed' ? 'Pago Fallido' :
+                         selectedOrder.paymentStatus}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Sincronización Printful */}
                 {selectedOrder.paymentStatus === 'paid' && !selectedOrder.printfulOrderId && (
                   <div className="border border-white/5 p-4 bg-[#6366f1]/5 space-y-3">

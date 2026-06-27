@@ -251,7 +251,7 @@ export default function HealthCenterPage() {
           <div>
             <div className="flex justify-between items-start mb-4">
               <span className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-semibold">PayPal Pasarela</span>
-              <span className="bg-indigo-500/10 text-indigo-400 p-2 rounded">
+              <span className={`p-2 rounded ${data.paypal.status === 'configured' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-red-500/10 text-red-400'}`}>
                 <Globe className="w-4 h-4" />
               </span>
             </div>
@@ -262,6 +262,10 @@ export default function HealthCenterPage() {
               <div className="flex justify-between">
                 <span>Entorno PayPal:</span>
                 <span className="text-indigo-400 uppercase font-bold">{data.paypal.mode}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Último Webhook:</span>
+                <span className="text-[#f5f5f0] truncate max-w-[120px]" title={(data.paypal as any).lastWebhook || 'Ninguno'}>{(data.paypal as any).lastWebhook || 'Ninguno'}</span>
               </div>
               <p className="text-[9px] text-[var(--muted)] leading-relaxed mt-1">
                 {data.paypal.setupInfo}

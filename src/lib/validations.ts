@@ -15,10 +15,10 @@ export const envSchema = z.object({
 // Safely validate and retrieve environment variables
 export function getEnv() {
   const result = envSchema.safeParse({
-    PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID,
-    PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET,
+    PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID || 'MOCK_CLIENT_ID',
+    PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET || 'MOCK_CLIENT_SECRET',
     PAYPAL_API: process.env.PAYPAL_API || 'https://api-m.sandbox.paypal.com',
-    PAYPAL_WEBHOOK_ID: process.env.PAYPAL_WEBHOOK_ID,
+    PAYPAL_WEBHOOK_ID: process.env.PAYPAL_WEBHOOK_ID || undefined,
     PRINTFUL_API_KEY: process.env.PRINTFUL_API_KEY || process.env.PRINTFUL_API_TOKEN,
     PRINTFUL_API_TOKEN: process.env.PRINTFUL_API_TOKEN,
     PRINTFUL_STORE_ID: process.env.PRINTFUL_STORE_ID,

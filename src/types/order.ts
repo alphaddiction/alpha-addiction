@@ -53,7 +53,7 @@ export interface Order {
   totalPrice: number;
   discount?: number; // Descuentos
   paymentMethod?: string; // Método de pago (E.g. PayPal)
-  paymentStatus?: 'pending' | 'paid' | 'refunded' | 'failed'; // Estado del pago
+  paymentStatus?: 'pending' | 'pago_pendiente' | 'payment_pending' | 'paid' | 'refunded' | 'failed' | 'payment_failed' | 'disputed' | 'reversed'; // Estado del pago
   printfulOrderId?: number; // ID de pedido en Printful
   paypalOrderId?: string; // ID de pedido en PayPal
   paypalCaptureId?: string;
