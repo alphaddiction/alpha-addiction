@@ -310,7 +310,7 @@ export default function OrdersPage() {
               <tbody className="divide-y divide-white/5 font-mono">
                 {orders.map((order) => (
                   <tr key={order.id} className="hover:bg-white/[0.01] transition-colors">
-                    <td className="py-4 font-bold text-[#f5f5f0]">{order.id}</td>
+                    <td className="py-4 font-bold text-[#f5f5f0]">{(order as any).orderNumber || order.id}</td>
                     <td className="py-4 font-sans text-[#f5f5f0]/80">
                       {order.shippingAddress.firstName} {order.shippingAddress.lastName}
                       <span className="block font-mono text-[10px] text-[var(--muted)] mt-0.5 font-normal">
@@ -387,7 +387,7 @@ export default function OrdersPage() {
               <div>
                 <span className="text-[9px] tracking-widest text-[var(--muted)] uppercase font-semibold block">Detalle de Pedido</span>
                 <h3 className="text-xl font-serif font-bold text-[#f5f5f0] tracking-wider uppercase font-mono mt-0.5">
-                  {selectedOrder.id}
+                  {(selectedOrder as any).orderNumber || selectedOrder.id}
                 </h3>
               </div>
               <button
@@ -446,6 +446,11 @@ export default function OrdersPage() {
                           <span className="block font-mono text-[9px] text-[var(--muted)] mt-0.5">
                             Talla: {item.size} {item.color ? `· Color: ${item.color}` : ''} {item.printfulVariantId ? `· Variant ID: ${item.printfulVariantId}` : ''}
                           </span>
+                          {(item as any).costPrice > 0 && (
+                            <span className="block font-mono text-[9px] text-green-500/80 mt-0.5">
+                              Coste Prod: {formatPrice((item as any).costPrice)} · Beneficio Unitario: {formatPrice(item.priceEUR - (item as any).costPrice)}
+                            </span>
+                          )}
                         </div>
                         <div className="text-right">
                           <span className="block text-[#f5f5f0] font-bold font-mono">
@@ -476,9 +481,26 @@ export default function OrdersPage() {
                       <span>{formatPrice(selectedOrder.shippingPrice)}</span>
                     </div>
                     <div className="flex justify-between text-[#f5f5f0] font-bold text-sm pt-2 border-t border-white/5">
-                      <span className="font-sans">TOTAL</span>
+                      <span className="font-sans">TOTAL VENTA</span>
                       <span>{formatPrice(selectedOrder.totalPrice)}</span>
                     </div>
+                    {(selectedOrder as any).totalCost > 0 && (
+                      <div className="border-t border-white/5 pt-2 mt-2 space-y-1">
+                        <div className="flex justify-between text-[var(--muted)] text-[10px]">
+                          <span>COSTE PRODUCCIÓN (PRINTFUL)</span>
+                          <span>{formatPrice((selectedOrder as any).totalCost)}</span>
+                        </div>
+                        <div className="flex justify-between text-green-400 font-bold text-xs pt-1">
+                          <span className="font-sans">BENEFICIO NETO</span>
+                          <span>
+                            {formatPrice((selectedOrder as any).netProfit)}
+                            <span className="text-[9px] font-normal font-sans ml-2 text-green-500">
+                              ({((selectedOrder as any).netProfit / (selectedOrder as any).totalPrice * 100).toFixed(1)}% Margen)
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

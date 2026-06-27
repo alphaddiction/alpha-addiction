@@ -53,15 +53,65 @@ model SystemHealth {
   lastChecked  DateTime @default(now())
 }
 
-model OrderRecord {
-  id             String   @id // ID local del pedido (E.g. AA-123456)
-  paypalOrderId  String   @unique
+model Order {
+  id              String       @id // ID interno local (UUID o localId)
+  orderNumber     String       @unique // Legible order number like AA-10001
+  email           String
+  name            String
+  phone           String?
+  addressLine1    String
+  addressLine2    String?
+  city            String
+  state           String?      // Provincia
+  postalCode      String
+  country         String
+  orderStatus     String       @default("draft") // draft, paid, fulfillment_submitted, fulfillment_failed, shipped, canceled
+  paymentStatus   String       @default("pago_pendiente") // pago_pendiente, pagado, fallido, reembolsado
+  paymentMethod   String       @default("paypal")
+  subtotal        Float
+  shipping        Float        @default(0.0)
+  tax             Float        @default(0.0)
+  discount        Float        @default(0.0)
+  total           Float
+  currency        String       @default("EUR")
+  totalCost       Float        @default(0.0) // Production cost sum
+  netProfit       Float        @default(0.0) // Benefit (total - totalCost)
+  paypalOrderId   String?      @unique
   paypalCaptureId String?
   printfulOrderId Int?
-  status         String   // paid, fulfillment_submitted, fulfillment_failed, shipped, canceled
-  shippingName   String
-  shippingEmail  String
-  totalPrice     Float
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  trackingNumber  String?
+  trackingUrl     String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  items           OrderItem[]
+  events          OrderEvent[]
+  internalNotes   String?
 }
+
+model OrderItem {
+  id                String  @id @default(uuid())
+  orderId           String
+  order             Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId         String  // Local product ID (e.g. p1, p3)
+  name              String
+  size              String
+  color             String
+  sku               String?
+  printfulProductId Int?
+  printfulVariantId Int?
+  quantity          Int
+  price             Float   // Unit price (retail paid by customer)
+  total             Float   // Line total (price * quantity)
+  costPrice         Float   @default(0.0) // Unit production cost
+  mockupUrl         String?
+}
+
+model OrderEvent {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type      String   // E.g., "CREATED", "PAYMENT_PENDING", "PAID", "FULFILLMENT_SUBMITTED", etc.
+  message   String   // Legible description in Spanish
+  createdAt DateTime @default(now())
+}
+

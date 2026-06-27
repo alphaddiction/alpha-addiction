@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import db from '@/lib/db';
 import { getOrderById, updateOrder, deleteOrder } from '@/lib/orders';
 
 /**
  * GET /api/orders/[id]
  * 
- * Recupera un único pedido por su identificador interno del OMS.
+ * Recupera un único pedido por su identificador interno de la base de datos de Neon.
  */
 export async function GET(
   req: Request,
@@ -15,7 +16,7 @@ export async function GET(
     const order = await getOrderById(id);
 
     if (!order) {
-      return NextResponse.json({ error: `Pedido ${id} no encontrado.` }, { status: 404 });
+      return NextResponse.json({ error: `Pedido ${id} no encontrado en Neon.` }, { status: 404 });
     }
 
     return NextResponse.json(order);
@@ -31,8 +32,8 @@ export async function GET(
 /**
  * PATCH /api/orders/[id]
  * 
- * Actualiza propiedades de un pedido (ej: estado, tracking, notas internas)
- * y registra automáticamente la acción en el historial de eventos del pedido.
+ * Actualiza propiedades de un pedido en Neon (ej: estado, tracking, notas internas)
+ * y registra automáticamente un evento en el historial en la base de datos.
  */
 export async function PATCH(
   req: Request,
@@ -44,33 +45,34 @@ export async function PATCH(
     const order = await getOrderById(id);
 
     if (!order) {
-      return NextResponse.json({ error: `Pedido ${id} no encontrado.` }, { status: 404 });
+      return NextResponse.json({ error: `Pedido ${id} no encontrado en Neon.` }, { status: 404 });
     }
 
-    const history = order.history || [];
-    
-    // Registrar evento de cambio de estado si se solicita
+    // Registrar evento de cambio de estado o nota en la tabla OrderEvent de Neon
     if (body.status && body.status !== order.status) {
-      history.push({
-        timestamp: new Date().toISOString(),
-        event: `Estado cambiado: ${body.status}`,
-        notes: body.notes || 'Actualización realizada desde la administración del OMS.',
+      await db.orderEvent.create({
+        data: {
+          orderId: id,
+          type: 'STATUS_CHANGED',
+          message: `Estado cambiado a: ${body.status}. ${body.notes || 'Actualización realizada desde la administración del OMS.'}`,
+          createdAt: new Date(),
+        }
       });
     } else if (body.notes) {
-      history.push({
-        timestamp: new Date().toISOString(),
-        event: 'Nota interna agregada',
-        notes: body.notes,
+      await db.orderEvent.create({
+        data: {
+          orderId: id,
+          type: 'NOTE_ADDED',
+          message: `Nota interna agregada: ${body.notes}`,
+          createdAt: new Date(),
+        }
       });
     }
 
-    // Excluir 'notes' de las actualizaciones directas del objeto order
+    // Excluir 'notes' de las actualizaciones directas de la cabecera del pedido
     const { notes, ...updates } = body;
 
-    const updatedOrder = await updateOrder(id, {
-      ...updates,
-      history,
-    });
+    const updatedOrder = await updateOrder(id, updates);
 
     return NextResponse.json({ success: true, order: updatedOrder });
   } catch (error) {
@@ -85,7 +87,7 @@ export async function PATCH(
 /**
  * DELETE /api/orders/[id]
  * 
- * Elimina físicamente un pedido del almacén OMS (control de depuración).
+ * Elimina físicamente un pedido de la base de datos de Neon.
  */
 export async function DELETE(
   req: Request,
@@ -96,7 +98,7 @@ export async function DELETE(
     const success = await deleteOrder(id);
 
     if (!success) {
-      return NextResponse.json({ error: `Pedido ${id} no encontrado o no pudo borrarse.` }, { status: 404 });
+      return NextResponse.json({ error: `Pedido ${id} no encontrado en Neon.` }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, message: `Pedido ${id} eliminado con éxito.` });

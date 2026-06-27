@@ -6,7 +6,7 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📋 Estado general del proyecto
 
-*   **Porcentaje aproximado completado:** 85%
+*   **Porcentaje aproximado completado:** 92%
 *   **Última actualización:** 26/06/2026 22:55
 *   **Próximos objetivos:**
     1. Desarrollar la monitorización activa y Health Checks en tiempo real (Fase 4).
@@ -26,7 +26,7 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 *   **Logs**: ✅ Completada (Registro en consola del flujo de creación, aprobación de pagos y sincronización de pedidos).
 *   **IVA**: 🔴 Pendiente (Implementar cálculos dinámicos del Impuesto sobre el Valor Añadido para España y el resto de la Unión Europea).
 *   **Emails**: 🔴 Pendiente (Integrar pasarela para envío automático de confirmaciones de compra y actualizaciones de envío al cliente).
-*   **Gestión de pedidos**: 🟡 En progreso (Persistencia funcional en base de datos local JSON `src/data/orders.json`, lista para ser migrada a base de datos de producción).
+*   **Gestión de pedidos**: ✅ Completada (Persistencia funcional en la base de datos en la nube Neon PostgreSQL, con desglose de costes y beneficios).
 *   **Integración con Printful**: ✅ Completada (Lanzamiento automático de órdenes de producción hacia Printful al confirmarse el cobro por PayPal).
 
 ---
@@ -67,7 +67,7 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 🗄️ Base de datos
 
-*   **Migración a PostgreSQL/Supabase**: 🟡 En progreso (Instalado Prisma ORM, definido el cliente de base de datos global `src/lib/db.ts` y modelado inicial de esquema para usuarios, sesiones, auditoría y pedidos en `prisma/schema.prisma` listo para migrar).
+*   **Migración a PostgreSQL/Supabase**: ✅ Completada (Esquema migrado a Neon PostgreSQL, tablas creadas y conectadas con Prisma ORM en desarrollo y producción).
 
 ---
 
@@ -96,6 +96,23 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📝 Historial de cambios
+
+### 27/06/2026 12:15 (Fase 4 — Conectar carrito con Neon, pedidos internos y balances de pagos)
+ 
+Archivos creados:
+*   `src/app/api/orders/create-draft/route.ts` (Endpoint POST para registrar borradores de pedidos en Neon con desglose contable)
+ 
+Archivos modificados:
+*   `prisma/schema.prisma` (Eliminado `OrderRecord`, modelados `Order`, `OrderItem` y `OrderEvent` con columnas financieras)
+*   `src/lib/orders.ts` (Migrada la persistencia OMS a Neon PostgreSQL con Prisma)
+*   `src/app/api/orders/[id]/route.ts` (Actualizados GET/PATCH/DELETE para Neon y seguimiento de auditoría)
+*   `src/app/checkout/page.tsx` (Integrado botón de compra de prueba que llama a la creación de borrador y limpia la cesta)
+*   `src/app/admin/orders/page.tsx` (Actualizado para mostrar datos reales de Neon, importes, costes de producción y beneficio neto con margen comercial)
+*   `src/app/admin/finance/page.tsx` (Implementado el panel financiero con ingresos, costes, beneficio neto total acumulado y lista de transacciones)
+*   `PENDIENTES.md` (Este archivo)
+ 
+Descripción:
+Se ha conectado el carrito de compras con Neon PostgreSQL a través de Prisma. El sistema calcula y persiste el coste de producción por artículo de Printful (camisetas €10.00, sudaderas €18.50, leggings €12.00) y calcula el beneficio neto y margen en tiempo de servidor. El listado de pedidos, la modal de detalles y el panel de finanzas cargan balances en tiempo real de Neon.
 
 ### 26/06/2026 22:55 (Fase 3 - Opción A: Autenticación del Administrador y Protección de Rutas)
 

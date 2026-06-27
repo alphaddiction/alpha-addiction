@@ -27,6 +27,42 @@ export default function CheckoutPage() {
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [paymentError, setPaymentError] = useState<string | null>(null);
+    const [isCreatingDraft, setIsCreatingDraft] = useState(false);
+
+    const handleCreateDraftOrder = async () => {
+        const isValid = validateForm();
+        if (!isValid) return;
+
+        setIsCreatingDraft(true);
+        setPaymentError(null);
+
+        try {
+            const res = await fetch('/api/orders/create-draft', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    shippingAddress: formData,
+                    items: items,
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Fallo al crear el borrador del pedido.');
+            }
+
+            const data = await res.json();
+            clearCart();
+            router.push(`/checkout/success?orderId=${data.orderId}`);
+        } catch (err) {
+            console.error('❌ Error creating draft order:', err);
+            setPaymentError(err instanceof Error ? err.message : 'Error al procesar el pedido de prueba.');
+        } finally {
+            setIsCreatingDraft(false);
+        }
+    };
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -344,6 +380,17 @@ export default function CheckoutPage() {
                                     setPaymentError(msg);
                                 }}
                             />
+
+                            <div className="flex flex-col gap-4 pt-4 border-t border-[var(--border)]/30 mt-4">
+                                <button
+                                    type="button"
+                                    onClick={handleCreateDraftOrder}
+                                    disabled={isCreatingDraft}
+                                    className="w-full bg-[var(--foreground)] text-[var(--background)] py-4 text-xs font-semibold uppercase tracking-widest hover:bg-[var(--primary)] hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {isCreatingDraft ? 'Creando Pedido...' : 'Confirmar y Crear Pedido de Prueba (OMS)'}
+                                </button>
+                            </div>
 
                             <p className="text-[10px] text-center text-[var(--foreground)]/40 mt-5 tracking-widest">
                                 PAGO SEGURO CON PAYPAL · TRANSACCIÓN PROTEGIDA POR SSL

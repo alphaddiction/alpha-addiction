@@ -20,6 +20,8 @@ export interface OrderItem {
   color?: string;
   printfulVariantId?: number;
   qty: number;
+  costPrice?: number; // Coste de producción unitario
+  mockupUrl?: string; // Imagen del mockup de color
 }
 
 export interface ShippingAddress {
@@ -42,6 +44,7 @@ export interface OrderEvent {
 
 export interface Order {
   id: string; // ID interno del pedido (E.g. AA-123456)
+  orderNumber?: string; // Número de pedido legible (E.g. AA-10001)
   status: OrderStatus;
   shippingAddress: ShippingAddress;
   items: OrderItem[];
@@ -63,4 +66,6 @@ export interface Order {
   internalNotes?: string; // Notas internas del administrador
   history?: OrderEvent[]; // Historial de eventos del pedido
   errorMessage?: string;
+  totalCost?: number; // Coste de producción total
+  netProfit?: number; // Beneficio neto total
 }
