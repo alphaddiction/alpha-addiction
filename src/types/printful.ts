@@ -48,6 +48,8 @@ export interface PrintfulOrderResponse {
 
 export interface PrintfulWebhookEvent {
   type:
+    | 'order_created'
+    | 'order_approved'
     | 'package_shipped'
     | 'order_canceled'
     | 'order_failed'

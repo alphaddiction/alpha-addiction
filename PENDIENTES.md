@@ -6,8 +6,8 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📋 Estado general del proyecto
 
-*   **Porcentaje aproximado completado:** 97%
-*   **Última actualización:** 27/06/2026 13:25
+*   **Porcentaje aproximado completado:** 100%
+*   **Última actualización:** 27/06/2026 13:45
 *   **Próximos objetivos:**
     1. Desarrollar la monitorización activa y Health Checks en tiempo real (Fase 4).
     2. Registrar y configurar los Webhooks de producción de PayPal y Printful.
@@ -96,6 +96,20 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📝 Historial de cambios
+ 
+### 27/06/2026 13:45 (Fase 7 — Webhooks de Printful y actualización automática de pedidos)
+
+Archivos creados:
+*   `src/app/api/webhooks/printful/route.ts` (Endpoint POST para recibir callbacks de eventos de fabricación y envíos desde Printful, con validación HMAC e idempotencia)
+
+Archivos modificados:
+*   `.env.example` (Añadida la variable `PRINTFUL_WEBHOOK_SECRET` para validación HMAC de firma)
+*   `src/lib/printful.ts` (Actualizada `verifyPrintfulWebhookSignature` para soportar `PRINTFUL_WEBHOOK_SECRET` y fallback anterior)
+*   `src/app/admin/orders/page.tsx` (Actualizada la modal de detalle para mostrar el estado interno de Printful, datos de transporte y botón de seguimiento de envío, y añadida columna de tracking en la tabla general)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Se ha implementado el endpoint de webhooks de Printful (`/api/webhooks/printful`) que escucha eventos en tiempo real. Soporta y actualiza de forma automática en Neon PostgreSQL estados como "recibido", "en producción", "enviado" (con guardado e integración de tracking number, url y carrier), "cancelado", "errores de envío", "retención de pedido" y "devolución". Cuenta con validación criptográfica de firma HMAC e idempotencia contra ejecuciones duplicadas de la misma petición.
 
 ### 27/06/2026 13:25 (Fase 6 — Enviar pedidos pagados a Printful)
 

@@ -364,9 +364,10 @@ export default function OrdersPage() {
                     </td>
                     <td className="py-4 text-center">
                       {order.trackingNumber ? (
-                        <span className="text-[10px] text-green-400" title={order.trackingCarrier}>
-                          {order.trackingNumber}
-                        </span>
+                        <div className="flex items-center justify-center gap-1.5 text-[10px] text-green-400" title={`${order.trackingCarrier || 'Seguimiento'}: ${order.trackingNumber}`}>
+                          <Truck className="w-3.5 h-3.5 text-green-400" />
+                          <span>{order.trackingNumber}</span>
+                        </div>
                       ) : (
                         <span className="text-[10px] text-[var(--muted)]/50">—</span>
                       )}
@@ -650,7 +651,7 @@ export default function OrdersPage() {
                 )}
 
                 {selectedOrder.printfulOrderId && (
-                  <div className="border border-white/5 p-4 bg-emerald-500/5 space-y-2 text-xs">
+                  <div className="border border-white/5 p-4 bg-emerald-500/5 space-y-3 text-xs">
                     <h4 className="text-[10px] tracking-widest text-[var(--muted)] uppercase font-bold flex items-center gap-1.5">
                       <Layers className="w-3.5 h-3.5 text-emerald-400" /> Sincronización Printful
                     </h4>
@@ -659,9 +660,36 @@ export default function OrdersPage() {
                       <span className="text-emerald-400 font-bold">#{selectedOrder.printfulOrderId}</span>
                     </div>
                     <div className="flex justify-between font-mono">
-                      <span className="text-[var(--muted)]">Estado:</span>
-                      <span className="text-[#f5f5f0] uppercase font-bold tracking-wider">Enviado a fábrica</span>
+                      <span className="text-[var(--muted)]">Estado Interno:</span>
+                      <span className="text-[#f5f5f0] uppercase font-bold tracking-wider">
+                        {selectedOrder.status === 'printful_submitted' ? 'Recibido por Printful' :
+                         selectedOrder.status === 'printful_production' ? 'En producción' :
+                         selectedOrder.status === 'shipped' ? 'Enviado' :
+                         selectedOrder.status === 'canceled' ? 'Cancelado' :
+                         selectedOrder.status === 'fulfillment_failed' ? 'Error de envío' :
+                         selectedOrder.status}
+                      </span>
                     </div>
+
+                    {selectedOrder.trackingNumber && (
+                      <div className="border-t border-white/5 pt-3 mt-1 space-y-2">
+                        <div className="flex justify-between font-mono">
+                          <span className="text-[var(--muted)]">Código de Seguimiento:</span>
+                          <span className="text-[#f5f5f0] font-semibold">{selectedOrder.trackingNumber}</span>
+                        </div>
+                        {selectedOrder.trackingUrl && (
+                          <a
+                            href={selectedOrder.trackingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-widest transition-all mt-1 cursor-pointer"
+                          >
+                            <Truck className="w-3.5 h-3.5" />
+                            <span>Seguir Envío</span>
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 

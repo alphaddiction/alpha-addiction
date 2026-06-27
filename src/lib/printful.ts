@@ -221,12 +221,12 @@ export function verifyPrintfulWebhookSignature(
   rawBody: string,
   signature: string | null
 ): boolean {
-  const secret = process.env.PRINTFUL_WEBHOOK_SIGNING_SECRET;
+  const secret = process.env.PRINTFUL_WEBHOOK_SECRET || process.env.PRINTFUL_WEBHOOK_SIGNING_SECRET;
 
   // Si no está configurado el secreto del webhook, omitimos en local/pruebas
   if (!secret) {
     console.warn(
-      '⚠️ Advertencia: PRINTFUL_WEBHOOK_SIGNING_SECRET no configurada en el entorno. Omitiendo validación de firma.'
+      '⚠️ Advertencia: PRINTFUL_WEBHOOK_SECRET no configurada en el entorno. Omitiendo validación de firma.'
     );
     return true;
   }
