@@ -19,6 +19,7 @@ import {
   ArrowRight,
   PlusCircle,
   FileText,
+  Layers,
 } from 'lucide-react';
 import { Order, OrderStatus } from '@/types/order';
 import { formatPrice } from '@/lib/utils';
@@ -153,6 +154,41 @@ export default function OrdersPage() {
       alert('Error actualizando pedido.');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const [sendingPrintful, setSendingPrintful] = useState<Record<string, boolean>>({});
+
+  const handleSendToPrintful = async (orderId: string) => {
+    if (!confirm('¿Estás seguro de que deseas enviar este pedido a fábrica (Printful)?')) return;
+    
+    setSendingPrintful(prev => ({ ...prev, [orderId]: true }));
+    try {
+      const res = await fetch('/api/printful/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.details || data.error || 'Error al enviar pedido a Printful.');
+      }
+
+      alert(`✅ Pedido enviado con éxito a Printful. ID asignado: #${data.printfulOrderId}`);
+      
+      // Actualizar modal
+      const orderRes = await fetch(`/api/orders/${orderId}`);
+      if (orderRes.ok) {
+        const updated = await orderRes.json();
+        setSelectedOrder(updated);
+      }
+      await fetchOrders();
+    } catch (err: any) {
+      console.error(err);
+      alert(`❌ Error: ${err.message}`);
+    } finally {
+      setSendingPrintful(prev => ({ ...prev, [orderId]: false }));
     }
   };
 
@@ -588,6 +624,46 @@ export default function OrdersPage() {
                     {updating ? 'Guardando...' : 'Aplicar Cambios'}
                   </button>
                 </form>
+
+                {/* Sincronización Printful */}
+                {selectedOrder.paymentStatus === 'paid' && !selectedOrder.printfulOrderId && (
+                  <div className="border border-white/5 p-4 bg-[#6366f1]/5 space-y-3">
+                    <h4 className="text-[10px] tracking-widest text-[var(--muted)] uppercase font-bold flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-indigo-400" /> Sincronización Printful
+                    </h4>
+                    <p className="text-[10px] text-[var(--muted)] leading-relaxed">
+                      Este pedido está pagado pero no se ha enviado a Printful. Envíalo ahora para proceder a la fabricación.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={sendingPrintful[selectedOrder.id]}
+                      onClick={() => handleSendToPrintful(selectedOrder.id)}
+                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs font-bold uppercase tracking-widest cursor-pointer border border-indigo-600 transition-all flex items-center justify-center gap-2"
+                    >
+                      {sendingPrintful[selectedOrder.id] ? (
+                        <span>Enviando...</span>
+                      ) : (
+                        <span>Enviar a Printful</span>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {selectedOrder.printfulOrderId && (
+                  <div className="border border-white/5 p-4 bg-emerald-500/5 space-y-2 text-xs">
+                    <h4 className="text-[10px] tracking-widest text-[var(--muted)] uppercase font-bold flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-emerald-400" /> Sincronización Printful
+                    </h4>
+                    <div className="flex justify-between font-mono">
+                      <span className="text-[var(--muted)]">Printful ID:</span>
+                      <span className="text-emerald-400 font-bold">#{selectedOrder.printfulOrderId}</span>
+                    </div>
+                    <div className="flex justify-between font-mono">
+                      <span className="text-[var(--muted)]">Estado:</span>
+                      <span className="text-[#f5f5f0] uppercase font-bold tracking-wider">Enviado a fábrica</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Timeline del Historial */}
                 <div className="border border-white/5 p-4 bg-white/[0.01]">

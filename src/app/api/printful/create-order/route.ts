@@ -1,79 +1,65 @@
-import { getOrderById, updateOrder } from '@/lib/orders';
-import { createPrintfulOrder } from '@/lib/printful';
-import { z } from 'zod';
-
-const retryFulfillmentSchema = z.object({
-  orderId: z.string().min(1, 'Order ID is required'),
-});
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { createPrintfulOrderFromInternalOrder } from '@/lib/printful';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const { orderId } = await req.json();
 
-    const validationResult = retryFulfillmentSchema.safeParse(body);
-    if (!validationResult.success) {
-      return Response.json(
-        { error: 'Invalid request data', details: validationResult.error.format() },
-        { status: 400 }
-      );
+    if (!orderId) {
+      return NextResponse.json({ error: 'El ID del pedido es obligatorio.' }, { status: 400 });
     }
-
-    const { orderId } = validationResult.data;
-
-    // Load order from DB
-    const order = await getOrderById(orderId);
-    if (!order) {
-      return Response.json({ error: `Order with ID ${orderId} not found` }, { status: 404 });
-    }
-
-    // Check current status
-    if (order.status === 'fulfillment_submitted' || order.status === 'shipped') {
-      return Response.json(
-        { error: 'Order is already submitted or shipped', orderStatus: order.status },
-        { status: 400 }
-      );
-    }
-
-    console.log(`Retrying Printful fulfillment for order: ${orderId}...`);
 
     try {
-      const printfulResponse = await createPrintfulOrder(order.id, order.shippingAddress, order.items);
-      const printfulOrderId = printfulResponse.result.id;
+      // 1. Intentar crear el pedido en Printful
+      const printfulRes = await createPrintfulOrderFromInternalOrder(orderId);
+      const printfulOrderId = printfulRes.result.id;
 
-      // Update order database
-      const updatedOrder = await updateOrder(orderId, {
-        printfulOrderId,
-        status: 'fulfillment_submitted',
-        errorMessage: undefined,
-      });
-
-      return Response.json({
-        success: true,
-        message: 'Fulfillment successfully submitted to Printful.',
-        orderId: updatedOrder.id,
-        printfulOrderId: updatedOrder.printfulOrderId,
-        status: updatedOrder.status,
-      });
-    } catch (printfulError) {
-      console.error(`❌ Printful retry failed for ${orderId}:`, printfulError);
-      
-      await updateOrder(orderId, {
-        status: 'fulfillment_failed',
-        errorMessage: (printfulError as Error).message || 'Retry submission failed',
-      });
-
-      return Response.json(
-        {
-          error: 'Printful order creation failed',
-          message: (printfulError as Error).message,
+      // 2. Actualizar el pedido en Neon a 'printful_submitted' y guardar printfulOrderId
+      await db.order.update({
+        where: { id: orderId },
+        data: {
+          printfulOrderId,
+          orderStatus: 'printful_submitted',
+          events: {
+            create: {
+              type: 'FULFILLMENT_SUBMITTED',
+              message: `Pedido enviado a Printful con ID #${printfulOrderId}`,
+            },
+          },
         },
+      });
+
+      console.log(`✅ Order ${orderId} successfully submitted to Printful. Printful ID: ${printfulOrderId}`);
+
+      return NextResponse.json({
+        success: true,
+        orderId,
+        printfulOrderId,
+        status: 'printful_submitted',
+      });
+    } catch (printfulError: any) {
+      const errMsg = printfulError instanceof Error ? printfulError.message : String(printfulError);
+      console.error(`❌ Falló la sincronización con Printful para el pedido ${orderId}:`, errMsg);
+
+      // Registrar el error en Neon PostgreSQL como un evento del pedido
+      await db.orderEvent.create({
+        data: {
+          orderId,
+          type: 'ERROR',
+          message: `Error al enviar a Printful: ${errMsg}`,
+        },
+      });
+
+      return NextResponse.json(
+        { error: 'Error en la integración de Printful.', details: errMsg },
         { status: 500 }
       );
     }
-  } catch (error) {
-    console.error('❌ Error in retry fulfillment API:', error);
-    return Response.json(
-      { error: 'Internal server error', message: (error as Error).message },
+  } catch (error: any) {
+    console.error('❌ Error en el endpoint de envío a Printful:', error);
+    return NextResponse.json(
+      { error: 'Error interno de servidor.', message: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

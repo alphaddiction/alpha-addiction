@@ -8,6 +8,7 @@ import {
   PrintfulProductDetails
 } from '@/types/printful';
 import { OrderItem, ShippingAddress } from '@/types/order';
+import { db } from './db';
 
 /**
  * Cliente de la API de Printful.
@@ -253,4 +254,77 @@ export function verifyPrintfulWebhookSignature(
     console.error('❌ Excepción al validar firma de webhook de Printful:', error);
     return false;
   }
+}
+
+/**
+ * Busca un pedido pagado en Neon PostgreSQL y lo envía a la API de Printful.
+ */
+export async function createPrintfulOrderFromInternalOrder(orderId: string): Promise<PrintfulOrderResponse> {
+  // 1. Buscar el pedido en Neon PostgreSQL
+  const order = await db.order.findUnique({
+    where: { id: orderId },
+    include: { items: true },
+  });
+
+  if (!order) {
+    throw new Error('No se encontró el pedido en la base de datos de Neon.');
+  }
+
+  // 2. Validar que esté pagado
+  if (order.paymentStatus !== 'pagado') {
+    throw new Error(`El pedido no se puede enviar a Printful porque no está pagado. Estado actual: ${order.paymentStatus}`);
+  }
+
+  // 3. Validar que no tenga ya printfulOrderId para evitar duplicados
+  if (order.printfulOrderId) {
+    throw new Error(`El pedido ya tiene un ID de Printful asignado (${order.printfulOrderId}). Se previene el envío duplicado.`);
+  }
+
+  // 4. Validar que todos los artículos tengan printfulVariantId
+  for (const item of order.items) {
+    if (!item.printfulVariantId) {
+      throw new Error(`El artículo "${item.name}" no está vinculado correctamente a Printful (falta printfulVariantId).`);
+    }
+  }
+
+  // 5. Convertir la dirección de envío al formato de Printful
+  let countryCode = 'ES';
+  const c = order.country.toLowerCase();
+  if (c.includes('portugal')) countryCode = 'PT';
+  else if (c.includes('francia') || c.includes('france')) countryCode = 'FR';
+  else if (c.includes('italia') || c.includes('italy')) countryCode = 'IT';
+  else if (c.includes('alemania') || c.includes('germany')) countryCode = 'DE';
+
+  const nameParts = order.name.trim().split(/\s+/);
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  const orderPayload: PrintfulOrderInput = {
+    external_id: order.id,
+    recipient: {
+      name: `${firstName} ${lastName}`,
+      address1: order.addressLine1,
+      city: order.city,
+      state_code: getStateCode(order.state || ''),
+      country_code: countryCode,
+      zip: order.postalCode,
+      phone: order.phone || undefined,
+      email: order.email,
+    },
+    items: order.items.map((item) => ({
+      external_id: `${order.id}-${item.productId}-${item.color ? item.color.toLowerCase().replace(/\s+/g, '-') : 'default'}-${item.size}`,
+      variant_id: item.printfulVariantId!,
+      quantity: item.quantity,
+      name: item.color ? `${item.name} (${item.color} / ${item.size})` : `${item.name} (${item.size})`,
+    })),
+  };
+
+  console.log(`[Printful] Enviando pedido interno ${order.orderNumber} (Neon ID: ${order.id}) a Printful...`);
+
+  const response = await printfulFetch<PrintfulOrderResponse>('orders', {
+    method: 'POST',
+    body: JSON.stringify(orderPayload),
+  });
+
+  return response;
 }

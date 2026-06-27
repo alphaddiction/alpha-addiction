@@ -6,8 +6,8 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📋 Estado general del proyecto
 
-*   **Porcentaje aproximado completado:** 95%
-*   **Última actualización:** 27/06/2026 13:10
+*   **Porcentaje aproximado completado:** 97%
+*   **Última actualización:** 27/06/2026 13:25
 *   **Próximos objetivos:**
     1. Desarrollar la monitorización activa y Health Checks en tiempo real (Fase 4).
     2. Registrar y configurar los Webhooks de producción de PayPal y Printful.
@@ -96,6 +96,17 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📝 Historial de cambios
+
+### 27/06/2026 13:25 (Fase 6 — Enviar pedidos pagados a Printful)
+
+Archivos modificados:
+*   `src/lib/printful.ts` (Añadida la función `createPrintfulOrderFromInternalOrder` para buscar el pedido pagado en Neon, verificar integridad y Variant IDs de Printful y enviarlo)
+*   `src/app/api/printful/create-order/route.ts` (Refactorizado para recibir el `orderId` de Neon, procesar el pedido, guardar `printfulOrderId` y actualizar a `printful_submitted`)
+*   `src/app/admin/orders/page.tsx` (Agregado el botón "Enviar a Printful" con comprobación condicional e indicador de carga y visualización del ID asignado)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Se ha implementado el envío controlado de pedidos pagados desde el panel de control de administración hacia la API de Printful. Al confirmarse el pago por PayPal, los administradores pueden enviar el pedido a producción con un solo clic. El sistema realiza comprobaciones rigurosas contra envíos duplicados, estados de pago incorrectos y Variant IDs faltantes, y registra todo el historial de eventos e incidencias directamente en Neon.
 
 ### 27/06/2026 13:10 (Fase 5 — Integrar PayPal Sandbox con pedidos de Neon)
 
