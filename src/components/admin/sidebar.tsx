@@ -19,6 +19,7 @@ import {
   X,
   Lock,
   Layers,
+  Activity,
 } from 'lucide-react';
 
 const navItems = [
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/admin/marketing', label: 'Marketing', icon: Megaphone },
   { href: '/admin/ai', label: 'IA Interna', icon: Brain },
   { href: '/admin/printful', label: 'Printful Status', icon: Layers },
+  { href: '/admin/monitoring', label: 'Health Center', icon: Activity },
   { href: '/admin/security', label: 'Seguridad', icon: Shield },
   { href: '/admin/logs', label: 'Auditoría', icon: FileText },
   { href: '/admin/settings', label: 'Configuración', icon: Settings },
