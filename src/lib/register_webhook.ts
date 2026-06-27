@@ -23,7 +23,6 @@ async function main() {
       url: cleanUrl,
       types: [
         'order_created',
-        'order_approved',
         'package_shipped',
         'order_canceled',
         'order_failed',
