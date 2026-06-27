@@ -84,6 +84,18 @@ function renderItemsTable(items: OrderItemInfo[], subtotal: number, discount: nu
 }
 
 /**
+ * Renderiza el botón interactivo para consultar el estado del pedido.
+ */
+function renderConsultBtn(orderNumber: string): string {
+  const url = `https://alphaddiction.com/pedido/${orderNumber}`;
+  return `
+    <div class="btn-container">
+      <a href="${url}" target="_blank" class="btn">Consultar mi pedido</a>
+    </div>
+  `;
+}
+
+/**
  * 1. Pedido Recibido
  */
 export function getReceivedEmail(order: OrderInfo): string {
@@ -98,6 +110,7 @@ export function getReceivedEmail(order: OrderInfo): string {
     ${renderItemsTable(order.items, order.subtotal, order.discount, order.total)}
 
     <p class="text">Una vez confirmemos la recepción de tu pago por PayPal, iniciaremos la preparación y fabricación de tus prendas de diseño exclusivo.</p>
+    ${renderConsultBtn(order.orderNumber)}
   `;
   return emailLayout(title, body);
 }
@@ -121,6 +134,7 @@ export function getPaymentConfirmedEmail(order: OrderInfo): string {
       <li>Una vez finalizado el control de calidad y empaquetado, se procederá al envío del paquete.</li>
       <li>Te enviaremos otro correo electrónico con el número de seguimiento (tracking) para que controles la entrega en todo momento.</li>
     </ol>
+    ${renderConsultBtn(order.orderNumber)}
   `;
   return emailLayout(title, body);
 }
@@ -135,6 +149,7 @@ export function getProductionEmail(order: OrderInfo): string {
     <p class="text">Hola <strong>${order.name}</strong>,</p>
     <p class="text">Tu pedido <strong>#${order.orderNumber}</strong> ya ha entrado en la fase de producción en fábrica. Nuestro equipo de soporte e impresión de Printful está confeccionando tus artículos personalizados con la máxima calidad.</p>
     <p class="text">Te notificaremos tan pronto como tus prendas salgan del centro de distribución hacia tu domicilio.</p>
+    ${renderConsultBtn(order.orderNumber)}
   `;
   return emailLayout(title, body);
 }
@@ -162,6 +177,7 @@ export function getShippedEmail(order: OrderInfo): string {
     </div>
 
     <p class="text">El transportista asignado gestionará la entrega en los próximos días. Asegúrate de que haya alguien disponible en la dirección de entrega.</p>
+    ${renderConsultBtn(order.orderNumber)}
   `;
   return emailLayout(title, body);
 }
@@ -177,6 +193,7 @@ export function getDeliveredEmail(order: OrderInfo): string {
     <p class="text">El transportista nos ha notificado que tu pedido <strong>#${order.orderNumber}</strong> ha sido entregado correctamente en tu dirección.</p>
     <p class="text">Esperamos que disfrutes de tus nuevas prendas exclusivas. Si te encantan, no dudes en etiquetarnos en tus redes sociales con el hashtag <strong>#AlphaAddiction</strong>.</p>
     <p class="text">Si tienes cualquier consulta sobre tus prendas o necesitas asistencia, responde directamente a este correo.</p>
+    ${renderConsultBtn(order.orderNumber)}
   `;
   return emailLayout(title, body);
 }
@@ -191,6 +208,7 @@ export function getCanceledEmail(order: OrderInfo): string {
     <p class="text">Hola <strong>${order.name}</strong>,</p>
     <p class="text">Te informamos que tu pedido <strong>#${order.orderNumber}</strong> ha sido cancelado en nuestro sistema.</p>
     <p class="text">Si se ha debido a un error o deseas volver a tramitar la compra, puedes acceder a nuestro catálogo en cualquier momento o ponerte en contacto con nuestro servicio de atención al cliente.</p>
+    ${renderConsultBtn(order.orderNumber)}
   `;
   return emailLayout(title, body);
 }
@@ -209,6 +227,7 @@ export function getRefundEmail(order: OrderInfo): string {
       <strong style="font-size: 20px; color: #d4af37; font-family: monospace;">${formatPrice(order.total)}</strong>
     </div>
     <p class="text">El reembolso se abonará directamente en la misma cuenta de PayPal que utilizaste para realizar el pago. Dependiendo de PayPal, el importe se verá reflejado en tu saldo o tarjeta en un plazo de 2 a 5 días hábiles.</p>
+    ${renderConsultBtn(order.orderNumber)}
   `;
   return emailLayout(title, body);
 }
@@ -224,6 +243,7 @@ export function getDisputeEmail(order: OrderInfo): string {
     <p class="text">Hemos recibido la notificación de una disputa en curso a través de PayPal para tu pedido <strong>#${order.orderNumber}</strong>.</p>
     <p class="text">Nuestro equipo de soporte está revisando el historial de transacciones, empaquetado y fabricación para ayudarte a resolver cualquier inconveniente con la mayor brevedad posible.</p>
     <p class="text">Si deseas acelerar la resolución o tienes información adicional, no dudes en responder directamente a este correo electrónico para hablar con nuestro equipo.</p>
+    ${renderConsultBtn(order.orderNumber)}
   `;
   return emailLayout(title, body);
 }

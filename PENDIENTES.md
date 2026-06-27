@@ -6,8 +6,8 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📋 Estado general del proyecto
  
-*   **Porcentaje aproximado completado:** 99% (🟡 En progreso)
-*   **Última actualización:** 27/06/2026 15:58
+*   **Porcentaje aproximado completado:** 99.5% (🟡 En progreso)
+*   **Última actualización:** 27/06/2026 16:11
 *   **Próximos objetivos:**
     1. Registrar y configurar los Webhooks de producción de PayPal y Printful.
     2. Habilitar autenticación de doble factor (2FA/TOTP) real en el panel.
@@ -54,9 +54,10 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 🌐 Frontend
-
+ 
 *   **Enlace de navegación**: 🔴 Pendiente (Añadir un enlace de acceso al historial de pedidos `/account/orders` en la cabecera o pie de página del layout).
 *   **Feedback visual detallado**: 🔴 Pendiente (Pantallas de carga más estilizadas si la redirección desde la pasarela PayPal tarda más de lo esperado).
+*   **Área de cliente sin registro**: ✅ Completada (Añadido el portal `/pedido` y `/pedido/[orderNumber]` con enmascaramiento de datos y cookies firmadas).
 
 ---
 
@@ -99,6 +100,23 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📝 Historial de cambios
  
+### 27/06/2026 16:11 (Fase 11 — Área de Cliente sin registro)
+
+Archivos creados:
+*   `src/lib/lookup-auth.ts` (Utilidades de tokens firmados por HMAC, enmascaramiento de datos personales y rate limit en memoria por IP)
+*   `src/app/api/customer/order-lookup/route.ts` (Endpoint POST para verificar email y número de pedido, asignar la cookie HttpOnly y registrar el evento)
+*   `src/app/pedido/page.tsx` (Formulario público interactivo de búsqueda de pedido)
+*   `src/app/pedido/[orderNumber]/page.tsx` (Vista de detalles de pedido pública con protección de cookie y datos enmascarados)
+
+Archivos modificados:
+*   `src/lib/email/templates/index.ts` (Inyectado botón "Consultar mi pedido" en las 8 plantillas transaccionales)
+*   `src/app/admin/orders/page.tsx` (Etiqueta visual "🔍 Consultado por el cliente" en la modal de detalles si hay un evento registrado)
+*   `src/app/api/admin/logs/route.ts` (API interna adaptada para recuperar logs de EmailLog)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Se ha creado un área pública de consulta de pedidos para clientes sin necesidad de registro ni cuenta. Se valida de forma segura la IP mediante rate limit en memoria (5 intentos por 10 min) y se expide una cookie temporal HttpOnly firmada con HMAC SHA-256 tras una coincidencia exitosa en Neon. Los datos personales como dirección, email y teléfono se muestran ofuscados en el portal público para mayor privacidad.
+
 ### 27/06/2026 15:58 (Fase 10 — Sistema de Emails Transaccionales (Resend))
 
 Archivos creados:

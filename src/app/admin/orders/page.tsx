@@ -426,6 +426,11 @@ export default function OrdersPage() {
                 <h3 className="text-xl font-serif font-bold text-[#f5f5f0] tracking-wider uppercase font-mono mt-0.5">
                   {(selectedOrder as any).orderNumber || selectedOrder.id}
                 </h3>
+                {selectedOrder.history?.some(h => h.event.includes('consultó')) && (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1.5 border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 text-[9px] font-bold uppercase tracking-wider rounded">
+                    🔍 Consultado por el cliente
+                  </span>
+                )}
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
