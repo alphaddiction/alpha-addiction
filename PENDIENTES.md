@@ -6,8 +6,8 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📋 Estado general del proyecto
 
-*   **Porcentaje aproximado completado:** 92%
-*   **Última actualización:** 26/06/2026 22:55
+*   **Porcentaje aproximado completado:** 95%
+*   **Última actualización:** 27/06/2026 13:10
 *   **Próximos objetivos:**
     1. Desarrollar la monitorización activa y Health Checks en tiempo real (Fase 4).
     2. Registrar y configurar los Webhooks de producción de PayPal y Printful.
@@ -96,6 +96,21 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📝 Historial de cambios
+
+### 27/06/2026 13:10 (Fase 5 — Integrar PayPal Sandbox con pedidos de Neon)
+
+Archivos modificados:
+*   `.env.example` (Añadida la variable `PAYPAL_API` para el control de endpoints en modo Sandbox)
+*   `src/lib/paypal.ts` (Traducidos errores al español y actualizado `createPayPalOrder` para admitir subtotal y desglose de descuentos)
+*   `src/types/paypal.ts` (Añadido soporte al campo `discount` dentro del breakdown en `PayPalOrderCreationRequest`)
+*   `src/app/api/paypal/create-order/route.ts` (Refactorizado para recibir el `orderId` de Neon, verificar el estado e importes y guardar el `paypalOrderId` en base de datos)
+*   `src/app/api/paypal/capture-order/route.ts` (Refactorizado para capturar el pago, marcar como `pagado`/`paid` en Neon e insertar el evento `PAYMENT_CONFIRMED` en el historial)
+*   `src/components/paypal/paypal-button.tsx` (Refactorizado para crear primero el borrador en Neon, luego la orden de PayPal, y finalmente capturar el cobro)
+*   `src/app/admin/orders/page.tsx` (Actualizado para mostrar los metadatos `paypalOrderId` y `paypalCaptureId` en la modal de detalles)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Se ha integrado de forma segura y consistente el entorno de pruebas PayPal Sandbox con la base de datos Neon PostgreSQL. Cuando el cliente hace clic en el botón de PayPal, se crea primero un pedido interno borrador (`create-draft`), se asocia la transacción de PayPal y se actualiza el estado a "pagado" (tanto el cobro como la orden) al capturar el pago con éxito. Se incluye el registro del evento en el timeline y se desactiva temporalmente el envío automático a Printful para centrarse en esta fase.
 
 ### 27/06/2026 12:15 (Fase 4 — Conectar carrito con Neon, pedidos internos y balances de pagos)
  

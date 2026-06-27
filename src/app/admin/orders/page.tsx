@@ -430,6 +430,18 @@ export default function OrdersPage() {
                       <span className="text-[9px] text-[var(--muted)] block">Dirección de envío</span>
                       <span className="text-[#f5f5f0]">{selectedOrder.shippingAddress.address}, {selectedOrder.shippingAddress.postalCode}</span>
                     </div>
+                    {selectedOrder.paypalOrderId && (
+                      <div className="col-span-2 border-t border-white/5 pt-3 mt-1 grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-[9px] text-[var(--muted)] block">PayPal Order ID</span>
+                          <span className="text-[#f5f5f0] font-mono break-all">{selectedOrder.paypalOrderId}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-[var(--muted)] block">PayPal Capture ID</span>
+                          <span className="text-[#f5f5f0] font-mono break-all">{selectedOrder.paypalCaptureId || '—'}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

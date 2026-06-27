@@ -30,7 +30,7 @@ export async function getPayPalAccessToken(): Promise<string> {
   if (!response.ok) {
     const errorText = await response.text();
     console.error('❌ PayPal OAuth Error:', errorText);
-    throw new Error(`PayPal OAuth failed: ${response.statusText}`);
+    throw new Error(`Fallo de autenticación con PayPal (OAuth): ${response.statusText}`);
   }
 
   const data = (await response.json()) as PayPalAccessTokenResponse;
@@ -39,9 +39,11 @@ export async function getPayPalAccessToken(): Promise<string> {
 
 // Create PayPal Order
 export async function createPayPalOrder(
+  orderNumber: string,
   items: OrderItem[],
   shippingAddress: ShippingAddress,
-  subtotal: number
+  subtotal: number,
+  discount: number = 0
 ): Promise<PayPalOrderResponse> {
   const env = getEnv();
   const accessToken = await getPayPalAccessToken();
@@ -54,13 +56,16 @@ export async function createPayPalOrder(
   else if (c.includes('italia') || c.includes('italy')) countryCode = 'IT';
   else if (c.includes('alemania') || c.includes('germany')) countryCode = 'DE';
 
+  const totalValue = Math.max(0, subtotal - discount);
+
   const orderPayload: PayPalOrderCreationRequest = {
     intent: 'CAPTURE',
     purchase_units: [
       {
+        reference_id: orderNumber,
         amount: {
           currency_code: 'EUR',
-          value: subtotal.toFixed(2),
+          value: totalValue.toFixed(2),
           breakdown: {
             item_total: {
               currency_code: 'EUR',
@@ -70,6 +75,10 @@ export async function createPayPalOrder(
               currency_code: 'EUR',
               value: '0.00', // Free shipping
             },
+            discount: discount > 0 ? {
+              currency_code: 'EUR',
+              value: discount.toFixed(2),
+            } : undefined,
           },
         },
         items: items.map(item => ({
@@ -116,7 +125,7 @@ export async function createPayPalOrder(
   if (!response.ok) {
     const errorText = await response.text();
     console.error('❌ PayPal Create Order Error:', errorText);
-    throw new Error(`PayPal Create Order failed: ${errorText}`);
+    throw new Error(`Error al crear la orden en PayPal: ${errorText}`);
   }
 
   return (await response.json()) as PayPalOrderResponse;
@@ -138,7 +147,7 @@ export async function capturePayPalOrder(paypalOrderId: string): Promise<PayPalC
   if (!response.ok) {
     const errorText = await response.text();
     console.error('❌ PayPal Capture Order Error:', errorText);
-    throw new Error(`PayPal Capture Order failed: ${errorText}`);
+    throw new Error(`Error al capturar la orden en PayPal: ${errorText}`);
   }
 
   return (await response.json()) as PayPalCaptureResponse;

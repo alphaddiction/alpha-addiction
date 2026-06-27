@@ -23,6 +23,10 @@ export interface PayPalOrderCreationRequest {
           currency_code: string;
           value: string;
         };
+        discount?: {
+          currency_code: string;
+          value: string;
+        };
       };
     };
     items?: Array<{

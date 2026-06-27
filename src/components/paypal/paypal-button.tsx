@@ -101,7 +101,8 @@ export default function PayPalButton({
           }}
           createOrder={async () => {
             try {
-              const res = await fetch('/api/paypal/create-order', {
+              // 1. Crear primero el pedido borrador en Neon
+              const draftRes = await fetch('/api/orders/create-draft', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -109,6 +110,24 @@ export default function PayPalButton({
                 body: JSON.stringify({
                   shippingAddress,
                   items,
+                }),
+              });
+
+              if (!draftRes.ok) {
+                const errData = await draftRes.json();
+                throw new Error(errData.error || 'No se pudo crear el borrador del pedido en Neon.');
+              }
+
+              const { orderId } = await draftRes.json();
+
+              // 2. Crear la orden en PayPal asociada al orderId de Neon
+              const res = await fetch('/api/paypal/create-order', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  orderId,
                 }),
               });
 
@@ -128,6 +147,7 @@ export default function PayPalButton({
           onApprove={async (data) => {
             setIsProcessing(true);
             try {
+              // 3. Capturar el pago en PayPal y confirmar el pedido interno
               const res = await fetch('/api/paypal/capture-order', {
                 method: 'POST',
                 headers: {
@@ -135,8 +155,6 @@ export default function PayPalButton({
                 },
                 body: JSON.stringify({
                   paypalOrderId: data.orderID,
-                  shippingAddress,
-                  items,
                 }),
               });
 

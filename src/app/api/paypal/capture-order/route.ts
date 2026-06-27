@@ -1,104 +1,76 @@
-import { captureOrderSchema } from '@/lib/validations';
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
 import { capturePayPalOrder } from '@/lib/paypal';
-import { createPrintfulOrder } from '@/lib/printful';
-import { generateLocalOrderId, saveOrder } from '@/lib/orders';
-import { Order } from '@/types/order';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const { paypalOrderId } = await req.json();
 
-    // Validation using Zod schema
-    const validationResult = captureOrderSchema.safeParse(body);
-    if (!validationResult.success) {
-      console.error('❌ Validation error for capture-order API:', validationResult.error.format());
-      return Response.json(
-        { error: 'Invalid request data', details: validationResult.error.format() },
-        { status: 400 }
-      );
+    if (!paypalOrderId) {
+      return NextResponse.json({ error: 'El ID de la orden de PayPal es obligatorio.' }, { status: 400 });
     }
 
-    const { paypalOrderId, shippingAddress, items } = validationResult.data;
+    console.log(`Capturing PayPal payment for order ID: ${paypalOrderId}...`);
 
-    // 1. Capture PayPal Payment
-    console.log(`Capturing PayPal order: ${paypalOrderId}...`);
+    // 1. Capturar el cobro en la API de PayPal Sandbox
     const captureResult = await capturePayPalOrder(paypalOrderId);
 
     if (captureResult.status !== 'COMPLETED') {
-      return Response.json(
-        { error: `Payment not completed. Status: ${captureResult.status}` },
+      console.error(`❌ PayPal capture status was not COMPLETED: ${captureResult.status}`);
+      return NextResponse.json(
+        { error: `El pago no pudo ser completado. Estado de PayPal: ${captureResult.status}` },
         { status: 400 }
       );
     }
 
     const captureId = captureResult.purchase_units[0]?.payments?.captures?.[0]?.id;
-
-    // Calculate totals
-    const subtotal = items.reduce((sum, item) => sum + item.priceEUR * item.qty, 0);
-    const shippingPrice = 0; // Free shipping
-    const totalPrice = subtotal + shippingPrice;
-
-    // 2. Save Order to Database (marked as paid)
-    const localOrderId = generateLocalOrderId();
-    const now = new Date().toISOString();
-
-    const newOrder: Order = {
-      id: localOrderId,
-      paypalOrderId,
-      paypalCaptureId: captureId,
-      shippingAddress,
-      items,
-      subtotal,
-      shippingPrice,
-      totalPrice,
-      status: 'paid',
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    await saveOrder(newOrder);
-    console.log(`✅ Order ${localOrderId} saved in database as 'paid'.`);
-
-    // 3. Automatically submit the order to Printful
-    let printfulOrderId: number | undefined;
-    let fulfillmentStatus: Order['status'] = 'paid';
-    let errorMessage: string | undefined;
-
-    try {
-      console.log(`Submitting order ${localOrderId} to Printful...`);
-      const printfulResponse = await createPrintfulOrder(localOrderId, shippingAddress, items);
-      printfulOrderId = printfulResponse.result.id;
-      fulfillmentStatus = 'fulfillment_submitted';
-      console.log(`✅ Printful order created successfully. ID: ${printfulOrderId}`);
-    } catch (printfulError) {
-      console.error(`❌ Printful order creation failed for ${localOrderId}:`, printfulError);
-      fulfillmentStatus = 'fulfillment_failed';
-      errorMessage = (printfulError as Error).message || 'Failed to submit order to Printful';
+    if (!captureId) {
+      console.warn('⚠️ No capture ID returned from PayPal capture result.');
     }
 
-    // 4. Update order status in DB with Printful ID/errors
-    const finalOrder = {
-      ...newOrder,
-      printfulOrderId,
-      status: fulfillmentStatus,
-      errorMessage,
-      updatedAt: new Date().toISOString(),
-    };
+    // 2. Buscar el pedido interno en Neon PostgreSQL por el paypalOrderId único
+    const order = await db.order.findUnique({
+      where: { paypalOrderId },
+    });
 
-    await saveOrder(finalOrder);
+    if (!order) {
+      console.error(`❌ No internal order found for PayPal ID: ${paypalOrderId}`);
+      return NextResponse.json(
+        { error: 'No se encontró el pedido correspondiente en el sistema OMS.' },
+        { status: 404 }
+      );
+    }
 
-    return Response.json({
+    console.log(`✅ Associated internal order found: ${order.orderNumber} (ID: ${order.id}). Updating status...`);
+
+    // 3. Actualizar el pedido en la base de datos de Neon
+    await db.order.update({
+      where: { id: order.id },
+      data: {
+        paymentStatus: 'pagado',
+        orderStatus: 'paid', // O 'processing' (Procesando)
+        paypalCaptureId: captureId || null,
+        events: {
+          create: {
+            type: 'PAYMENT_CONFIRMED',
+            message: 'Pago confirmado por PayPal',
+          },
+        },
+      },
+    });
+
+    console.log(`✅ Order ${order.orderNumber} marked as PAID in Neon PostgreSQL.`);
+
+    return NextResponse.json({
       success: true,
-      orderId: localOrderId,
+      orderId: order.id,
       paypalCaptureId: captureId,
-      printfulOrderId,
-      status: fulfillmentStatus,
-      errorMessage,
+      status: 'paid',
     });
   } catch (error) {
     console.error('❌ Error capturing PayPal order:', error);
-    return Response.json(
-      { error: 'Failed to capture PayPal order', message: (error as Error).message },
+    return NextResponse.json(
+      { error: 'Fallo al procesar y confirmar la transacción en el servidor.', message: (error as Error).message },
       { status: 500 }
     );
   }
