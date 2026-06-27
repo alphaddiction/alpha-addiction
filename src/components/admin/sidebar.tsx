@@ -20,6 +20,7 @@ import {
   Lock,
   Layers,
   Activity,
+  Mail,
 } from 'lucide-react';
 
 const navItems = [
@@ -33,6 +34,7 @@ const navItems = [
   { href: '/admin/ai', label: 'IA Interna', icon: Brain },
   { href: '/admin/printful', label: 'Printful Status', icon: Layers },
   { href: '/admin/monitoring', label: 'Health Center', icon: Activity },
+  { href: '/admin/comunicaciones', label: 'Comunicaciones', icon: Mail },
   { href: '/admin/security', label: 'Seguridad', icon: Shield },
   { href: '/admin/logs', label: 'Auditoría', icon: FileText },
   { href: '/admin/settings', label: 'Configuración', icon: Settings },

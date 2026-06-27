@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyPayPalWebhook } from '@/lib/paypal';
 import { PayPalWebhookEvent } from '@/types/paypal';
+import { sendOrderReceived, sendPaymentConfirmed, sendRefund, sendDispute } from '@/lib/email/send-email';
 
 export async function POST(req: Request) {
   try {
@@ -159,6 +160,18 @@ export async function POST(req: Request) {
       where: { id: orderId },
       data: updateData,
     });
+
+    // 6. Disparar los correos correspondientes asíncronamente según el tipo de evento procesado
+    if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+      Promise.all([
+        sendOrderReceived(orderId),
+        sendPaymentConfirmed(orderId)
+      ]).catch(err => console.error('⚠️ [Email Trigger] Error al disparar correos de pago completado por webhook:', err));
+    } else if (event.event_type === 'PAYMENT.CAPTURE.REFUNDED') {
+      sendRefund(orderId).catch(err => console.error('⚠️ [Email Trigger] Error al disparar correo de reembolso:', err));
+    } else if (event.event_type === 'CUSTOMER.DISPUTE.CREATED') {
+      sendDispute(orderId).catch(err => console.error('⚠️ [Email Trigger] Error al disparar correo de disputa:', err));
+    }
 
     return NextResponse.json({
       success: true,

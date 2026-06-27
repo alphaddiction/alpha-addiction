@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { capturePayPalOrder } from '@/lib/paypal';
+import { sendOrderReceived, sendPaymentConfirmed } from '@/lib/email/send-email';
 
 export async function POST(req: Request) {
   try {
@@ -60,6 +61,12 @@ export async function POST(req: Request) {
     });
 
     console.log(`✅ Order ${order.orderNumber} marked as PAID in Neon PostgreSQL.`);
+
+    // 4. Enviar correos transaccionales de forma asíncrona sin bloquear la respuesta del servidor
+    Promise.all([
+      sendOrderReceived(order.id),
+      sendPaymentConfirmed(order.id)
+    ]).catch(err => console.error('⚠️ [Email Trigger] Error al disparar correos de pago confirmado:', err));
 
     return NextResponse.json({
       success: true,

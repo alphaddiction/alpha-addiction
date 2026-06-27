@@ -18,6 +18,7 @@ import {
   ShoppingBag,
   FileText,
   HelpCircle,
+  Mail,
 } from 'lucide-react';
 
 interface SystemHealthData {
@@ -191,7 +192,7 @@ export default function HealthCenterPage() {
       </div>
 
       {/* Grid de Estado Físico */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Base de Datos */}
         <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col justify-between">
           <div>
@@ -236,11 +237,11 @@ export default function HealthCenterPage() {
               </div>
               <div className="flex justify-between">
                 <span>Último Webhook:</span>
-                <span className="text-[#f5f5f0] truncate max-w-[120px]" title={data.printful.lastWebhook}>{data.printful.lastWebhook}</span>
+                <span className="text-[#f5f5f0] truncate max-w-[100px]" title={data.printful.lastWebhook}>{data.printful.lastWebhook}</span>
               </div>
               <div className="flex justify-between">
                 <span>Último Envío:</span>
-                <span className="text-[#f5f5f0] truncate max-w-[120px]" title={data.printful.lastOrder}>{data.printful.lastOrder}</span>
+                <span className="text-[#f5f5f0] truncate max-w-[100px]" title={data.printful.lastOrder}>{data.printful.lastOrder}</span>
               </div>
             </div>
           </div>
@@ -265,11 +266,33 @@ export default function HealthCenterPage() {
               </div>
               <div className="flex justify-between">
                 <span>Último Webhook:</span>
-                <span className="text-[#f5f5f0] truncate max-w-[120px]" title={(data.paypal as any).lastWebhook || 'Ninguno'}>{(data.paypal as any).lastWebhook || 'Ninguno'}</span>
+                <span className="text-[#f5f5f0] truncate max-w-[100px]" title={(data.paypal as any).lastWebhook || 'Ninguno'}>{(data.paypal as any).lastWebhook || 'Ninguno'}</span>
               </div>
-              <p className="text-[9px] text-[var(--muted)] leading-relaxed mt-1">
-                {data.paypal.setupInfo}
-              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Resend Email Pasarela */}
+        <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-semibold">Resend Email</span>
+              <span className={`p-2 rounded ${(data as any).resend?.status === 'configured' ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-500'}`}>
+                <Mail className="w-4 h-4" />
+              </span>
+            </div>
+            <h3 className="text-xl font-serif font-bold text-[#f5f5f0] uppercase tracking-wider">
+              {(data as any).resend?.status === 'configured' ? 'ACTIVO' : 'PENDIENTE'}
+            </h3>
+            <div className="text-[10px] text-[var(--muted)] font-mono mt-4 space-y-1.5">
+              <div className="flex justify-between">
+                <span>Envíos Fallidos:</span>
+                <span className="text-[#f5f5f0]">{(data as any).resend?.totalErrors || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Último Envío:</span>
+                <span className="text-[#f5f5f0] truncate max-w-[100px]" title={(data as any).resend?.lastEmail || 'Ninguno'}>{(data as any).resend?.lastEmail || 'Ninguno'}</span>
+              </div>
             </div>
           </div>
         </div>

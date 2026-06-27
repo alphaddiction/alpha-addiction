@@ -6,15 +6,14 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📋 Estado general del proyecto
  
-*   **Porcentaje aproximado completado:** 98% (🟡 En progreso)
-*   **Última actualización:** 27/06/2026 14:25
+*   **Porcentaje aproximado completado:** 99% (🟡 En progreso)
+*   **Última actualización:** 27/06/2026 15:58
 *   **Próximos objetivos:**
     1. Registrar y configurar los Webhooks de producción de PayPal y Printful.
-    2. Integrar servicio de envío de correos transaccionales automáticos (Resend / SendGrid).
-    3. Habilitar autenticación de doble factor (2FA/TOTP) real en el panel.
-    4. Realizar auditoría legal y de políticas RGPD/LSSI.
-    5. Implementar suite de pruebas end-to-end completas.
-    6. Configurar copias de seguridad (Backups) automatizadas para la base de datos de Neon y monitorización de errores (Sentry).
+    2. Habilitar autenticación de doble factor (2FA/TOTP) real en el panel.
+    3. Realizar auditoría legal y de políticas RGPD/LSSI.
+    4. Implementar suite de pruebas end-to-end completas.
+    5. Configurar copias de seguridad (Backups) automatizadas para la base de datos de Neon y monitorización de errores (Sentry).
 
 ---
 
@@ -28,7 +27,7 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 *   **Errores**: ✅ Completada (Manejo estructurado de errores y fallos en peticiones API con respuestas HTTP semánticas).
 *   **Logs**: ✅ Completada (Registro en consola del flujo de creación, aprobación de pagos y sincronización de pedidos).
 *   **IVA**: 🔴 Pendiente (Implementar cálculos dinámicos del Impuesto sobre el Valor Añadido para España y el resto de la Unión Europea).
-*   **Emails**: 🔴 Pendiente (Integrar pasarela para envío automático de confirmaciones de compra y actualizaciones de envío al cliente).
+*   **Emails**: ✅ Completada (Integrado el servicio de emails transaccionales centralizado e idempotente con Resend y plantillas premium).
 *   **Gestión de pedidos**: ✅ Completada (Persistencia funcional en la base de datos en la nube Neon PostgreSQL, con desglose de costes y beneficios).
 *   **Integración con Printful**: ✅ Completada (Lanzamiento automático de órdenes de producción hacia Printful al confirmarse el cobro por PayPal).
 
@@ -100,6 +99,32 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📝 Historial de cambios
  
+### 27/06/2026 15:58 (Fase 10 — Sistema de Emails Transaccionales (Resend))
+
+Archivos creados:
+*   `src/lib/email/types.ts` (Definición de tipos de correos y payloads de Resend)
+*   `src/lib/email/helpers.ts` (Helpers de formato de precios, fechas en español y layout de correo corporativo)
+*   `src/lib/email/resend.ts` (Cliente API REST de Resend con soporte de simulador de desarrollo sin claves)
+*   `src/lib/email/templates/index.ts` (Plantillas responsivas y refinadas para recibidos, confirmados, producción, envíos, entregas, disputas y cancelaciones)
+*   `src/lib/email/send-email.ts` (Orquestador asíncrono con control de duplicados e inserciones en Neon)
+*   `src/app/admin/comunicaciones/page.tsx` (Panel visual de auditoría de comunicaciones en el panel admin)
+
+Archivos modificados:
+*   `prisma/schema.prisma` (Creado modelo `EmailLog` y su relación con pedidos en la base de datos Neon)
+*   `.env.example` & `.env.local` (Añadidas variables `RESEND_API_KEY`, `EMAIL_FROM` y `EMAIL_REPLY_TO`)
+*   `src/lib/validations.ts` (Validaciones Zod de entorno para Resend)
+*   `src/app/api/paypal/capture-order/route.ts` (Envío asíncrono de emails tras confirmar pago)
+*   `src/app/api/webhooks/paypal/route.ts` (Disparo de emails tras reembolsos, disputas o pagos)
+*   `src/app/api/webhooks/printful/route.ts` (Disparo de emails tras aprobación o despacho de envíos con tracking)
+*   `src/app/api/admin/logs/route.ts` (API interna adaptada para devolver el historial de logs de emails)
+*   `src/components/admin/sidebar.tsx` (Enlace de Comunicaciones en la navegación de administración)
+*   `src/app/api/admin/system/health/route.ts` (Integración de estado, últimos correos y errores de Resend)
+*   `src/app/admin/monitoring/page.tsx` (Renderizado de la tarjeta de Resend en el Health Center)
+*   `PENDIENTES.md` (Este archivo)
+
+Descripción:
+Se ha implementado el módulo centralizado de correos transaccionales utilizando la API de Resend. El sistema valida destinatarios, comprueba si un tipo de email ya ha sido enviado con éxito (para evitar duplicaciones), renderiza plantillas responsivas en formato HTML de lujo, y registra de forma segura la latencia, fecha y estado de cada comunicación en la tabla `EmailLog` de Neon PostgreSQL.
+
 ### 27/06/2026 14:35 (Fase 9 — PayPal Sandbox + Webhooks de pago)
 
 Archivos creados:
@@ -475,7 +500,7 @@ Tareas actualizadas:
  
 - [ ] **PayPal Sandbox & Webhooks**: Validar el entorno completo en Sandbox con compras de prueba y registrar los webhooks automáticos de PayPal.
 - [ ] **PayPal Producción**: Configurar credenciales productivas reales y apuntar el endpoint a producción.
-- [ ] **Emails automáticos**: Integrar servicio transaccional para notificar confirmaciones de pago y códigos de tracking al comprador.
+- [x] **Emails automáticos**: Integrar servicio transaccional para notificar confirmaciones de pago y códigos de tracking al comprador.
 - [ ] **2FA Real**: Implementar la capa de visualización e inicio de sesión de dos factores (TOTP) usando los campos ya preparados en la base de datos.
 - [ ] **Auditoría legal**: Revisar y adaptar el texto de aviso legal, privacidad y política de cookies a la normativa española (RGPD/LSSI).
 - [ ] **Pruebas end-to-end**: Realizar simulaciones completas de pedidos de extremo a extremo.

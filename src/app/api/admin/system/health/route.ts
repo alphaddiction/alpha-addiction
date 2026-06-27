@@ -85,6 +85,15 @@ export async function GET() {
   const paypalConfigured = !!(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET);
   const paypalStatus = paypalConfigured ? 'configured' : 'pending_setup';
 
+  // 3.1 Diagnóstico de Resend
+  let resendStatus = 'pending_setup';
+  let resendLastEmail = 'Ninguno';
+  let resendTotalErrors = 0;
+
+  if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'MOCK_RESEND_API_KEY') {
+    resendStatus = 'configured';
+  }
+
   // 4. Variables de entorno (Comprobación de existencia únicamente, sin exponer valores)
   const envStatus = {
     DATABASE_URL: process.env.DATABASE_URL ? 'configured' : 'missing',
@@ -93,6 +102,8 @@ export async function GET() {
     PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID ? 'configured' : 'missing',
     PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET ? 'configured' : 'missing',
     PAYPAL_WEBHOOK_ID: process.env.PAYPAL_WEBHOOK_ID ? 'configured' : 'missing',
+    RESEND_API_KEY: process.env.RESEND_API_KEY ? 'configured' : 'missing',
+    EMAIL_FROM: process.env.EMAIL_FROM ? 'configured' : 'missing',
     JWT_SECRET: process.env.JWT_SECRET ? 'configured' : 'missing',
     ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET ? 'configured' : 'missing',
   };
@@ -141,8 +152,18 @@ export async function GET() {
           createdAt: true,
         },
       });
+      // Consultar historial y errores de correos
+      const lastEmailLog = await db.emailLog.findFirst({
+        orderBy: { sentAt: 'desc' },
+      });
+      if (lastEmailLog) {
+        resendLastEmail = `${lastEmailLog.sentAt.toLocaleString('es-ES')} [${lastEmailLog.emailType}] a ${lastEmailLog.recipient} (${lastEmailLog.status})`;
+      }
+      resendTotalErrors = await db.emailLog.count({
+        where: { status: 'failed' },
+      });
     } catch (lError) {
-      console.warn('⚠️ [Health API] Error consultando logs de auditoría:', lError);
+      console.warn('⚠️ [Health API] Error consultando logs de auditoría/emails:', lError);
     }
   }
 
@@ -179,6 +200,12 @@ export async function GET() {
       webhookIdConfigured: !!process.env.PAYPAL_WEBHOOK_ID,
       lastWebhook: paypalLastWebhook,
       setupInfo: 'Pendiente de configurar credenciales reales de producción.',
+    },
+    resend: {
+      status: resendStatus,
+      configured: !!process.env.RESEND_API_KEY,
+      lastEmail: resendLastEmail,
+      totalErrors: resendTotalErrors,
     },
     envVariables: envStatus,
     orders: ordersCount,

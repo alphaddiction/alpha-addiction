@@ -10,6 +10,9 @@ export const envSchema = z.object({
   PRINTFUL_API_TOKEN: z.string().optional(),
   PRINTFUL_STORE_ID: z.string().optional(),
   PRINTFUL_WEBHOOK_SIGNING_SECRET: z.string().optional(), // Used if verifying Printful webhook signature
+  RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
+  EMAIL_FROM: z.string().min(1, 'EMAIL_FROM is required'),
+  EMAIL_REPLY_TO: z.string().optional(),
 });
 
 // Safely validate and retrieve environment variables
@@ -23,6 +26,9 @@ export function getEnv() {
     PRINTFUL_API_TOKEN: process.env.PRINTFUL_API_TOKEN,
     PRINTFUL_STORE_ID: process.env.PRINTFUL_STORE_ID,
     PRINTFUL_WEBHOOK_SIGNING_SECRET: process.env.PRINTFUL_WEBHOOK_SIGNING_SECRET,
+    RESEND_API_KEY: process.env.RESEND_API_KEY || 'MOCK_RESEND_API_KEY',
+    EMAIL_FROM: process.env.EMAIL_FROM || 'Alpha Addiction <no-reply@alphaddiction.com>',
+    EMAIL_REPLY_TO: process.env.EMAIL_REPLY_TO || undefined,
   });
 
   if (!result.success) {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getLogs } from '@/lib/logger';
+import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,18 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
     const moduleName = searchParams.get('module');
+
+    if (type === 'email') {
+      const emailLogs = await db.emailLog.findMany({
+        orderBy: { sentAt: 'desc' },
+        include: {
+          order: {
+            select: { orderNumber: true }
+          }
+        }
+      });
+      return NextResponse.json(emailLogs);
+    }
 
     let allLogs = await getLogs();
 

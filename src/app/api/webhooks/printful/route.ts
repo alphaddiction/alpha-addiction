@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyPrintfulWebhookSignature } from '@/lib/printful';
 import { PrintfulWebhookEvent } from '@/types/printful';
+import { sendOrderInProduction, sendOrderShipped } from '@/lib/email/send-email';
 
 export async function POST(req: Request) {
   try {
@@ -150,6 +151,13 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    // 6. Disparar los correos correspondientes asíncronamente según el tipo de evento procesado
+    if (payload.type === 'order_approved') {
+      sendOrderInProduction(orderId).catch(err => console.error('⚠️ [Email Trigger] Error al disparar correo de orden en fabricación:', err));
+    } else if (payload.type === 'package_shipped') {
+      sendOrderShipped(orderId).catch(err => console.error('⚠️ [Email Trigger] Error al disparar correo de orden enviada:', err));
+    }
 
     return NextResponse.json({
       success: true,
