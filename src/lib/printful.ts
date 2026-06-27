@@ -21,11 +21,11 @@ export async function printfulFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const apiKey = process.env.PRINTFUL_API_KEY;
+  const apiKey = process.env.PRINTFUL_API_KEY || process.env.PRINTFUL_API_TOKEN;
 
   // Validación de seguridad de la API Key en el servidor
   if (!apiKey) {
-    console.error('❌ Error de configuración: PRINTFUL_API_KEY no definida en el entorno.');
+    console.error('❌ Error de configuración: PRINTFUL_API_KEY (o PRINTFUL_API_TOKEN) no definida en el entorno.');
     throw new Error('La variable de entorno PRINTFUL_API_KEY no está configurada.');
   }
 
