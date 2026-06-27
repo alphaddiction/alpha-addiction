@@ -95,7 +95,16 @@ export async function POST(req: Request) {
     const shippingPrice = 0.0; // Envío gratuito
     const taxPrice = 0.0;
     const finalTotal = Math.max(0, calculatedSubtotal + shippingPrice + taxPrice - discountVal);
-    const netProfit = finalTotal - calculatedTotalCost;
+
+    // Calcular coste de envío estimado que cobrará Printful
+    const isDomestic = ['españa', 'spain', 'portugal'].includes(country.toLowerCase().trim());
+    const totalQty = validatedItems.reduce((sum, item) => sum + item.quantity, 0);
+    const shippingCost = totalQty > 0
+      ? (isDomestic ? 4.50 + (totalQty - 1) * 1.50 : 6.50 + (totalQty - 1) * 2.00)
+      : 0.0;
+
+    const totalCost = calculatedTotalCost + shippingCost;
+    const netProfit = finalTotal - totalCost;
 
     // 3. Generar identificadores únicos de pedido
     const internalId = crypto.randomUUID();
@@ -127,7 +136,8 @@ export async function POST(req: Request) {
           discount: discountVal,
           total: finalTotal,
           currency: 'EUR',
-          totalCost: calculatedTotalCost,
+          totalCost: totalCost,
+          shippingCost: shippingCost,
           netProfit: netProfit,
           createdAt: new Date(),
           updatedAt: new Date(),

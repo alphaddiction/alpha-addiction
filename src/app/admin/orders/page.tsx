@@ -487,7 +487,15 @@ export default function OrdersPage() {
                     {(selectedOrder as any).totalCost > 0 && (
                       <div className="border-t border-white/5 pt-2 mt-2 space-y-1">
                         <div className="flex justify-between text-[var(--muted)] text-[10px]">
-                          <span>COSTE PRODUCCIÓN (PRINTFUL)</span>
+                          <span>PRODUCCIÓN PRENDAS (PRINTFUL)</span>
+                          <span>{formatPrice((selectedOrder as any).totalCost - ((selectedOrder as any).shippingCost || 0))}</span>
+                        </div>
+                        <div className="flex justify-between text-[var(--muted)] text-[10px]">
+                          <span>ENVÍO SOPORTADO (PRINTFUL)</span>
+                          <span>{formatPrice((selectedOrder as any).shippingCost || 0)}</span>
+                        </div>
+                        <div className="flex justify-between text-[var(--muted)] text-[10px] font-bold border-t border-white/5 pt-1 mt-1">
+                          <span>COSTE TOTAL PROVEEDOR</span>
                           <span>{formatPrice((selectedOrder as any).totalCost)}</span>
                         </div>
                         <div className="flex justify-between text-green-400 font-bold text-xs pt-1">

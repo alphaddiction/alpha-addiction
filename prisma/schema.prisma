@@ -75,6 +75,7 @@ model Order {
   total           Float
   currency        String       @default("EUR")
   totalCost       Float        @default(0.0) // Production cost sum
+  shippingCost    Float        @default(0.0) // Shipping cost charged by Printful
   netProfit       Float        @default(0.0) // Benefit (total - totalCost)
   paypalOrderId   String?      @unique
   paypalCaptureId String?

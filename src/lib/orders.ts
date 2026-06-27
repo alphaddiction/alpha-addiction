@@ -65,6 +65,7 @@ export function mapDbOrderToType(dbOrder: any): Order {
     })) || [],
     totalCost: dbOrder.totalCost,
     netProfit: dbOrder.netProfit,
+    shippingCost: dbOrder.shippingCost,
   } as any;
 }
 
@@ -160,7 +161,15 @@ export async function saveOrder(order: Order): Promise<Order> {
       };
     });
 
-    const netProfit = order.totalPrice - calculatedCost;
+    // Calcular coste de envío estimado
+    const isDomestic = ['españa', 'spain', 'portugal'].includes(order.shippingAddress.country.toLowerCase().trim());
+    const totalQty = order.items.reduce((sum, item) => sum + item.qty, 0);
+    const shippingCost = totalQty > 0
+      ? (isDomestic ? 4.50 + (totalQty - 1) * 1.50 : 6.50 + (totalQty - 1) * 2.00)
+      : 0.0;
+
+    const totalCost = calculatedCost + shippingCost;
+    const netProfit = order.totalPrice - totalCost;
 
     const created = await db.order.create({
       data: {
@@ -184,7 +193,8 @@ export async function saveOrder(order: Order): Promise<Order> {
         discount: order.discount || 0.0,
         total: order.totalPrice,
         currency: 'EUR',
-        totalCost: calculatedCost,
+        totalCost,
+        shippingCost,
         netProfit,
         paypalOrderId: order.paypalOrderId || null,
         paypalCaptureId: order.paypalCaptureId || null,

@@ -68,4 +68,5 @@ export interface Order {
   errorMessage?: string;
   totalCost?: number; // Coste de producción total
   netProfit?: number; // Beneficio neto total
+  shippingCost?: number; // Coste de envío cobrado por Printful
 }

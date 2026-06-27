@@ -46,7 +46,9 @@ export default function FinancePage() {
 
   // Totales financieros consolidados
   const totalRevenue = paidOrders.reduce((sum, o) => sum + o.totalPrice, 0);
-  const totalCost = paidOrders.reduce((sum, o) => sum + ((o as any).totalCost || 0), 0);
+  const totalCost = paidOrders.reduce((sum, o) => sum + (o.totalCost || 0), 0);
+  const totalShipping = paidOrders.reduce((sum, o) => sum + (o.shippingCost || 0), 0);
+  const totalProdCost = Math.max(0, totalCost - totalShipping);
   const totalProfit = totalRevenue - totalCost;
   const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
@@ -114,7 +116,7 @@ export default function FinancePage() {
             {/* Tarjeta 2: Costes de Producción */}
             <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col justify-between min-h-[120px]">
               <div className="flex justify-between items-start">
-                <span className="text-[10px] tracking-wider text-[var(--muted)] uppercase font-semibold">Coste de Producción</span>
+                <span className="text-[10px] tracking-wider text-[var(--muted)] uppercase font-semibold">Costes Proveedor</span>
                 <div className="p-1.5 bg-red-500/10 text-red-400 rounded">
                   <Activity className="w-4 h-4" />
                 </div>
@@ -124,7 +126,7 @@ export default function FinancePage() {
                   {formatPrice(totalCost)}
                 </h3>
                 <p className="text-[10px] text-[var(--muted)] mt-1 tracking-wide font-sans">
-                  Total facturado por Printful
+                  Prendas: {formatPrice(totalProdCost)} · Envío: {formatPrice(totalShipping)}
                 </p>
               </div>
             </div>
@@ -187,14 +189,17 @@ export default function FinancePage() {
                         <th className="pb-4">ID Pedido</th>
                         <th className="pb-4">Cliente</th>
                         <th className="pb-4 text-right">Venta</th>
-                        <th className="pb-4 text-right">Coste</th>
-                        <th className="pb-4 text-right text-[var(--primary)]">Beneficio</th>
+                        <th className="pb-4 text-right">Fab. Prendas</th>
+                        <th className="pb-4 text-right">Envío Printful</th>
+                        <th className="pb-4 text-right text-[var(--primary)]">Beneficio Neto</th>
                         <th className="pb-4 text-right">Margen</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 font-mono">
                       {paidOrders.map((order) => {
-                        const cost = (order as any).totalCost || 0;
+                        const cost = order.totalCost || 0;
+                        const shipCost = order.shippingCost || 0;
+                        const prodCost = Math.max(0, cost - shipCost);
                         const profit = order.totalPrice - cost;
                         const margin = order.totalPrice > 0 ? (profit / order.totalPrice) * 100 : 0;
                         return (
@@ -204,7 +209,8 @@ export default function FinancePage() {
                               {order.shippingAddress.firstName} {order.shippingAddress.lastName}
                             </td>
                             <td className="py-3.5 text-right font-bold text-[#f5f5f0]">{formatPrice(order.totalPrice)}</td>
-                            <td className="py-3.5 text-right text-[var(--muted)]">{formatPrice(cost)}</td>
+                            <td className="py-3.5 text-right text-[var(--muted)]">{formatPrice(prodCost)}</td>
+                            <td className="py-3.5 text-right text-[var(--muted)]/80">{formatPrice(shipCost)}</td>
                             <td className="py-3.5 text-right text-[var(--primary)] font-bold">{formatPrice(profit)}</td>
                             <td className="py-3.5 text-right text-blue-400 font-semibold">{margin.toFixed(1)}%</td>
                           </tr>
