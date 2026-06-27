@@ -5,13 +5,16 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ---
 
 ## 📋 Estado general del proyecto
-
-*   **Porcentaje aproximado completado:** 100%
-*   **Última actualización:** 27/06/2026 13:45
+ 
+*   **Porcentaje aproximado completado:** 98% (🟡 En progreso)
+*   **Última actualización:** 27/06/2026 14:25
 *   **Próximos objetivos:**
-    1. Desarrollar la monitorización activa y Health Checks en tiempo real (Fase 4).
-    2. Registrar y configurar los Webhooks de producción de PayPal y Printful.
-    3. Integrar servicio de envío de correos transaccionales (por ejemplo, Resend o SendGrid).
+    1. Registrar y configurar los Webhooks de producción de PayPal y Printful.
+    2. Integrar servicio de envío de correos transaccionales automáticos (Resend / SendGrid).
+    3. Habilitar autenticación de doble factor (2FA/TOTP) real en el panel.
+    4. Realizar auditoría legal y de políticas RGPD/LSSI.
+    5. Implementar suite de pruebas end-to-end completas.
+    6. Configurar copias de seguridad (Backups) automatizadas para la base de datos de Neon y monitorización de errores (Sentry).
 
 ---
 
@@ -452,10 +455,12 @@ Tareas actualizadas:
 ---
 
 ## ✅ Checklist antes del lanzamiento
-
-- [ ] **Variables de entorno**: Configurar credenciales productivas reales de PayPal y Printful en el panel de Vercel.
-- [ ] **Webhook Registros**: Registrar la URL pública productiva HTTPS del webhook tanto en el panel developer de PayPal como en el de Printful.
-- [ ] **Base de datos productiva**: Configurar la conexión SQL (PostgreSQL/Supabase) en lugar de usar almacenamiento local JSON.
-- [ ] **SEO & Metadata**: Completar el mapeo de metadatos SEO en español en todas las páginas.
-- [ ] **Políticas legales**: Revisar y adaptar el texto de aviso legal, privacidad y política de cookies a la normativa española (RGPD/LSSI).
-- [ ] **Testing de cobro real**: Realizar una compra real de un importe mínimo en producción para verificar el cobro e integración extremo a extremo antes de habilitar la web al público.
+ 
+- [ ] **PayPal Sandbox & Webhooks**: Validar el entorno completo en Sandbox con compras de prueba y registrar los webhooks automáticos de PayPal.
+- [ ] **PayPal Producción**: Configurar credenciales productivas reales y apuntar el endpoint a producción.
+- [ ] **Emails automáticos**: Integrar servicio transaccional para notificar confirmaciones de pago y códigos de tracking al comprador.
+- [ ] **2FA Real**: Implementar la capa de visualización e inicio de sesión de dos factores (TOTP) usando los campos ya preparados en la base de datos.
+- [ ] **Auditoría legal**: Revisar y adaptar el texto de aviso legal, privacidad y política de cookies a la normativa española (RGPD/LSSI).
+- [ ] **Pruebas end-to-end**: Realizar simulaciones completas de pedidos de extremo a extremo.
+- [ ] **Backups de Neon**: Configurar programaciones periódicas de copias de seguridad de la base de datos relacional.
+- [ ] **Monitorización de errores**: Integrar herramientas de logging y reporte de incidencias en producción (ej. Sentry).
