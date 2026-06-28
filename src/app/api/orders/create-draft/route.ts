@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { products } from '@/lib/products';
+import { validateDiscountCode, recordDiscountRedemption } from '@/lib/discounts';
+import { dispatchEvent } from '@/lib/events/dispatcher';
 
 // Resolver coste de producción unitario estimado según la categoría
 function getProductionCost(category: string): number {
@@ -20,7 +22,7 @@ function getProductionCost(category: string): number {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { shippingAddress, items, discount } = body;
+    const { shippingAddress, items, discountCode } = body;
 
     // 1. Validaciones básicas
     if (!shippingAddress) {
@@ -35,26 +37,65 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Faltan campos requeridos en la dirección de envío.' }, { status: 400 });
     }
 
-    // 2. Procesamiento y validación de artículos desde el Backend
-    const validatedItems: any[] = [];
-    let calculatedSubtotal = 0;
-    let calculatedTotalCost = 0;
+     // 2. Procesamiento y validación de artículos desde el Backend
+     const validatedItems: any[] = [];
+     let calculatedSubtotal = 0;
+     let calculatedTotalCost = 0;
+ 
+     for (const item of items) {
+       // Buscar el producto en la tabla Product de Neon
+       let catalogProduct = null;
+       if (item.productId) {
+         catalogProduct = await db.product.findUnique({
+           where: { id: item.productId }
+         });
+       }
+       if (!catalogProduct && item.slug) {
+         catalogProduct = await db.product.findUnique({
+           where: { slug: item.slug }
+         });
+       }
+ 
+       if (!catalogProduct) {
+         return NextResponse.json(
+           { error: `El producto con ID/Slug "${item.productId || item.slug}" no existe en el catálogo.` },
+           { status: 400 }
+         );
+       }
 
-    for (const item of items) {
-      // Buscar el producto en el catálogo por ID o Slug para validar
-      const catalogProduct = products.find(
-        (p) => p.id === item.productId || p.slug === item.slug
-      );
+       // Validar que el Drop esté activo (LIVE)
+       if (catalogProduct.dropId) {
+         const drop = await db.drop.findUnique({ where: { id: catalogProduct.dropId } });
+         if (drop && drop.status !== 'LIVE') {
+           return NextResponse.json(
+             { error: `Lo sentimos, la colección "${drop.name}" no está activa actualmente.` },
+             { status: 400 }
+           );
+         }
+       }
 
-      if (!catalogProduct) {
-        return NextResponse.json(
-          { error: `El producto con ID/Slug "${item.productId || item.slug}" no existe en el catálogo.` },
-          { status: 400 }
-        );
-      }
+       // Validar cantidad
+       const quantity = Math.max(1, parseInt(item.qty || item.quantity || 1, 10));
 
-      // Validar cantidad
-      const quantity = Math.max(1, parseInt(item.qty || item.quantity || 1, 10));
+       // Validar stock virtual
+       if (catalogProduct.colorVariants) {
+         const colorVariants = catalogProduct.colorVariants as any[];
+         const colorNormalized = (item.color || 'Default').toLowerCase().replace(/\s+/g, '-');
+         const selectedColorGroup = colorVariants.find(
+           (cv) => cv.id === colorNormalized || cv.name.toLowerCase() === (item.color || '').toLowerCase()
+         );
+         const selectedSizeObj = selectedColorGroup?.sizes?.find(
+           (sz: any) => sz.size.toUpperCase() === (item.size || 'M').toUpperCase()
+         );
+         if (selectedSizeObj && selectedSizeObj.virtualStock !== undefined) {
+           if (selectedSizeObj.virtualStock < quantity) {
+             return NextResponse.json(
+               { error: `Lo sentimos, no hay suficiente stock disponible para ${catalogProduct.name} - ${item.size} (${item.color}). Stock disponible: ${selectedSizeObj.virtualStock} uds.` },
+               { status: 400 }
+             );
+           }
+         }
+       }
 
       // Usar precios reales del backend
       const price = catalogProduct.priceEUR;
@@ -69,9 +110,17 @@ export async function POST(req: Request) {
 
       // Buscar mockup correspondiente en el color si existe
       let mockupUrl = item.mockupUrl || null;
-      if (!mockupUrl && catalogProduct.mockups) {
-        const matchingMockup = catalogProduct.mockups.find((m) => m.enabled);
-        if (matchingMockup) mockupUrl = matchingMockup.url;
+      if (!mockupUrl && catalogProduct.colorVariants) {
+        const colorVariants = (catalogProduct.colorVariants as any[]) || [];
+        const colorNormalized = (item.color || 'Default').toLowerCase().replace(/\s+/g, '-');
+        const selectedColorGroup = colorVariants.find(
+          (cv) => cv.id === colorNormalized || cv.name.toLowerCase() === (item.color || '').toLowerCase()
+        ) || colorVariants[0];
+
+        if (selectedColorGroup && selectedColorGroup.mockups && selectedColorGroup.mockups.length > 0) {
+          const matchingMockup = selectedColorGroup.mockups.find((m: any) => m.enabled) || selectedColorGroup.mockups[0];
+          if (matchingMockup) mockupUrl = matchingMockup.url;
+        }
       }
 
       validatedItems.push({
@@ -87,13 +136,30 @@ export async function POST(req: Request) {
         total: lineTotal,
         costPrice,
         mockupUrl,
+        dropId: catalogProduct.dropId,
       });
     }
 
-    // Calcular descuento, tasas e importes finales
-    const discountVal = discount || 0;
-    const shippingPrice = 0.0; // Envío gratuito
+    // Validar y aplicar el descuento si se proporciona discountCode
+    let discountVal = 0;
+    let dbDiscountId: string | null = null;
+    let dbDiscountCode: string | null = null;
+    let shippingPrice = 0.0; // Envío gratuito por defecto
     const taxPrice = 0.0;
+
+    if (discountCode) {
+      const validation = await validateDiscountCode(discountCode, email, validatedItems);
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
+      }
+      discountVal = validation.discountAmount || 0;
+      dbDiscountId = validation.discountId || null;
+      dbDiscountCode = validation.code || null;
+      if (validation.freeShipping) {
+        shippingPrice = 0.0;
+      }
+    }
+
     const finalTotal = Math.max(0, calculatedSubtotal + shippingPrice + taxPrice - discountVal);
 
     // Calcular coste de envío estimado que cobrará Printful
@@ -111,6 +177,17 @@ export async function POST(req: Request) {
     const count = await db.order.count();
     const orderNumber = `AA-${10001 + count}`;
 
+    const isTestOrder = !!body.isTestOrder;
+
+    if (isTestOrder) {
+      if (process.env.NODE_ENV === 'production' || process.env.ENABLE_TEST_PURCHASES !== 'true') {
+        return NextResponse.json(
+          { error: 'Acceso denegado.', message: 'Las compras de prueba están desactivadas en este entorno.' },
+          { status: 403 }
+        );
+      }
+    }
+
     // 4. Crear el pedido relacional en Neon mediante transacción
     const createdOrder = await db.$transaction(async (tx) => {
       // Crear cabecera de pedido
@@ -127,9 +204,9 @@ export async function POST(req: Request) {
           state: province,
           postalCode,
           country,
-          orderStatus: 'draft',
-          paymentStatus: 'pago_pendiente',
-          paymentMethod: 'paypal',
+          orderStatus: isTestOrder ? 'paid' : 'draft',
+          paymentStatus: isTestOrder ? 'pagado' : 'pago_pendiente',
+          paymentMethod: isTestOrder ? 'oms_test' : 'paypal',
           subtotal: calculatedSubtotal,
           shipping: shippingPrice,
           tax: taxPrice,
@@ -141,7 +218,9 @@ export async function POST(req: Request) {
           netProfit: netProfit,
           createdAt: new Date(),
           updatedAt: new Date(),
-          internalNotes: null,
+          internalNotes: isTestOrder ? 'Pedido de prueba creado desde OMS.' : null,
+          discountId: dbDiscountId,
+          discountCode: dbDiscountCode,
         },
       });
 
@@ -187,6 +266,20 @@ export async function POST(req: Request) {
 
       return newOrder;
     });
+
+    if (isTestOrder && dbDiscountId) {
+      const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+      await recordDiscountRedemption(createdOrder.id, dbDiscountId, clientIp);
+    }
+
+    // Disparar eventos de automatización de forma asíncrona sin bloquear la respuesta del cliente
+    dispatchEvent('ORDER_CREATED', { orderId: createdOrder.id })
+      .then(() => {
+        if (isTestOrder) {
+          return dispatchEvent('PAYMENT_CONFIRMED', { orderId: createdOrder.id });
+        }
+      })
+      .catch(err => console.error('❌ [Event Engine Dispatcher] Error al disparar eventos en create-draft:', err));
 
     return NextResponse.json({
       success: true,

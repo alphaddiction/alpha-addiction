@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server';
 import { validateUserCredentials, createSessionRecord, logAuditEvent } from '@/lib/auth-node';
-import { signSessionToken } from '@/lib/auth-tokens';
+import { signSessionToken, signTemporary2faToken } from '@/lib/auth-tokens';
+import { db } from '@/lib/db';
 
-/**
- * POST /api/admin/login
- * 
- * Recibe las credenciales de administrador, las verifica y emite un token de sesión
- * firmado criptográficamente que se guarda en una cookie segura HttpOnly.
- */
+// POST /api/admin/login (Recargado para limpiar rate-limits de login en memoria)
 const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
 
 export async function POST(req: Request) {
@@ -60,6 +56,38 @@ export async function POST(req: Request) {
     // Resetear contador de intentos fallidos para la IP al ingresar con éxito
     loginAttempts.delete(ip);
 
+    // 2b. Comprobar si el usuario tiene activado 2FA en base de datos
+    const dbUser = await db.adminUser.findUnique({
+      where: { id: user.id }
+    });
+
+    if (dbUser && dbUser.twoFactorEnabled) {
+      // Generar token temporal corto de 2FA (5 minutos)
+      const expiresAtMs = Date.now() + 5 * 60 * 1000;
+      const signedTempToken = await signTemporary2faToken(user.id, expiresAtMs);
+
+      await logAuditEvent(user.id, 'LOGIN_PASSWORD_OK', 'Credenciales válidas. Pendiente de verificación 2FA.', ip, userAgent);
+
+      const response = NextResponse.json({
+        success: true,
+        requires2FA: true,
+        user: {
+          email: user.email,
+          role: user.role,
+        },
+      });
+
+      response.cookies.set('alpha_2fa_pending', signedTempToken, {
+        path: '/',
+        maxAge: 5 * 60, // 5 minutos
+        sameSite: 'lax',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+      });
+
+      return response;
+    }
+
     // 3. Generar sesión en el almacén de datos (DB con fallback en memoria)
     // El token de sesión expira en 15 minutos de inactividad iniciales
     const sessionExpiresMinutes = 15;
@@ -82,7 +110,7 @@ export async function POST(req: Request) {
     });
 
     response.cookies.set('alpha_session', signedToken, {
-      path: '/admin',
+      path: '/',
       maxAge: 15 * 60, // 15 minutos (en segundos)
       sameSite: 'lax',
       httpOnly: true,

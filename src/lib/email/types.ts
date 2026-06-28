@@ -6,7 +6,13 @@ export type EmailType =
   | 'DELIVERED'
   | 'REFUNDED'
   | 'DISPUTE'
-  | 'CANCELED';
+  | 'CANCELED'
+  | 'WAITLIST_CONFIRMATION'
+  | 'DROP_LIVE_NOTIFICATION'
+  | 'SUPPORT_TICKET_RECEIVED'
+  | 'SUPPORT_TICKET_REPLIED'
+  | 'SUPPORT_TICKET_CLOSED'
+  | 'PORTAL_OTP';
 
 export interface EmailPayload {
   to: string;

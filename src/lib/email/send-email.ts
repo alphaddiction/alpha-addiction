@@ -3,6 +3,7 @@ import { sendViaResend } from './resend';
 import { EmailType } from './types';
 import * as templates from './templates';
 import { isValidEmail } from './helpers';
+import { generateSecureOrderToken } from '../portal-auth';
 
 interface SendEmailResult {
   success: boolean;
@@ -68,6 +69,14 @@ async function sendTransactionalEmail(
       return { success: false, error: 'Email inválido', emailLogId: log.id };
     }
 
+    // Generar o recuperar token seguro de 30 días para enlace rápido
+    let secureToken = '';
+    try {
+      secureToken = await generateSecureOrderToken(order.orderNumber, order.email);
+    } catch (tokErr) {
+      console.error('⚠️ [Email Service] Error al generar active token para email:', tokErr);
+    }
+
     // Mapear al formato esperado por las plantillas
     const orderInfo = {
       orderNumber: order.orderNumber,
@@ -83,6 +92,7 @@ async function sendTransactionalEmail(
       total: order.total,
       trackingNumber: order.trackingNumber,
       trackingUrl: order.trackingUrl,
+      secureToken, // Inyectar token seguro
       items: order.items.map((i) => ({
         name: i.name,
         size: i.size,
@@ -236,3 +246,232 @@ export async function sendDispute(orderId: string): Promise<SendEmailResult> {
     templates.getDisputeEmail
   );
 }
+
+/**
+ * 9. Envía el email de confirmación de registro en la lista de espera de un Drop
+ */
+export async function sendWaitlistConfirmation(email: string, dropName: string): Promise<any> {
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+      return { success: false, error: 'Email inválido' };
+    }
+
+    const html = templates.getWaitlistConfirmationEmail(dropName);
+    const subject = `Te avisaremos cuando salga ${dropName}`;
+    const result = await sendViaResend(cleanEmail, subject, html);
+    
+    // Registrar el envío en EmailLog sin asociarlo a un orderId (ya que es para la waitlist)
+    try {
+      await db.emailLog.create({
+        data: {
+          recipient: cleanEmail,
+          subject,
+          emailType: 'WAITLIST_CONFIRMATION',
+          status: result.success ? 'success' : 'failed',
+          errorMessage: result.error || null,
+        }
+      });
+    } catch (dbErr) {
+      console.error('Error logging waitlist email to db:', dbErr);
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('Error sending waitlist confirmation email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 10. Envía el correo "El drop ya está activo" a los inscritos en la waitlist
+ */
+export async function sendDropLiveNotification(email: string, dropName: string, dropSlug: string): Promise<any> {
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+      return { success: false, error: 'Email inválido' };
+    }
+
+    const html = templates.getDropLiveNotificationEmail(dropName, dropSlug);
+    const subject = `🔥 ¡Ya está activo: ${dropName}!`;
+    const result = await sendViaResend(cleanEmail, subject, html);
+    
+    try {
+      await db.emailLog.create({
+        data: {
+          recipient: cleanEmail,
+          subject,
+          emailType: 'DROP_LIVE_NOTIFICATION',
+          status: result.success ? 'success' : 'failed',
+          errorMessage: result.error || null,
+        }
+      });
+    } catch (dbErr) {
+      console.error('Error logging drop live waitlist email to db:', dbErr);
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('Error sending drop live notification email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 11. Envía el email de confirmación de ticket recibido
+ */
+export async function sendSupportTicketReceived(ticketId: string): Promise<SendEmailResult> {
+  try {
+    const ticket = await db.supportTicket.findUnique({
+      where: { id: ticketId }
+    });
+    if (!ticket) {
+      return { success: false, error: 'Ticket no encontrado' };
+    }
+
+    // Comprobar si ya se envió este tipo de email con éxito para este ticket
+    const alreadySent = await db.emailLog.findFirst({
+      where: {
+        recipient: ticket.customerEmail,
+        subject: { contains: ticket.ticketNumber },
+        emailType: 'SUPPORT_TICKET_RECEIVED',
+        status: 'success',
+      },
+    });
+    if (alreadySent) {
+      return { success: true, duplicated: true };
+    }
+
+    const html = templates.getTicketReceivedEmail(ticket.ticketNumber, ticket.customerName, ticket.subject, ticket.category);
+    const subject = `Hemos recibido tu solicitud ${ticket.ticketNumber}`;
+    const resendResult = await sendViaResend(ticket.customerEmail, subject, html);
+
+    const log = await db.emailLog.create({
+      data: {
+        recipient: ticket.customerEmail,
+        subject,
+        emailType: 'SUPPORT_TICKET_RECEIVED',
+        status: resendResult.success ? 'success' : 'failed',
+        errorMessage: resendResult.error || null,
+        orderId: ticket.orderId || null,
+      },
+    });
+
+    return { success: resendResult.success, emailLogId: log.id, error: resendResult.error };
+  } catch (error: any) {
+    console.error('Error sending support ticket received email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 12. Envía la respuesta del equipo al cliente
+ */
+export async function sendSupportTicketReplied(ticketId: string, replyBody: string): Promise<SendEmailResult> {
+  try {
+    const ticket = await db.supportTicket.findUnique({
+      where: { id: ticketId }
+    });
+    if (!ticket) {
+      return { success: false, error: 'Ticket no encontrado' };
+    }
+
+    const html = templates.getTicketRepliedEmail(ticket.ticketNumber, ticket.customerName, replyBody, ticket.subject);
+    const subject = `Respuesta a tu solicitud ${ticket.ticketNumber}`;
+    const resendResult = await sendViaResend(ticket.customerEmail, subject, html);
+
+    const log = await db.emailLog.create({
+      data: {
+        recipient: ticket.customerEmail,
+        subject,
+        emailType: 'SUPPORT_TICKET_REPLIED',
+        status: resendResult.success ? 'success' : 'failed',
+        errorMessage: resendResult.error || null,
+        orderId: ticket.orderId || null,
+      },
+    });
+
+    return { success: resendResult.success, emailLogId: log.id, error: resendResult.error };
+  } catch (error: any) {
+    console.error('Error sending support ticket replied email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 13. Envía el email de ticket cerrado
+ */
+export async function sendSupportTicketClosed(ticketId: string): Promise<SendEmailResult> {
+  try {
+    const ticket = await db.supportTicket.findUnique({
+      where: { id: ticketId }
+    });
+    if (!ticket) {
+      return { success: false, error: 'Ticket no encontrado' };
+    }
+
+    // Comprobar si ya se envió este tipo de email con éxito para este ticket
+    const alreadySent = await db.emailLog.findFirst({
+      where: {
+        recipient: ticket.customerEmail,
+        subject: { contains: ticket.ticketNumber },
+        emailType: 'SUPPORT_TICKET_CLOSED',
+        status: 'success',
+      },
+    });
+    if (alreadySent) {
+      return { success: true, duplicated: true };
+    }
+
+    const html = templates.getTicketClosedEmail(ticket.ticketNumber, ticket.customerName, ticket.subject);
+    const subject = `Solicitud de soporte resuelta ${ticket.ticketNumber}`;
+    const resendResult = await sendViaResend(ticket.customerEmail, subject, html);
+
+    const log = await db.emailLog.create({
+      data: {
+        recipient: ticket.customerEmail,
+        subject,
+        emailType: 'SUPPORT_TICKET_CLOSED',
+        status: resendResult.success ? 'success' : 'failed',
+        errorMessage: resendResult.error || null,
+        orderId: ticket.orderId || null,
+      },
+    });
+
+    return { success: resendResult.success, emailLogId: log.id, error: resendResult.error };
+  } catch (error: any) {
+    console.error('Error sending support ticket closed email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 14. Envía el email con el código OTP temporal para acceso al portal
+ */
+export async function sendPortalOtpEmail(email: string, code: string): Promise<SendEmailResult> {
+  try {
+    const html = templates.getPortalOtpEmail(code);
+    const subject = `Tu código de acceso temporal a Alpha Addiction`;
+    const resendResult = await sendViaResend(email, subject, html);
+
+    const log = await db.emailLog.create({
+      data: {
+        recipient: email,
+        subject,
+        emailType: 'PORTAL_OTP',
+        status: resendResult.success ? 'success' : 'failed',
+        errorMessage: resendResult.error || null,
+        orderId: null,
+      },
+    });
+
+    return { success: resendResult.success, emailLogId: log.id, error: resendResult.error };
+  } catch (error: any) {
+    console.error('Error sending portal OTP email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+
+

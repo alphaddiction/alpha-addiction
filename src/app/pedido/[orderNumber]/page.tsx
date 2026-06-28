@@ -1,9 +1,12 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { db } from '@/lib/db';
 import { verifyLookupToken, maskEmail, maskPhone, maskAddress } from '@/lib/lookup-auth';
+import { verifyPortalSessionToken, verifySecureOrderToken } from '@/lib/portal-auth';
 import { formatPrice, formatDate } from '@/lib/email/helpers';
+import OrderActionsClient from '@/components/pedido/order-actions-client';
 import {
   Package,
   Calendar,
@@ -13,43 +16,44 @@ import {
   ArrowLeft,
   CheckCircle2,
   Clock,
-  Layers,
+  ShieldCheck,
   Check,
 } from 'lucide-react';
+
+import type { Metadata } from 'next';
 
 interface Props {
   params: Promise<{
     orderNumber: string;
   }>;
+  searchParams: Promise<{
+    token?: string;
+  }>;
 }
 
-export default async function OrderLookupDetailPage({ params }: Props) {
+export async function generateMetadata({ params }: { params: Promise<{ orderNumber: string }> }): Promise<Metadata> {
   const { orderNumber } = await params;
+  return {
+    title: `Pedido #${orderNumber.trim().toUpperCase()} | Alpha Addiction`,
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
+
+export default async function OrderLookupDetailPage({ params, searchParams }: Props) {
+  const { orderNumber } = await params;
+  const { token: tokenParam } = await searchParams;
   const upperOrderNumber = orderNumber.trim().toUpperCase();
 
-  // 1. Obtener cookie de sesión de consulta
-  const cookieStore = await cookies();
-  const token = cookieStore.get(`order_lookup_session_${upperOrderNumber}`)?.value;
-
-  // 2. Validar token firmado y vigencia
-  if (!token) {
-    console.warn(`🔒 [Lookup Detail] Acceso bloqueado a pedido ${upperOrderNumber}: Cookie de sesión ausente.`);
-    redirect('/pedido?error=session_required');
-  }
-
-  const isValid = await verifyLookupToken(token, upperOrderNumber);
-  if (!isValid) {
-    console.warn(`🔒 [Lookup Detail] Acceso bloqueado a pedido ${upperOrderNumber}: Firma de token inválida o expirada.`);
-    redirect('/pedido?error=session_invalid');
-  }
-
-  // 3. Recuperar pedido de la base de datos de Neon
+  // 1. Recuperar pedido de la base de datos de Neon
   const order = await db.order.findUnique({
     where: { orderNumber: upperOrderNumber },
     include: {
       items: true,
       events: {
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'asc' },
       },
     },
   });
@@ -59,10 +63,68 @@ export default async function OrderLookupDetailPage({ params }: Props) {
     redirect('/pedido?error=not_found');
   }
 
-  // 4. Enmascarar datos del cliente
-  const maskedEmailVal = maskEmail(order.email || '');
-  const maskedPhoneVal = maskPhone(order.phone || '');
-  const maskedAddressVal = maskAddress(order.addressLine1 || '');
+  // 2. Control de Autenticación
+  const cookieStore = await cookies();
+  let isAuthorized = false;
+  let authTypeUsed = 'CREDENTIALS';
+
+  // Opción A: Token firmado para consulta individual en Cookie
+  const orderCookieToken = cookieStore.get(`order_lookup_session_${upperOrderNumber}`)?.value;
+  if (orderCookieToken) {
+    const isValidLookup = await verifyLookupToken(orderCookieToken, upperOrderNumber);
+    if (isValidLookup) {
+      isAuthorized = true;
+      authTypeUsed = 'CREDENTIALS';
+    }
+  }
+
+  // Opción B: Sesión activa del portal general de clientes
+  if (!isAuthorized) {
+    const portalSession = cookieStore.get('client_portal_session')?.value;
+    if (portalSession) {
+      const portalEmail = await verifyPortalSessionToken(portalSession);
+      if (portalEmail && portalEmail.toLowerCase() === order.email.toLowerCase()) {
+        isAuthorized = true;
+        authTypeUsed = 'OTP';
+      }
+    }
+  }
+
+  // Opción C: Acceso mediante enlace seguro con Token en Query Param (30 días)
+  if (!isAuthorized && tokenParam) {
+    const tokenEmail = await verifySecureOrderToken(tokenParam, upperOrderNumber);
+    if (tokenEmail && tokenEmail.toLowerCase() === order.email.toLowerCase()) {
+      isAuthorized = true;
+      authTypeUsed = 'TOKEN';
+    }
+  }
+
+  // Si no está autorizado, denegar acceso
+  if (!isAuthorized) {
+    console.warn(`🔒 [Lookup Detail] Acceso bloqueado a pedido ${upperOrderNumber}: Credenciales insuficientes.`);
+    redirect('/pedido?error=session_required');
+  }
+
+  // 3. Registrar acceso en la base de datos para auditoría
+  const headerList = await headers();
+  const reqIp = headerList.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                headerList.get('x-real-ip') || 
+                '127.0.0.1';
+  const reqUserAgent = headerList.get('user-agent') || 'Unknown';
+
+  try {
+    await db.customerAccessLog.create({
+      data: {
+        email: order.email,
+        orderNumber: order.orderNumber,
+        accessType: authTypeUsed,
+        ipAddress: reqIp,
+        userAgent: reqUserAgent
+      }
+    });
+  } catch (logErr) {
+    console.error('⚠️ [Lookup Detail] Error al registrar el log de acceso:', logErr);
+  }
 
   // Mapeo de estados legibles para el cliente
   const clientStatusLabels: Record<string, { label: string; color: string; desc: string }> = {
@@ -82,17 +144,58 @@ export default async function OrderLookupDetailPage({ params }: Props) {
     desc: 'Tu pedido se encuentra en proceso.',
   };
 
-  // Filtrar el historial de eventos para mostrar solo los útiles para el cliente
-  const clientEvents = order.events.filter(
-    (e) =>
-      e.type === 'CREATED' ||
-      e.type === 'PAYMENT_CONFIRMED' ||
-      e.type === 'FULFILLMENT_SUBMITTED' ||
-      e.type === 'FULFILLMENT_IN_PRODUCTION' ||
-      e.type === 'FULFILLMENT_SHIPPED' ||
-      e.type === 'DELIVERED' ||
-      e.type === 'CANCELED'
-  );
+  // Explicación inteligente basada en el estado actual
+  let statusExplanation = '';
+  if (order.orderStatus === 'printful_production' || order.orderStatus === 'printful_submitted') {
+    statusExplanation = 'Tu prenda se está fabricando bajo demanda.';
+  } else if (order.orderStatus === 'shipped') {
+    statusExplanation = 'Tu pedido ya está de camino.';
+  } else if (order.orderStatus === 'delivered') {
+    statusExplanation = 'Esperamos que disfrutes tu compra.';
+  }
+
+  // 4. Enmascarar datos del cliente
+  const maskedEmailVal = maskEmail(order.email || '');
+  const maskedPhoneVal = order.phone ? maskPhone(order.phone) : '—';
+  const maskedAddressVal = maskAddress(order.addressLine1 || '');
+
+  // 5. Construcción del Timeline elegante de 6 pasos
+  const steps = [
+    { type: 'CREATED', label: 'Pedido recibido' },
+    { type: 'PAYMENT_CONFIRMED', label: 'Pago confirmado' },
+    { type: 'FULFILLMENT_SUBMITTED', label: 'Enviado a Printful' },
+    { type: 'FULFILLMENT_IN_PRODUCTION', label: 'En producción' },
+    { type: 'FULFILLMENT_SHIPPED', label: 'Enviado' },
+    { type: 'DELIVERED', label: 'Entregado' }
+  ];
+
+  // Mapear eventos reales de Neon para asociar fechas a cada paso
+  const timelineSteps = steps.map((step) => {
+    // Buscar si existe el evento en el historial del pedido
+    const realEvent = order.events.find(
+      e => e.type === step.type || 
+           (step.type === 'CREATED' && e.type === 'CREATED') || 
+           (step.type === 'PAYMENT_CONFIRMED' && e.type === 'PAYMENT_CONFIRMED')
+    );
+
+    // Determinar si el paso ya se completó basándonos en el estado del pedido
+    let completed = !!realEvent;
+    
+    // Validaciones de fallback en caso de estados avanzados sin eventos explícitos guardados
+    if (step.type === 'CREATED') completed = true;
+    if (step.type === 'PAYMENT_CONFIRMED' && ['paid', 'printful_submitted', 'printful_production', 'shipped', 'delivered'].includes(order.orderStatus)) completed = true;
+    if (step.type === 'FULFILLMENT_SUBMITTED' && ['printful_submitted', 'printful_production', 'shipped', 'delivered'].includes(order.orderStatus)) completed = true;
+    if (step.type === 'FULFILLMENT_IN_PRODUCTION' && ['printful_production', 'shipped', 'delivered'].includes(order.orderStatus)) completed = true;
+    if (step.type === 'FULFILLMENT_SHIPPED' && ['shipped', 'delivered'].includes(order.orderStatus)) completed = true;
+    if (step.type === 'DELIVERED' && order.orderStatus === 'delivered') completed = true;
+
+    return {
+      label: step.label,
+      completed,
+      date: realEvent ? realEvent.createdAt : null,
+      message: realEvent ? realEvent.message : null
+    };
+  });
 
   return (
     <div className="min-h-screen bg-[#070707] text-[#f5f5f0] py-12 px-4 sm:px-6 lg:px-8 font-sans relative overflow-hidden">
@@ -100,16 +203,17 @@ export default async function OrderLookupDetailPage({ params }: Props) {
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[var(--primary)]/2 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="max-w-4xl mx-auto space-y-8 relative">
+        
         {/* Header de Navegación */}
         <div className="flex justify-between items-center border-b border-white/5 pb-5">
           <Link
             href="/pedido"
             className="text-xs uppercase tracking-widest text-[var(--muted)] hover:text-[#f5f5f0] flex items-center gap-1.5 transition-colors font-mono"
           >
-            <ArrowLeft className="w-4 h-4 text-[var(--primary)]" /> Volver a buscar
+            <ArrowLeft className="w-4 h-4 text-[var(--primary)]" /> Volver al portal
           </Link>
           <span className="text-[10px] font-mono text-[var(--muted)]">
-            Sesión válida por 30 minutos
+            Sesión segura de cliente
           </span>
         </div>
 
@@ -118,7 +222,7 @@ export default async function OrderLookupDetailPage({ params }: Props) {
           <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 pb-6 border-b border-white/5">
             <div>
               <span className="text-[10px] tracking-[0.25em] text-[var(--muted)] uppercase font-semibold block mb-1">
-                Estado del Pedido
+                Detalle de Pedido
               </span>
               <h2 className="text-2xl font-serif font-bold text-[#f5f5f0] tracking-wide">
                 PEDIDO #{order.orderNumber}
@@ -138,6 +242,11 @@ export default async function OrderLookupDetailPage({ params }: Props) {
               <p className="text-[10px] text-[var(--muted)] max-w-xs mt-2.5 leading-relaxed md:ml-auto">
                 {statusInfo.desc}
               </p>
+              {statusExplanation && (
+                <p className="text-[10px] text-[var(--primary)] font-bold tracking-wide mt-1.5 uppercase font-mono">
+                  {statusExplanation}
+                </p>
+              )}
             </div>
           </div>
 
@@ -157,28 +266,35 @@ export default async function OrderLookupDetailPage({ params }: Props) {
                 href={order.trackingUrl || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] uppercase tracking-widest transition-all"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] uppercase tracking-widest transition-all text-center"
               >
                 Seguir Envío
               </a>
             </div>
           )}
 
+          {/* PANELES DE ACCIÓN DE CLIENTE (Rebuy, Soporte Modal, Facturas, Devoluciones) */}
+          <OrderActionsClient order={{ id: order.id, orderNumber: order.orderNumber, email: order.email, items: order.items }} />
+
           {/* Desglose de Artículos */}
-          <div className="space-y-4">
+          <div className="space-y-4 pt-4">
             <h3 className="text-xs uppercase tracking-widest text-[var(--muted)] font-bold font-mono">
               Artículos en el pedido
             </h3>
-            <div className="border border-white/5 divide-y divide-white/5">
+            <div className="border border-white/5 divide-y divide-white/5 bg-white/[0.01]">
               {order.items.map((item) => (
                 <div key={item.id} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div className="flex gap-4">
                     {item.mockupUrl && (
-                      <img
-                        src={item.mockupUrl}
-                        alt={item.name}
-                        className="w-14 h-14 bg-white/[0.02] border border-white/5 shrink-0 object-cover"
-                      />
+                      <div className="w-14 h-14 relative shrink-0">
+                        <Image
+                          src={item.mockupUrl}
+                          alt={item.name}
+                          fill
+                          sizes="56px"
+                          className="bg-white/[0.02] border border-white/5 object-cover"
+                        />
+                      </div>
                     )}
                     <div>
                       <h4 className="text-sm font-serif font-bold text-[#f5f5f0]">{item.name}</h4>
@@ -221,6 +337,9 @@ export default async function OrderLookupDetailPage({ params }: Props) {
                   <span>Localidad:</span>
                   <span className="text-[#f5f5f0]">{order.city}, {order.postalCode}</span>
                 </div>
+                <div className="flex justify-between font-bold text-white/40">
+                  <span>Datos Adicionales:</span>
+                </div>
                 <div className="flex justify-between">
                   <span>Teléfono:</span>
                   <span className="text-[#f5f5f0]">{maskedPhoneVal}</span>
@@ -248,6 +367,12 @@ export default async function OrderLookupDetailPage({ params }: Props) {
                     <span>-{formatPrice(order.discount)}</span>
                   </div>
                 )}
+                {order.discountCode && (
+                  <div className="flex justify-between text-[10px] text-[var(--primary)] font-mono">
+                    <span>Cupón utilizado:</span>
+                    <span>{order.discountCode.toUpperCase()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-white/5 pt-3">
                   <span className="text-sm font-sans font-bold text-[#f5f5f0]">TOTAL PAGADO</span>
                   <span className="text-lg font-bold text-[var(--primary)]">
@@ -259,30 +384,45 @@ export default async function OrderLookupDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Historial simplificado de eventos */}
-        <div className="bg-[#111111]/90 border border-white/5 p-6 sm:p-8 space-y-4">
+        {/* TIMELINE ELEGANTE DE SEGUIMIENTO */}
+        <div className="bg-[#111111]/90 border border-white/5 p-6 sm:p-8 space-y-6">
           <h3 className="text-xs uppercase tracking-widest text-[var(--muted)] font-bold font-mono">
-            Historial de Seguimiento
+            Estado de Fabricación y Envío
           </h3>
+
           <div className="relative border-l border-white/10 pl-6 ml-3 space-y-6">
-            {clientEvents.length === 0 ? (
-              <p className="text-xs text-[var(--muted)] font-mono">No hay registros de seguimiento de fabricación disponibles.</p>
-            ) : (
-              clientEvents.map((evt) => (
-                <div key={evt.id} className="relative">
-                  {/* Icono de círculo del paso */}
-                  <span className="absolute -left-[31px] top-0.5 p-1 bg-[#070707] border border-white/10 rounded-full flex items-center justify-center">
-                    <Check className="w-2.5 h-2.5 text-[var(--primary)]" />
+            {timelineSteps.map((step, idx) => (
+              <div key={idx} className="relative">
+                {/* Icono de círculo del paso */}
+                <span className={`absolute -left-[31px] top-0.5 p-1 bg-[#070707] border rounded-full flex items-center justify-center ${
+                  step.completed ? 'border-[var(--primary)] text-[var(--primary)]' : 'border-white/10 text-white/20'
+                }`}>
+                  {step.completed ? (
+                    <Check className="w-2.5 h-2.5" />
+                  ) : (
+                    <span className="w-2.5 h-2.5 block bg-transparent" />
+                  )}
+                </span>
+                
+                {step.date ? (
+                  <span className="text-[9px] text-[var(--muted)] font-mono block">
+                    {new Date(step.date).toLocaleDateString()} {new Date(step.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
-                  <span className="text-[10px] text-[var(--muted)] font-mono block">
-                    {formatDate(evt.createdAt)}
+                ) : (
+                  <span className="text-[9px] text-white/20 font-mono block">Pendiente</span>
+                )}
+                
+                <span className={`text-xs font-semibold mt-0.5 block ${step.completed ? 'text-[#f5f5f0]' : 'text-white/30'}`}>
+                  {step.completed ? '✔' : '⬜'} {step.label}
+                </span>
+
+                {step.completed && step.message && (
+                  <span className="text-[10px] text-[var(--muted)] block mt-0.5">
+                    {step.message}
                   </span>
-                  <span className="text-xs text-[#f5f5f0] font-semibold mt-0.5 block">
-                    {evt.message}
-                  </span>
-                </div>
-              ))
-            )}
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </div>

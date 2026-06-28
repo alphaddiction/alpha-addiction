@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyPayPalWebhook } from '@/lib/paypal';
 import { PayPalWebhookEvent } from '@/types/paypal';
-import { sendOrderReceived, sendPaymentConfirmed, sendRefund, sendDispute } from '@/lib/email/send-email';
+import { dispatchEvent } from '@/lib/events/dispatcher';
+import { recordDiscountRedemption } from '@/lib/discounts';
 
 export async function POST(req: Request) {
   try {
@@ -161,16 +162,22 @@ export async function POST(req: Request) {
       data: updateData,
     });
 
-    // 6. Disparar los correos correspondientes asíncronamente según el tipo de evento procesado
+    // 5b. Registrar redención del cupón si aplica
+    if (order.discountId && event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+      const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+      await recordDiscountRedemption(order.id, order.discountId, clientIp);
+    }
+
+    // 6. Disparar los eventos de automatización correspondientes en el Event Engine de forma asíncrona
     if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
-      Promise.all([
-        sendOrderReceived(orderId),
-        sendPaymentConfirmed(orderId)
-      ]).catch(err => console.error('⚠️ [Email Trigger] Error al disparar correos de pago completado por webhook:', err));
+      dispatchEvent('PAYMENT_CONFIRMED', { orderId })
+        .catch(err => console.error('⚠️ [Event Engine] Error al despachar PAYMENT_CONFIRMED en webhook:', err));
     } else if (event.event_type === 'PAYMENT.CAPTURE.REFUNDED') {
-      sendRefund(orderId).catch(err => console.error('⚠️ [Email Trigger] Error al disparar correo de reembolso:', err));
+      dispatchEvent('ORDER_REFUNDED', { orderId })
+        .catch(err => console.error('⚠️ [Event Engine] Error al despachar ORDER_REFUNDED en webhook:', err));
     } else if (event.event_type === 'CUSTOMER.DISPUTE.CREATED') {
-      sendDispute(orderId).catch(err => console.error('⚠️ [Email Trigger] Error al disparar correo de disputa:', err));
+      dispatchEvent('CUSTOMER_DISPUTE', { orderId })
+        .catch(err => console.error('⚠️ [Event Engine] Error al despachar CUSTOMER_DISPUTE en webhook:', err));
     }
 
     return NextResponse.json({

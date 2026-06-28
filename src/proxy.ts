@@ -68,11 +68,11 @@ export async function proxy(request: NextRequest) {
       // Token inválido, alterado o expirado por inactividad
       if (!isLoginPage) {
         const response = NextResponse.redirect(new URL('/admin/login', request.url));
-        response.cookies.set('alpha_session', '', { path: '/admin', maxAge: 0 });
+        response.cookies.set('alpha_session', '', { path: '/', maxAge: 0 });
         return applySecurityHeaders(response);
       }
       const response = NextResponse.next();
-      response.cookies.set('alpha_session', '', { path: '/admin', maxAge: 0 });
+      response.cookies.set('alpha_session', '', { path: '/', maxAge: 0 });
       return applySecurityHeaders(response);
     }
 
@@ -90,7 +90,7 @@ export async function proxy(request: NextRequest) {
     const renewedToken = await signSessionToken(verified.sessionId, newExpiresAt);
 
     response.cookies.set('alpha_session', renewedToken, {
-      path: '/admin',
+      path: '/',
       maxAge: 15 * 60, // 15 minutos en segundos
       sameSite: 'lax',
       httpOnly: true,

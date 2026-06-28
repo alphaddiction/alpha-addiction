@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { capturePayPalOrder } from '@/lib/paypal';
-import { sendOrderReceived, sendPaymentConfirmed } from '@/lib/email/send-email';
+import { dispatchEvent } from '@/lib/events/dispatcher';
+import { decrementVirtualStock } from '@/lib/products';
+import { recordDiscountRedemption } from '@/lib/discounts';
 
 export async function POST(req: Request) {
   try {
@@ -29,9 +31,10 @@ export async function POST(req: Request) {
       console.warn('⚠️ No capture ID returned from PayPal capture result.');
     }
 
-    // 2. Buscar el pedido interno en Neon PostgreSQL por el paypalOrderId único
+    // 2. Buscar el pedido interno en Neon PostgreSQL por el paypalOrderId único (e incluir items)
     const order = await db.order.findUnique({
       where: { paypalOrderId },
+      include: { items: true },
     });
 
     if (!order) {
@@ -62,11 +65,28 @@ export async function POST(req: Request) {
 
     console.log(`✅ Order ${order.orderNumber} marked as PAID in Neon PostgreSQL.`);
 
-    // 4. Enviar correos transaccionales de forma asíncrona sin bloquear la respuesta del servidor
-    Promise.all([
-      sendOrderReceived(order.id),
-      sendPaymentConfirmed(order.id)
-    ]).catch(err => console.error('⚠️ [Email Trigger] Error al disparar correos de pago confirmado:', err));
+    // 3a. Registrar redención del cupón si existe
+    if (order.discountId) {
+      const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+      await recordDiscountRedemption(order.id, order.discountId, clientIp);
+    }
+
+    // 3b. Reducir stock virtual de las variantes correspondientes
+    if (order.items && Array.isArray(order.items)) {
+      for (const item of (order.items as any[])) {
+        if (item.productId && item.sku) {
+          try {
+            await decrementVirtualStock(item.productId, item.sku, item.quantity);
+          } catch (stErr) {
+            console.error(`⚠️ [Stock Decrement] Fallo al reducir stock para ${item.productId} SKU ${item.sku}:`, stErr);
+          }
+        }
+      }
+    }
+
+    // 4. Disparar evento de pago confirmado en el Event Engine de forma asíncrona sin bloquear la respuesta
+    dispatchEvent('PAYMENT_CONFIRMED', { orderId: order.id })
+      .catch(err => console.error('⚠️ [Event Engine] Error al despachar PAYMENT_CONFIRMED en capture-order:', err));
 
     return NextResponse.json({
       success: true,

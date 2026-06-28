@@ -12,6 +12,7 @@ interface PayPalButtonProps {
   onValidate: () => boolean;
   onSuccess: (localOrderId: string) => void;
   onError: (errorMessage: string) => void;
+  discountCode?: string;
 }
 
 export default function PayPalButton({
@@ -20,6 +21,7 @@ export default function PayPalButton({
   onValidate,
   onSuccess,
   onError,
+  discountCode,
 }: PayPalButtonProps) {
   const [clientId, setClientId] = useState<string | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(true);
@@ -110,6 +112,7 @@ export default function PayPalButton({
                 body: JSON.stringify({
                   shippingAddress,
                   items,
+                  discountCode,
                 }),
               });
 

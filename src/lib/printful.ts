@@ -114,13 +114,14 @@ export async function getPrintfulProductVariants(productId: number): Promise<Pri
  */
 export function getPrintfulVariantId(slug: string, size: string): number {
   const mapping: Record<string, Record<string, number>> = {
-    'essential-tee': {
-      'XS': 4011,
-      'S': 4012,
-      'M': 4013,
-      'L': 4014,
+    'core-tee': {
+      'S': 11546,
+      'M': 11547,
+      'L': 11548,
+      'XL': 11549,
+      '2XL': 11550,
     },
-    'pure-tee': {
+    'discipline-tank': {
       'XS': 4011,
       'S': 4012,
       'M': 4013,
@@ -271,8 +272,13 @@ export async function createPrintfulOrderFromInternalOrder(orderId: string): Pro
   }
 
   // 2. Validar que esté pagado
-  if (order.paymentStatus !== 'pagado') {
+  if (order.paymentStatus !== 'pagado' && order.paymentStatus !== 'paid') {
     throw new Error(`El pedido no se puede enviar a Printful porque no está pagado. Estado actual: ${order.paymentStatus}`);
+  }
+
+  // 2b. Validar que no sea un pedido de prueba (oms_test)
+  if (order.paymentMethod === 'oms_test') {
+    throw new Error('No se permiten enviar pedidos de prueba (oms_test) a la API real de Printful.');
   }
 
   // 3. Validar que no tenga ya printfulOrderId para evitar duplicados

@@ -8,10 +8,12 @@ export const COLOR_HEX_MAP: Record<string, string> = {
   'maroon': '#800020',
   'forest green': '#2D5A27',
   'dark heather': '#4F4F4F',
-  'indigo blue': '#4B0082',
+  'indigo blue': '#395d82',
   'light blue': '#ADD8E6',
   'sand': '#E6D7B8',
   'light pink': '#FFB6C1',
+  'dark chocolate': '#4a3b32',
+  'cardinal': '#C41E3A',
   'black': '#000000',
   'white': '#FFFFFF',
   'cream': '#F5F5DC',
@@ -130,9 +132,11 @@ export async function getDynamicProduct(product: Product): Promise<Product> {
       // Combinar colores y tallas globales en base a las variantes dinámicas detectadas
       const dynamicColors = Array.from(new Set(syncVariants.map(v => v.color).filter((c): c is string => !!c)));
       const dynamicSizes = Array.from(new Set(syncVariants.map(v => v.size).filter((s): s is string => !!s)));
+      const dynamicPrice = syncVariants[0]?.retail_price ? parseFloat(syncVariants[0].retail_price) : product.priceEUR;
 
       return {
         ...product,
+        priceEUR: dynamicPrice,
         colors: dynamicColors.length > 0 ? dynamicColors : product.colors,
         sizes: dynamicSizes.length > 0 ? dynamicSizes : product.sizes,
         colorVariants,

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, ArrowRight, Loader2, Check } from 'lucide-react';
 import { type Product, ProductMockup } from '@/lib/products';
 import { useCart } from '@/context/cart-context';
@@ -12,9 +13,11 @@ const USE_CONFIRMATION_PAGE = true;
 
 interface ProductDetailClientProps {
   product: Product;
+  dropStatus?: string;
+  dropSlug?: string;
 }
 
-export default function ProductDetailClient({ product }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, dropStatus = 'LIVE', dropSlug }: ProductDetailClientProps) {
   const router = useRouter();
   const { addItem } = useCart();
 
@@ -32,6 +35,15 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [imageError, setImageError] = useState<boolean>(false);
+  const [failedMiniatures, setFailedMiniatures] = useState<Set<number>>(new Set());
+
+  // Resetear estados de error al cambiar el índice o el color
+  useEffect(() => {
+    setImageError(false);
+  }, [activeImageIndex, selectedColorId]);
+
 
   // 3. Inicializar el color seleccionado por defecto
   useEffect(() => {
@@ -161,30 +173,42 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     <div className="min-h-screen pt-32 px-6 max-w-7xl mx-auto flex flex-col md:flex-row gap-12 lg:gap-24 mb-24 relative">
       
       {/* Volver */}
-      <Link 
-        href="/genesis" 
-        className="absolute top-24 left-6 md:left-auto flex items-center text-xs text-[var(--muted)] hover:text-[var(--primary)] transition-colors tracking-widest"
+      <button 
+        onClick={() => {
+          if (typeof window !== 'undefined' && window.history.length > 1) {
+            router.back();
+          } else {
+            router.push(dropSlug ? `/drops/${dropSlug}` : '/');
+          }
+        }}
+        className="absolute top-24 left-6 md:left-auto flex items-center text-xs text-[var(--muted)] hover:text-[var(--primary)] transition-colors tracking-widest bg-transparent border-0 outline-none cursor-pointer"
       >
         <ArrowLeft className="w-3 h-3 mr-2" />
         VOLVER
-      </Link>
+      </button>
 
       {/* Galería de imágenes (Izquierda) */}
       <div className="w-full md:w-1/2 mt-8 md:mt-0 flex flex-col">
         <div className="aspect-[3/4] bg-[var(--surface)] w-full relative overflow-hidden shadow-sm flex items-center justify-center border-2 border-[var(--primary)] transition-all duration-300">
-          {imageSources.length > 0 ? (
-            <img
+          {imageSources.length > 0 && !imageError && (
+            <Image
               src={imageSources[activeImageIndex] || imageSources[0]}
               alt={imageAlts[activeImageIndex] || imageAlts[0]}
-              className="object-cover w-full h-full animate-fade-in"
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover animate-fade-in absolute inset-0 z-10"
+              onError={() => setImageError(true)}
             />
-          ) : (
-            <div className="absolute inset-0 flex items-end p-8">
-              <span className="text-white/20 text-xs tracking-[0.2em] uppercase">
-                AlphaAddiction
-              </span>
-            </div>
           )}
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-[#111111] select-none">
+            <span className="text-white/5 text-7xl font-serif uppercase tracking-wider">
+              {product.name.split(' ')[0]}
+            </span>
+            <span className="text-white/10 text-[9px] tracking-[0.3em] uppercase font-light mt-4">
+              AlphaAddiction
+            </span>
+          </div>
         </div>
 
         {/* Miniaturas de la galería */}
@@ -195,18 +219,29 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 key={index}
                 onClick={() => setActiveImageIndex(index)}
                 className={`
-                  aspect-square bg-[var(--surface)] overflow-hidden border-2 transition-all duration-200
+                  aspect-square bg-[var(--surface)] overflow-hidden border-2 transition-all duration-200 relative
                   ${activeImageIndex === index 
                     ? 'border-[var(--primary)] opacity-100 scale-[1.02]' 
                     : 'border-[var(--border)]/30 opacity-60 hover:opacity-100 hover:border-[var(--primary)]/60'
                   }
                 `}
               >
-                <img
-                  src={src}
-                  alt={imageAlts[index]}
-                  className="object-cover w-full h-full"
-                />
+                {!failedMiniatures.has(index) && (
+                  <Image
+                    src={src}
+                    alt={imageAlts[index]}
+                    fill
+                    sizes="100px"
+                    className="object-cover"
+                    onError={() => {
+                      setFailedMiniatures(prev => {
+                        const next = new Set(prev);
+                        next.add(index);
+                        return next;
+                      });
+                    }}
+                  />
+                )}
               </button>
             ))}
           </div>
@@ -272,27 +307,35 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {hasColorVariants
-                    ? availableSizes.map(sizeObj => (
-                        <button
-                          key={sizeObj.size}
-                          disabled={!sizeObj.available}
-                          onClick={() => {
-                            setSelectedSize(sizeObj.size);
-                            setSizeError(false);
-                          }}
-                          className={`
-                            border px-4 py-2 text-xs transition-all duration-200 relative min-w-[48px] text-center
-                            ${!sizeObj.available 
-                              ? 'border-[var(--border)]/30 text-[var(--muted)]/40 cursor-not-allowed opacity-40 line-through' 
-                              : selectedSize === sizeObj.size
-                                ? 'bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] scale-105 font-medium'
-                                : 'border-[var(--border)] text-[var(--foreground)]/70 hover:border-[var(--primary)] hover:text-[var(--foreground)]'
-                            }
-                          `}
-                        >
-                          {sizeObj.size}
-                        </button>
-                      ))
+                    ? availableSizes.map(sizeObj => {
+                        const isSizeDisabled = !sizeObj.available || (sizeObj.virtualStock !== undefined && sizeObj.virtualStock <= 0);
+                        return (
+                          <button
+                            key={sizeObj.size}
+                            disabled={isSizeDisabled}
+                            onClick={() => {
+                              setSelectedSize(sizeObj.size);
+                              setSizeError(false);
+                            }}
+                            className={`
+                              border px-4 py-2 text-xs transition-all duration-200 relative min-w-[48px] text-center
+                              ${isSizeDisabled 
+                                ? 'border-[var(--border)]/30 text-[var(--muted)]/40 cursor-not-allowed opacity-40 line-through' 
+                                : selectedSize === sizeObj.size
+                                  ? 'bg-[var(--foreground)] text-[var(--background)] border-[var(--foreground)] scale-105 font-medium'
+                                  : 'border-[var(--border)] text-[var(--foreground)]/70 hover:border-[var(--primary)] hover:text-[var(--foreground)]'
+                              }
+                            `}
+                          >
+                            {sizeObj.size}
+                            {sizeObj.virtualStock !== undefined && sizeObj.virtualStock > 0 && sizeObj.virtualStock <= 10 && (
+                              <span className="absolute -top-1.5 -right-1 px-1 bg-amber-500 text-black text-[7px] font-bold rounded-full">
+                                {sizeObj.virtualStock}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })
                     : product.sizes.map(size => (
                         <button
                           key={size}
@@ -316,40 +359,54 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               </div>
             )}
 
-            {/* Acciones de añadir al carrito */}
-            <div className="space-y-3">
-              <button
-                onClick={handleAddToCart}
-                className={`
-                  w-full py-4 text-sm font-medium tracking-widest uppercase flex items-center justify-center gap-3 transition-all duration-200
-                  ${added
-                    ? 'bg-transparent border border-green-600 text-green-700 dark:text-green-500'
-                    : 'bg-transparent border border-[var(--foreground)] text-[var(--foreground)] hover:bg-[var(--foreground)] hover:text-[var(--background)]'
-                  }
-                `}
-              >
-                {added ? (
-                  <>
-                    <span>Añadido a la cesta</span>
-                    <Check className="w-4 h-4" />
-                  </>
+            {/* Acciones de añadir al carrito / Alertas de Drop */}
+            {dropStatus !== 'LIVE' ? (
+              <div className="space-y-3 pt-4">
+                {dropStatus === 'COMING_SOON' ? (
+                  <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 p-4 text-xs font-mono text-center uppercase tracking-wider">
+                    ⏳ Este artículo pertenece a un drop programado que abrirá próximamente.
+                  </div>
                 ) : (
-                  <span>Añadir a la cesta</span>
+                  <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 text-xs font-mono text-center uppercase tracking-wider">
+                    🚫 Colección Cerrada. Este Drop ha finalizado.
+                  </div>
                 )}
-              </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <button
+                  onClick={handleAddToCart}
+                  className={`
+                    w-full py-4 text-sm font-medium tracking-widest uppercase flex items-center justify-center gap-3 transition-all duration-200
+                    ${added
+                      ? 'bg-transparent border border-green-600 text-green-700 dark:text-green-500'
+                      : 'bg-transparent border border-[var(--foreground)] text-[var(--foreground)] hover:bg-[var(--foreground)] hover:text-[var(--background)]'
+                    }
+                  `}
+                >
+                  {added ? (
+                    <>
+                      <span>Añadido a la cesta</span>
+                      <Check className="w-4 h-4" />
+                    </>
+                  ) : (
+                    <span>Añadir a la cesta</span>
+                  )}
+                </button>
 
-              <button
-                onClick={handleBuyNow}
-                className="
-                  w-full py-4 bg-[var(--primary)] text-black uppercase tracking-widest text-sm font-medium
-                  flex items-center justify-center gap-3 transition-all duration-200
-                  hover:bg-transparent hover:text-[var(--foreground)] hover:border hover:border-[var(--primary)]
-                "
-              >
-                <span>Comprar ahora</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+                <button
+                  onClick={handleBuyNow}
+                  className="
+                    w-full py-4 bg-[var(--primary)] text-black uppercase tracking-widest text-sm font-medium
+                    flex items-center justify-center gap-3 transition-all duration-200
+                    hover:bg-transparent hover:text-[var(--foreground)] hover:border hover:border-[var(--primary)]
+                  "
+                >
+                  <span>Comprar ahora</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
           </div>
         ) : (

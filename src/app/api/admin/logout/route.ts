@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     const response = NextResponse.json({ success: true, message: 'Sesión cerrada con éxito.' });
     
     response.cookies.set('alpha_session', '', {
-      path: '/admin',
+      path: '/',
       maxAge: 0,
       expires: new Date(0),
       sameSite: 'strict',

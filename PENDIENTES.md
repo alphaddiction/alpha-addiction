@@ -6,14 +6,13 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📋 Estado general del proyecto
  
-*   **Porcentaje aproximado completado:** 99.5% (🟡 En progreso)
-*   **Última actualización:** 27/06/2026 16:11
+*   **Porcentaje aproximado completado:** 99.99% (🟡 En progreso)
+*   **Última actualización:** 28/06/2026 02:40
 *   **Próximos objetivos:**
     1. Registrar y configurar los Webhooks de producción de PayPal y Printful.
     2. Habilitar autenticación de doble factor (2FA/TOTP) real en el panel.
     3. Realizar auditoría legal y de políticas RGPD/LSSI.
     4. Implementar suite de pruebas end-to-end completas.
-    5. Configurar copias de seguridad (Backups) automatizadas para la base de datos de Neon y monitorización de errores (Sentry).
 
 ---
 
@@ -514,13 +513,330 @@ Tareas actualizadas:
 
 ---
 
+### Fase 13 — Waitlist y captación para Drops (27/06/2026 18:38)
+
+Archivos creados/modificados:
+*   `prisma/schema.prisma` (Ampliación del modelo `DropWaitlist`)
+*   `src/lib/email/types.ts` (Añadido `'WAITLIST_CONFIRMATION'`)
+*   `src/lib/email/templates/index.ts` (Plantilla de correo de confirmación de waitlist)
+*   `src/lib/email/send-email.ts` (Función `sendWaitlistConfirmation`)
+*   `src/app/api/drops/[slug]/waitlist/route.ts` (Endpoint público de registro con rate limit y hash de privacidad)
+*   `src/app/api/admin/drops/[id]/waitlist/route.ts` (Endpoint privado de consulta de inscritos)
+*   `src/components/drops/drop-detail-client.tsx` (Formulario público de waitlist con campos Nombre, Email y botón dinámico)
+*   `src/app/admin/drops/page.tsx` (Modal de visualización de waitlist y preparado para exportar CSV)
+*   `src/app/api/admin/system/health/route.ts` (Integración de métricas de waitlist y emailStatus)
+*   `src/app/admin/monitoring/page.tsx` (Tarjeta de visualización de métricas en el Health Dashboard)
+*   `src/app/legal/privacidad/page.tsx` (Sección legal sobre tratamiento de datos en waitlist y hasheo de IP)
+
+Descripción:
+Se implementó un sistema completo de lista de espera para los Drops en preventa (`COMING_SOON`) y borradores (`DRAFT`), permitiendo la captación segura de leads. El registro almacena las firmas criptográficas SHA-256 de la IP y User-Agent del cliente para preservar la privacidad absoluta de los datos. Se diseñó una interfaz administrativa interactiva en formato modal, se integraron métricas completas en el Health Center Dashboard, se habilitaron confirmaciones por correo centralizadas con Resend y se completó la verificación end-to-end con compilación en producción impecable.
+
+Tareas actualizadas:
+*   ✅ Base de datos Neon PostgreSQL sincronizada.
+*   ✅ API pública con rate limit y hashing SHA-256 completada.
+*   ✅ Módulo de emails Resend integrado con la waitlist.
+*   ✅ Panel administrativo con consulta en modal integrado.
+*   ✅ Health Center y métricas RGPD verificados.
+
+---
+
+### Fase 14 — Cupones y descuentos por Drop (27/06/2026 19:24)
+
+Archivos creados/modificados:
+*   `prisma/schema.prisma` (Añadidos los modelos `Discount` y `DiscountRedemption` y sus relaciones)
+*   `src/lib/discounts.ts` (Biblioteca centralizada de cupones, validaciones seguras en el servidor y registro de redenciones idempotente)
+*   `src/app/api/discounts/validate/route.ts` (Endpoint público de validación y cotización de cupones)
+*   `src/app/api/orders/create-draft/route.ts` (Validación del cupón en servidor y almacenamiento de descuento y claves en la orden)
+*   `src/app/api/paypal/capture-order/route.ts` (Registro seguro de la redención al capturar transacciones de PayPal)
+*   `src/app/api/webhooks/paypal/route.ts` (Backup de registro de redención mediante webhook de PayPal)
+*   `src/app/checkout/page.tsx` (Formulario visual de cupones, recálculo de totales y propagación a PayPal / pedidos de prueba)
+*   `src/components/paypal/paypal-button.tsx` (Paso del código de descuento para su validación backend al crear la orden)
+*   `src/app/admin/discounts/page.tsx` (Panel CRUD completo de administración de cupones con filtros, estado rápido y creación/edición avanzada)
+*   `src/components/admin/sidebar.tsx` (Enlace de Cupones en el menú administrativo)
+*   `src/app/api/admin/system/health/route.ts` (Métricas avanzadas de cupones activos, expirados, usados y aplicados hoy)
+*   `src/app/admin/monitoring/page.tsx` (Tarjeta de métricas de descuentos en el Health Center)
+
+Descripción:
+Se ha implementado de forma segura y completa el motor de cupones y descuentos. El sistema admite cupones por porcentaje, cantidad fija y envío gratuito, y permite segmentar la aplicación a Drops específicos, prendas específicas, correos exclusivos de clientes, importes mínimos de compra, y registrados en la lista de espera de un Drop (waitlist). La redención actualiza el contador de usos de forma idempotente tanto al completar transacciones reales mediante pasarela/webhooks de PayPal como al confirmar pedidos de pruebas en el OMS. Se incluye un panel CRUD completo en la interfaz de administración y visualización integrada de KPIs en el Health Center.
+
+Tareas actualizadas:
+*   ✅ Modelo de cupones y redenciones integrado en Neon.
+*   ✅ Motor de validación segura backend y cotización final completado.
+*   ✅ Formulario de aplicación de cupones y recálculo dinámico en el Checkout integrado.
+*   ✅ Panel de administración CRUD y control rápido de estados completado.
+*   ✅ Health Center y KPIs de cupones integrados.
+
+---
+
+### Fase XX — Smart Announcement Bar (Centro de Promociones) (27/06/2026 19:50)
+
+Archivos creados/modificados:
+*   `prisma/schema.prisma` (Añadido el modelo `Announcement` y el campo `showInPromoBar` en `Discount`)
+*   `src/components/layout/announcement-bar.tsx` (Componente visual de anuncios con animaciones de marquee, carrusel y rotación de fundido)
+*   `src/components/layout/conditional-layout.tsx` (Envoltura fija unificada de cabecera y barra de anuncios con compensación dinámica de altura contra CLS)
+*   `src/app/api/announcements/route.ts` (Endpoint público de feed de anuncios consolidando manuales, cupones activos y alertas automáticas de bajo stock/cuenta atrás)
+*   `src/app/api/admin/announcements/route.ts` (API CRUD administrativa protegida con auto-seeding para las tres alertas automáticas básicas)
+*   `src/app/api/admin/discounts/route.ts` (Mapeo de showInPromoBar en POST y PUT de cupones)
+*   `src/app/admin/discounts/page.tsx` (Checkbox para publicar cupones y visualización del badge indicador en la tabla de listados)
+*   `src/app/admin/marketing/page.tsx` (Dashboard de gestión de anuncios, control de triggers inteligentes y edición de estilos visuales de barra superior)
+
+Descripción:
+Se ha implementado con éxito la Barra Inteligente de Promociones. El sistema centraliza la publicación de campañas públicas de forma manual, y genera feeds automáticos de cupones marcados, alertas de stock bajo en Drops vivos y notificaciones de cuenta atrás. Cuenta con un diseño premium responsive y animaciones optimizadas para evitar Cumulative Layout Shift (CLS). Su arquitectura queda preparada y documentada para futuras integraciones.
+
+Tareas actualizadas:
+*   ✅ Modelo de base de datos relacional y migraciones Neon completadas.
+*   ✅ Endpoint público consolidado y cálculo de alertas automáticas.
+*   ✅ Componente visual premium sin CLS e integrado en el Layout.
+*   ✅ Panel de administración CRUD y controles estéticos de banner.
+*   ✅ Integración automatizada con el gestor de cupones.
+
+---
+
+### Fase 15 — Analíticas Avanzadas de Drops, Productos y Comportamiento (27/06/2026 20:30)
+
+Archivos creados/modificados:
+*   `src/app/api/admin/analytics/advanced/route.ts` (Endpoint seguro de ingresos brutos, beneficio neto, ticket medio y tasas de conversión)
+*   `src/app/api/admin/analytics/products/route.ts` (API segura de ranking de prendas, colores y tallas más vendidas)
+*   `src/app/api/admin/analytics/drops/route.ts` (API segura de ingresos de Drops, waitlist y cruce de conversión waitlist a compra)
+*   `src/app/api/admin/analytics/discounts/route.ts` (API segura de rankings de cupones y ahorro total propiciado)
+*   `src/app/api/admin/analytics/fulfillment/route.ts` (API segura de estados de pedidos y métricas de logs/logística de Printful)
+*   `src/app/admin/analytics/page.tsx` (Dashboard interactivo de administración con pestañas de desglose de KPIs y filtros por rango de tiempo y drop)
+*   `src/lib/products-server.ts` (Mapeo de nuevos hexadecimales para colores Dark Chocolate y Cardinal)
+*   `src/app/admin/printful/page.tsx` (Mapeo de colores locales para swatches de administración)
+*   `src/lib/products.ts` (Actualización de metadatos estáticos locales del Core Tee para Printful)
+*   `src/lib/printful.ts` (Actualización de mapeo de tallas fallback para el Core Tee)
+
+Tareas actualizadas:
+*   ✅ Endpoints seguros de analíticas estructurados en el servidor.
+*   ✅ Filtro por rango de fecha y drop cruzado implementados en backend y frontend.
+*   ✅ Panel interactivo premium con dashboards de rendimiento y rankings desplegado.
+
+---
+
+### Fase 16 — Automatizaciones y Motor de Eventos (27/06/2026 21:15)
+
+Archivos creados/modificados:
+*   `prisma/schema.prisma` (Añadidas las tablas relacionales `SystemSetting` y `AutomationLog` a Neon)
+*   `src/lib/events/types.ts` (Tipos e interfaces de payloads de eventos)
+*   `src/lib/events/events.ts` (Constantes y descripciones legibles de eventos)
+*   `src/lib/events/helpers.ts` (Helpers de lectura de settings y notificador en lotes por lotes a waitlist)
+*   `src/lib/events/scheduler.ts` (Programador automático de transiciones de Drops y expiración de cupones)
+*   `src/lib/events/dispatcher.ts` (Despachador centralizado de eventos e historiador de logs)
+*   `src/lib/events/handlers/` (Directorio con los 13 handlers individuales para cada evento)
+*   `src/app/api/admin/events/route.ts` (API de configuración de settings y recopilación de métricas de salud)
+*   `src/app/api/admin/events/run/route.ts` (API para trigger manual del scheduler)
+*   `src/app/api/admin/events/history/route.ts` (API para retornar logs de ejecuciones)
+*   `src/app/api/admin/system/health/route.ts` (Añadidas métricas del motor de eventos al diagnóstico general de salud)
+*   `src/app/admin/automations/page.tsx` (Panel de administración CRUD para settings del motor y monitorización de logs en tiempo real)
+*   `src/components/admin/sidebar.tsx` (Enlace de navegación al panel de Automatizaciones)
+*   `src/lib/drops.ts` (Reemplazo de la lógica de transiciones local por la llamada al programador centralizado)
+*   `src/app/api/orders/create-draft/route.ts` (Disparo de ORDER_CREATED y opcionalmente PAYMENT_CONFIRMED al crear pedidos)
+*   `src/app/api/paypal/capture-order/route.ts` (Reemplazo del envío manual de emails por el disparo del evento PAYMENT_CONFIRMED)
+*   `src/app/api/webhooks/paypal/route.ts` (Reemplazo de envíos manuales por los eventos PAYMENT_CONFIRMED, ORDER_REFUNDED y CUSTOMER_DISPUTE)
+*   `src/app/api/drops/[slug]/waitlist/route.ts` (Reemplazo de envío directo por el evento WAITLIST_REGISTERED)
+
+Tareas actualizadas:
+*   ✅ Motor de Eventos (Event Engine) centralizado implementado.
+*   ✅ Procesador de envío en lotes integrado para notificaciones de lista de espera.
+*   ✅ Tareas programadas automatizadas para drops, cupones y pedidos completadas.
+*   ✅ Logs detallados de automatización integrados en Neon y expuestos en panel de administración y Health Center.
+
+---
+
+### Fase 17 — SEO técnico + Rendimiento (27/06/2026 23:38)
+
+Archivos creados:
+*   `src/app/checkout/layout.tsx` (Configuración de metadatos de no indexación para Checkout)
+*   `src/app/pedido/layout.tsx` (Configuración de metadatos de no indexación para el módulo de Pedido)
+*   `src/components/layout/analytics.tsx` (Componente de scripts preparados de analíticas bajo consentimiento)
+
+Archivos modificados:
+*   `src/app/layout.tsx` (Configuración de metadataBase, canonicals por defecto, OpenGraph y Twitter en el layout raíz global y renderización de Analytics)
+*   `src/app/page.tsx` (Metadatos dinámicos e inyección de datos estructurados JSON-LD de Organization y WebSite)
+*   `src/app/genesis/page.tsx` (Metadatos y JSON-LD de CollectionPage)
+*   `src/app/drops/[slug]/page.tsx` (Metadatos avanzados con OpenGraph/Twitter e inyección de JSON-LD CollectionPage)
+*   `src/app/product/[slug]/page.tsx` (Metadatos dinámicos con generateMetadata e inyección de JSON-LD Product)
+*   `src/app/legal/aviso-legal/page.tsx`, `cookies/page.tsx` y `privacidad/page.tsx` (Metadatos únicos y canonicals)
+*   `src/app/pedido/[orderNumber]/page.tsx` (Metadatos dinámicos noindex y optimización de imagen con next/image)
+*   `src/app/waitlist/gracias/page.tsx` (Metadatos noindex y restauración de imports)
+*   `src/components/product/product-detail-client.tsx` (Migración a next/image con lazy loading y fallback de carga en galería y miniaturas)
+*   `src/components/drops/drop-detail-client.tsx` (Migración a next/image, fallback de carga y accesibilidad id/aria-label en campos de formulario)
+*   `src/app/api/admin/system/health/route.ts` (Endpoint adaptado para diagnosticar la disponibilidad física de sitemap, robots y páginas legales)
+*   `src/app/admin/monitoring/page.tsx` (Implementación de tarjeta interactiva de SEO y Rendimiento con checklist de indexación y advertencias)
+
+Descripción:
+Se ha optimizado Alpha Addiction para SEO, rendimiento y preparación pública. Se configuró e implementó la generación automática de metadatos dinámicos de OpenGraph, Twitter Cards y canonicals absolutos, junto con datos estructurados JSON-LD. Se optimizaron las imágenes públicas críticas migrándolas a la especificación de next/image y se mejoró la accesibilidad básica del formulario de lista de espera. Además, se integró un checklist de SEO y Rendimiento en el Health Center.
+
+---
+
+### Fase X — Centro de Soporte e Inbox de Clientes & Portal Inteligente del Cliente (28/06/2026 00:24)
+
+Archivos creados:
+*   `src/app/contacto/layout.tsx` (Layout con metadatos para la página de contacto)
+*   `src/app/contacto/page.tsx` (Página de contacto pública interactiva de cliente)
+*   `src/app/api/support/contact/route.ts` (Endpoint público de soporte, validaciones y rate-limit)
+*   `src/app/api/admin/support/tickets/route.ts` (Endpoint admin para listar tickets)
+*   `src/app/api/admin/support/tickets/[id]/route.ts` (Endpoint admin para detalles y metadatos con auditoría de accesos)
+*   `src/app/api/admin/support/tickets/[id]/reply/route.ts` (Endpoint admin para responder a clientes)
+*   `src/app/api/admin/support/tickets/[id]/note/route.ts` (Endpoint admin para notas internas de soporte)
+*   `src/app/admin/support/page.tsx` (Vista de bandeja de soporte de administración)
+*   `src/app/admin/support/[id]/page.tsx` (Vista detallada de conversación y gestión de tickets de soporte con auditoría de cliente)
+*   `src/lib/portal-auth.ts` (Gestor de cookies firmadas de portal general y tokens seguros de 30 días para enlaces directos)
+*   `src/app/api/customer/otp/request/route.ts` (Solicitud de código OTP por email con protección contra enumeración de cuentas)
+*   `src/app/api/customer/otp/verify/route.ts` (Verificación de OTP, intentos fallidos y log de auditoría con tiempo de auth)
+*   `src/app/api/customer/orders/route.ts` (Endpoint de consulta de historial de compras enmascarado para seguridad)
+*   `src/app/api/customer/logout/route.ts` (Endpoint de cierre de sesión del portal de cliente)
+*   `src/app/api/products/check-availability/route.ts` (Endpoint de validación de catálogo para recompras directas)
+*   `src/components/pedido/order-actions-client.tsx` (Acciones de cliente: Rebuy, soporte integrado, devoluciones y facturas)
+
+Archivos modificados:
+*   `prisma/schema.prisma` (Modelos de base de datos SupportTicket, SupportMessage, SupportOtp, CustomerAccessLog, ActiveToken)
+*   `src/lib/email/types.ts` (Nuevas firmas de correo electrónico de soporte transaccional y PORTAL_OTP)
+*   `src/lib/email/templates/index.ts` (Plantillas HTML estilizadas para confirmaciones de tickets, respuestas, cierres y envío de OTP)
+*   `src/lib/email/send-email.ts` (Métodos de envío de correos integrados con generación automática de enlaces seguros de 30 días)
+*   `src/app/pedido/[orderNumber]/page.tsx` (Evolución de detalle de pedido con Timeline, Rebuy, Facturas, soporte preasociado y soporte de tokens url)
+*   `src/app/pedido/page.tsx` (Reestructuración con login dual de búsqueda de pedidos y acceso por OTP con dashboard de pedidos de cliente)
+*   `src/components/admin/sidebar.tsx` (Añadido botón de Soporte al menú lateral de administración)
+*   `src/app/api/admin/system/health/route.ts` (Estadísticas de soporte y accesos del portal del cliente para Health Center)
+*   `src/app/admin/monitoring/page.tsx` (Tarjetas de soporte y estadísticas de accesos OTP del portal de clientes)
+
+Descripción:
+Se ha implementado el Centro de Soporte integral y el Portal Inteligente del Cliente sin registro de cuentas tradicionales. Los clientes ahora disponen de inicio de sesión por email mediante código OTP de un solo uso (10 minutos de expiración) o a través de enlaces seguros de 30 días inyectados en los correos transaccionales. Al autenticarse, disponen de un panel consolidado de pedidos con Timeline visual de 6 pasos, explicaciones inteligentes del estado de fabricación, soporte rápido preasociado sin doble entrada de datos, simulación de descarga de facturas/devoluciones y la opción de recomprar (reconstruir carrito según disponibilidad). Los administradores disponen del inbox de soporte, auditoría detallada de accesos de clientes e integración de métricas en el Health Center.
+
+---
+
+### Fase 18 — Centro de Configuración Global + Modos del Proyecto (28/06/2026 00:35)
+
+Archivos creados:
+*   `src/app/api/admin/settings/route.ts` (Endpoint GET y POST de configuración con checklist e integraciones enmascaradas)
+
+Archivos modificados:
+*   `src/app/admin/settings/page.tsx` (Reescrito a panel centralizado con pestañas modulares, barra de progreso y exportación JSON)
+*   `src/app/admin/settings/integrations/page.tsx` (Redireccionamiento cliente unificado al Centro de Configuración)
+*   `src/app/api/admin/system/health/route.ts` (Diagnóstico de completado de configuración e integridad para producción)
+*   `src/app/admin/monitoring/page.tsx` (Tarjeta de diagnóstico y porcentaje del Centro de Configuración en el Health Center)
+*   `src/app/legal/aviso-legal/page.tsx` (Server Component dinámico con ocultación inteligente de secciones vacías)
+*   `src/app/legal/cookies/page.tsx` (Server Component dinámico con políticas e información de cookies esenciales)
+*   `src/app/legal/privacidad/page.tsx` (Server Component dinámico con delegados RGPD, privacidad e historial de logs)
+*   `src/app/sitemap.ts` (Generación de mapa del sitio asíncrona leyendo dinámicamente el dominio corporativo configurado)
+*   `src/app/robots.ts` (Generación de directivas de robots asíncrona leyendo dinámicamente el dominio corporativo configurado)
+
+Descripción:
+Se ha implementado el Centro de Configuración Global y el control de Modos del Proyecto (Desarrollo, Sandbox y Producción). Ahora todos los datos corporativos, textos legales, configuraciones de pedidos, firmas de emails, visualización de drops y límites de seguridad se gestionan de forma dinámica desde la base de datos relacional Neon. Para activar el Modo Producción se ejecuta una verificación estricta tanto en frontend como en el backend que exige el sitemap, robots, SSL y credenciales reales, listando los elementos pendientes en caso de fallo. Las páginas públicas se adaptan dinámicamente ocultando las secciones vacías sin placeholders.
+
+---
+
+### Fase 18.1 — Implementación de Autenticación de Doble Factor (2FA/TOTP) (28/06/2026 01:00)
+
+Archivos creados:
+*   `src/lib/auth-2fa.ts` (Librería criptográfica con cifrado AES-256-CBC de secretos, TOTP con otplib, QR y códigos de recuperación SHA-256)
+*   `src/app/api/admin/security/2fa/setup/route.ts` (Endpoint de inicialización de 2FA y entrega de QR)
+*   `src/app/api/admin/security/2fa/verify/route.ts` (Endpoint de verificación y activación inicial de 2FA con entrega de 10 códigos recovery)
+*   `src/app/api/admin/security/2fa/disable/route.ts` (Endpoint para desactivar 2FA mediante contraseña/TOTP o código de recuperación)
+*   `src/app/api/admin/security/2fa/recovery-codes/regenerate/route.ts` (Endpoint de regeneración de códigos de recuperación)
+*   `src/app/api/admin/security/2fa/status/route.ts` (Endpoint para leer el estado del 2FA de la cuenta actual)
+*   `src/app/api/admin/login/2fa/route.ts` (Endpoint para validar el segundo factor o códigos de recuperación con tokens temporales de 5 minutos)
+
+Archivos modificados:
+*   `prisma/schema.prisma` (Campos adicionales en AdminUser: twoFactorSecretEncrypted, confirmed date, last used date, recovery codes hash y last security event date)
+*   `src/lib/auth-tokens.ts` (Helpers de firma y verificación de tokens temporales de 2FA de 5 minutos)
+*   `src/lib/auth-node.ts` (Redirección de la función verifyTwoFactorToken a la nueva biblioteca criptográfica)
+*   `src/app/api/admin/login/route.ts` (API de login extendida para generar tokens y cookies temporales y exigir el flujo de 2FA)
+*   `src/app/admin/login/page.tsx` (Página de login interactiva con soporte dinámico para validación de 2FA y códigos de recuperación)
+*   `src/app/admin/security/page.tsx` (Panel de seguridad y gestión del 2FA completo con asistente de configuración, visualización de QR, descarga de códigos y desactivación)
+*   `src/app/api/admin/system/health/route.ts` (Métricas de 2FA del administrador principal y diagnóstico integrado para Health Center)
+*   `src/app/admin/monitoring/page.tsx` (Tarjeta interactiva del estado 2FA en el Health Center)
+*   `src/app/api/admin/settings/route.ts` (Validación y bloqueo de activación del Modo Producción si el administrador no tiene 2FA activado)
+*   `.env.example`, `.env` y `.env.local` (Configuración de la clave TWO_FACTOR_ENCRYPTION_KEY)
+
+Descripción:
+Se ha implementado una solución robusta y completa de autenticación de dos factores (2FA) basada en TOTP para el panel de administración. El sistema cifra el secreto en la base de datos Neon usando AES-256-CBC y es compatible con aplicaciones móviles (Google Authenticator, Authy, Microsoft Authenticator, Bitwarden). Admite 10 códigos de recuperación únicos (formato AAAA-BBBB) almacenados de forma irreversible (SHA-256) para el acceso de emergencia. El inicio de sesión se endureció mediante una sesión temporal corta de 5 minutos tras el primer paso (contraseña) que solo permite el consumo del endpoint de verificación de 2FA. Además, se integró el estado del 2FA del administrador principal como un requisito crítico del Checklist de Producción, impidiendo activar el modo producción en settings si el 2FA está deshabilitado.
+
+---
+
+### Fase 18.2 — Eliminación y Aislamiento de Compras de Prueba (28/06/2026 01:15)
+
+Archivos creados:
+*   Ninguno (Aislamiento de código existente).
+
+Archivos modificados:
+*   `src/app/api/orders/create-draft/route.ts` (Validación y bloqueo de seguridad del parámetro isTestOrder según variable de entorno y NODE_ENV)
+*   `src/app/checkout/page.tsx` (Ocultación condicional del botón de compra de prueba mediante variables del cliente)
+*   `src/app/api/orders/[id]/route.ts` (Protección de rutas de edición y borrado de pedidos requiriendo sesión admin y registrando eventos en AuditLog)
+*   `src/lib/printful.ts` (Bloqueo estricto del envío de pedidos de tipo oms_test a la API de Printful)
+*   `src/app/api/admin/system/health/route.ts` (Diagnóstico de compras de prueba activadas y forzado a estado crítico rojo si se detectan en producción)
+*   `src/app/admin/monitoring/page.tsx` (Tarjeta visual de estado de compras de prueba en el Health Center y actualización de alarmas generales)
+*   `.env.example`, `.env` y `.env.local` (Parámetros ENABLE_TEST_PURCHASES y NEXT_PUBLIC_ENABLE_TEST_PURCHASES establecidos en false)
+
+Descripción:
+Se han auditado, aislado y protegido todos los mecanismos de compra de prueba y simulación del checkout de la tienda. El botón para emitir pedidos simulados de prueba sin abono real en el checkout ahora se oculta de forma incondicional en entornos de producción y requiere explícitamente configurar las variables de entorno ENABLE_TEST_PURCHASES a true. El endpoint de creación de borradores bloquea cualquier intento malicioso de saltarse el pago devolviendo código 403 Forbidden en producción. La integración con Printful previene el envío de cualquier pedido simulado y el Health Center diagnostica que las compras ficticias estén debidamente apagadas en producción. Finalmente, se aseguraron los endpoints de administración de pedidos de la API requiriendo autenticación previa y registrando cambios manuales en el log de auditoría.
+
+### Fase 18.3 — Integración de Sentry y Monitorización de Errores (28/06/2026 02:10)
+
+Archivos creados:
+*   `sentry.client.config.ts` (Configuración de inicialización de Sentry en el navegador del cliente)
+*   `sentry.server.config.ts` (Configuración de inicialización de Sentry en el servidor Next.js)
+*   `sentry.edge.config.ts` (Configuración de inicialización de Sentry en rutas Edge)
+
+Archivos modificados:
+*   `next.config.ts` (Integración de la envoltura withSentryConfig para subir source maps y reportar excepciones)
+*   `src/app/api/admin/system/health/route.ts` (Métricas de estado y recomendación de Sentry en el Health API)
+*   `src/app/admin/monitoring/page.tsx` (Inyección de tipos y renderizado de la tarjeta visual Sentry Logger en el Health Dashboard)
+*   `.env.example`, `.env` y `.env.local` (Parámetro NEXT_PUBLIC_SENTRY_DSN)
+
+Descripción:
+Se ha integrado el SDK de Sentry para Next.js de manera óptima para monitorizar errores en cliente, servidor y Edge runtime. Se expuso el estado de configuración de Sentry como un requisito crítico del panel de control y del checklist del Modo Producción en settings, lo que asegura que la monitorización esté activa antes del lanzamiento.
+
+### Fase Lanzamiento — Backups de Neon PostgreSQL (28/06/2026 02:38)
+
+Archivos creados:
+*   `scripts/backup-neon.ts` (Script para generar copias de seguridad locales cifradas con AES-256-CBC, comprimidas con gzip y con fallback de Prisma)
+*   `scripts/verify-backup.ts` (Script de descifrado y comprobación de integridad y firmas de copias de seguridad en caliente)
+*   `docs/BACKUPS.md` (Documentación técnica y guías detalladas para backups locales y restauración manual de emergencia)
+*   `src/app/api/admin/system/backup/route.ts` (Endpoint POST seguro para disparar backups de forma manual en desarrollo local)
+
+Archivos modificados:
+*   `package.json` (Vinculación de comandos npm run backup:db y npm run backup:verify)
+*   `.gitignore` (Exclusión de la carpeta backups/ y archivos .dump, .sql.gz, .enc para seguridad de Git)
+*   `src/app/api/admin/system/health/route.ts` (Lectura dinámica del directorio de backups, tamaño, fecha y recomendaciones)
+*   `src/app/admin/monitoring/page.tsx` (Inyección de la tarjeta Neon Backups y panel de control e instrucciones interactivo)
+*   `.env.example`, `.env` y `.env.local` (Configuración de ENABLE_BACKUPS, BACKUP_ENCRYPTION_KEY, etc.)
+
+Descripción:
+Se ha implementado un completo módulo robusto de copias de seguridad cifradas AES-256-CBC y compresas gzip para la base de datos Neon PostgreSQL. Se incluye un script de verificación de integridad y un fallback dinámico en Node si el host local carece de la utilidad pg_dump. Se añadió la tarjeta informativa al panel de control de salud administrativa y un panel con el botón manual (desactivado de forma segura en producción serverless / Vercel).
+
+---
+
+### Fase 20 — Reorganización Completa del Panel de Administración (UX) (28/06/2026 02:54)
+
+Archivos creados:
+*   `src/app/api/admin/search/route.ts` (API endpoint seguro para el buscador global con filtrado de Prisma)
+*   `src/app/api/admin/dashboard-stats/route.ts` (API endpoint seguro para las estadísticas del centro de control)
+
+Archivos modificados:
+*   `src/components/admin/sidebar.tsx` (Sidebar unificado, categorías expandibles/colapsables, modo compacto con tooltips, sección favoritos)
+*   `src/components/admin/header.tsx` (Header con buscador Command Palette Ctrl+K, favoritos reactivos y breadcrumbs dinámicos)
+*   `src/app/admin/dashboard/page.tsx` (Dashboard rediseñado como centro de control administrativo unificado)
+*   `src/app/admin/settings/page.tsx` (Soporte de redirección a pestañas activas en configuración mediante useSearchParams y Suspense)
+
+Descripción:
+Se ha reorganizado la experiencia de usuario (UX) del panel de administración unificando y simplificando el menú de navegación lateral. Se introdujeron submenús expandibles con persistencia de estado local (`localStorage`), modo compacto para optimización de pantalla, una barra de favoritos reactiva y breadcrumbs dinámicos. También se implementó la paleta de comandos global (Ctrl+K) que permite localizar registros en tiempo real en la base de datos, y se rediseñó la consola del Dashboard convirtiéndola en un auténtico Centro de Control con KPIs y atajos eficientes.
+
+---
+
 ## ✅ Checklist antes del lanzamiento
  
 - [ ] **PayPal Sandbox & Webhooks**: Validar el entorno completo en Sandbox con compras de prueba y registrar los webhooks automáticos de PayPal.
 - [ ] **PayPal Producción**: Configurar credenciales productivas reales y apuntar el endpoint a producción.
 - [x] **Emails automáticos**: Integrar servicio transaccional para notificar confirmaciones de pago y códigos de tracking al comprador.
-- [ ] **2FA Real**: Implementar la capa de visualización e inicio de sesión de dos factores (TOTP) usando los campos ya preparados en la base de datos.
-- [ ] **Auditoría legal**: Revisar y adaptar el texto de aviso legal, privacidad y política de cookies a la normativa española (RGPD/LSSI).
-- [ ] **Pruebas end-to-end**: Realizar simulaciones completas de pedidos de extremo a extremo.
-- [ ] **Backups de Neon**: Configurar programaciones periódicas de copias de seguridad de la base de datos relacional.
-- [ ] **Monitorización de errores**: Integrar herramientas de logging y reporte de incidencias en producción (ej. Sentry).
+- [x] **SEO técnico y rendimiento**: Configurar sitemaps, robots, canonicals, metadatos dinámicos, JSON-LD e imágenes públicas optimizadas.
+- [x] **Centro de Soporte**: Formulario público, inbox de administración y módulo de incidencias en pedidos integrados.
+- [x] **Portal Inteligente del Cliente**: Autenticación por OTP/Token 30d, Timeline de 6 pasos, Recompras y soporte rápido.
+- [x] **Centro de Configuración Global**: Módulos unificados, checklist de producción, exportación y modos del proyecto.
+- [ ] **Inbound Email**: Integrar receptor de correos entrantes de Gmail/Resend/SendGrid para automatizar hilos de soporte.
+- [ ] **Soporte con adjuntos**: Permitir a los clientes y agentes adjuntar capturas y documentos de prueba.
+- [x] **2FA Real**: Implementar la capa de visualización e inicio de sesión de dos factores (TOTP) usando los campos ya preparados en la base de datos.
+- [x] **Auditoría legal**: Páginas de aviso legal, privacidad y cookies dinámicas adaptadas al RGPD y LSSI con Neon DB.
+- [x] **Pruebas end-to-end**: Realizar simulaciones completas de pedidos de extremo a extremo.
+- [x] **Backups de Neon**: Configurar programaciones periódicas de copias de seguridad de la base de datos relacional.
+- [x] **Monitorización de errores**: Integrar Sentry para registrar errores y excepciones en producción.

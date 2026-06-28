@@ -29,6 +29,41 @@ export default function CheckoutPage() {
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const [isCreatingDraft, setIsCreatingDraft] = useState(false);
 
+    // Estados para los cupones de descuento
+    const [discountCode, setDiscountCode] = useState('');
+    const [appliedDiscount, setAppliedDiscount] = useState<any | null>(null);
+    const [discountError, setDiscountError] = useState<string | null>(null);
+    const [isApplying, setIsApplying] = useState(false);
+
+    const handleApplyDiscount = async () => {
+        if (!discountCode.trim()) return;
+        setIsApplying(true);
+        setDiscountError(null);
+        try {
+            const res = await fetch('/api/discounts/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: discountCode,
+                    email: formData.email,
+                    items: items.map(item => ({
+                        slug: item.slug,
+                        quantity: item.qty,
+                        price: item.priceEUR
+                    }))
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Fallo al validar código.');
+            setAppliedDiscount(data);
+        } catch (err: any) {
+            setDiscountError(err.message);
+            setAppliedDiscount(null);
+        } finally {
+            setIsApplying(false);
+        }
+    };
+
     const handleCreateDraftOrder = async () => {
         const isValid = validateForm();
         if (!isValid) return;
@@ -45,6 +80,8 @@ export default function CheckoutPage() {
                 body: JSON.stringify({
                     shippingAddress: formData,
                     items: items,
+                    discountCode: appliedDiscount ? appliedDiscount.code : undefined,
+                    isTestOrder: true,
                 }),
             });
 
@@ -176,10 +213,52 @@ export default function CheckoutPage() {
 
                         <div className="h-px bg-[var(--border)] mb-6" />
 
+                        {/* Campo de Código de Descuento */}
+                        <div className="mb-6 space-y-2">
+                            <label className="text-[10px] tracking-widest uppercase text-[var(--foreground)]/70 block">
+                                Código de descuento
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Introduce tu código"
+                                    value={discountCode}
+                                    onChange={(e) => setDiscountCode(e.target.value)}
+                                    disabled={isApplying}
+                                    className="flex-1 bg-transparent border border-[var(--border)] p-2 text-xs uppercase focus:outline-none focus:border-[var(--primary)] transition-colors placeholder-[var(--foreground)]/20 text-[var(--foreground)]"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleApplyDiscount}
+                                    disabled={isApplying || !discountCode.trim()}
+                                    className="px-4 py-2 bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--primary)] hover:text-white text-xs font-semibold uppercase tracking-widest transition-colors duration-300 disabled:opacity-50"
+                                >
+                                    {isApplying ? '...' : 'Aplicar'}
+                                </button>
+                            </div>
+                            {discountError && (
+                                <p className="text-[10px] text-red-500 font-mono mt-1">{discountError}</p>
+                            )}
+                            {appliedDiscount && (
+                                <p className="text-[10px] text-green-600 font-mono mt-1">
+                                    ¡Cupón {appliedDiscount.code} aplicado con éxito!
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="h-px bg-[var(--border)] mb-6" />
+
                         <div className="flex justify-between text-sm mb-3 text-[var(--foreground)]/70">
                             <span>Subtotal</span>
                             <span>{formatPrice(subtotal)}</span>
                         </div>
+
+                        {appliedDiscount && (
+                            <div className="flex justify-between text-sm mb-3 text-green-600 font-medium">
+                                <span>Descuento ({appliedDiscount.code})</span>
+                                <span>-{formatPrice(appliedDiscount.discountAmount)}</span>
+                            </div>
+                        )}
 
                         <div className="flex justify-between text-sm mb-6 text-[var(--foreground)]/70">
                             <span>Envío</span>
@@ -188,7 +267,7 @@ export default function CheckoutPage() {
 
                         <div className="flex justify-between text-lg font-serif text-[var(--foreground)]">
                             <span>Total</span>
-                            <span>{formatPrice(subtotal)}</span>
+                            <span>{formatPrice(Math.max(0, subtotal - (appliedDiscount ? appliedDiscount.discountAmount : 0)))}</span>
                         </div>
                     </div>
                 </div>
@@ -371,6 +450,7 @@ export default function CheckoutPage() {
                             <PayPalButton
                                 shippingAddress={formData}
                                 items={items}
+                                discountCode={appliedDiscount ? appliedDiscount.code : undefined}
                                 onValidate={validateForm}
                                 onSuccess={(localOrderId) => {
                                     clearCart();
@@ -381,16 +461,18 @@ export default function CheckoutPage() {
                                 }}
                             />
 
-                            <div className="flex flex-col gap-4 pt-4 border-t border-[var(--border)]/30 mt-4">
-                                <button
-                                    type="button"
-                                    onClick={handleCreateDraftOrder}
-                                    disabled={isCreatingDraft}
-                                    className="w-full bg-[var(--foreground)] text-[var(--background)] py-4 text-xs font-semibold uppercase tracking-widest hover:bg-[var(--primary)] hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                >
-                                    {isCreatingDraft ? 'Creando Pedido...' : 'Confirmar y Crear Pedido de Prueba (OMS)'}
-                                </button>
-                            </div>
+                            {process.env.NEXT_PUBLIC_ENABLE_TEST_PURCHASES === 'true' && process.env.NODE_ENV !== 'production' && (
+                                <div className="flex flex-col gap-4 pt-4 border-t border-[var(--border)]/30 mt-4">
+                                    <button
+                                        type="button"
+                                        onClick={handleCreateDraftOrder}
+                                        disabled={isCreatingDraft}
+                                        className="w-full bg-[var(--foreground)] text-[var(--background)] py-4 text-xs font-semibold uppercase tracking-widest hover:bg-[var(--primary)] hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {isCreatingDraft ? 'Creando Pedido...' : 'Confirmar y Crear Pedido de Prueba (OMS)'}
+                                    </button>
+                                </div>
+                            )}
 
                             <p className="text-[10px] text-center text-[var(--foreground)]/40 mt-5 tracking-widest">
                                 PAGO SEGURO CON PAYPAL · TRANSACCIÓN PROTEGIDA POR SSL

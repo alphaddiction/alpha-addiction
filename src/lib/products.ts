@@ -32,6 +32,7 @@ export interface SizeVariant {
     sku: string;
     available: boolean;
     retailPrice?: string;
+    virtualStock?: number;
 }
 
 export interface ColorVariant {
@@ -68,39 +69,66 @@ export interface Product {
 export const products: Product[] = [
     {
         id: 'p1',
-        slug: 'essential-tee',
-        name: 'Essential Tee',
+        slug: 'core-tee',
+        name: 'Core Tee',
         priceEUR: 25,
         category: 'Tops',
-        colors: ['Black', 'Cream'],
-        sizes: ['XS', 'S', 'M', 'L'],
+        colors: ['Black', 'Navy', 'Forest Green', 'Dark Chocolate', 'Cardinal', 'Charcoal', 'Sand'],
+        sizes: ['S', 'M', 'L', 'XL', '2XL'],
         descriptionShort: 'Camiseta esencial de algodón premium. Corte relajado y minimalista, perfecta para el día a día.',
         status: 'in_stock',
         images: ['/images/essential-tee-1.jpg'],
-        printfulProductId: undefined, // TODO: Enlazar con printfulProductId de la tienda de producción en la siguiente fase
+        printfulProductId: 443035762,
         variants: [
-            { color: 'Black', size: 'XS', printfulVariantId: undefined, sku: undefined },
-            { color: 'Black', size: 'S', printfulVariantId: undefined, sku: undefined },
-            { color: 'Black', size: 'M', printfulVariantId: undefined, sku: undefined },
-            { color: 'Black', size: 'L', printfulVariantId: undefined, sku: undefined },
-            { color: 'Cream', size: 'XS', printfulVariantId: undefined, sku: undefined },
-            { color: 'Cream', size: 'S', printfulVariantId: undefined, sku: undefined },
-            { color: 'Cream', size: 'M', printfulVariantId: undefined, sku: undefined },
-            { color: 'Cream', size: 'L', printfulVariantId: undefined, sku: undefined },
+            { color: 'Black', size: 'S', printfulVariantId: 11546, sku: '6A400952DC1B9_Black-S' },
+            { color: 'Black', size: 'M', printfulVariantId: 11547, sku: '6A400952DC1B9_Black-M' },
+            { color: 'Black', size: 'L', printfulVariantId: 11548, sku: '6A400952DC1B9_Black-L' },
+            { color: 'Black', size: 'XL', printfulVariantId: 11549, sku: '6A400952DC1B9_Black-XL' },
+            { color: 'Black', size: '2XL', printfulVariantId: 11550, sku: '6A400952DC1B9_Black-2XL' },
+            { color: 'Navy', size: 'S', printfulVariantId: 11561, sku: '6A400952DC1B9_Navy-S' },
+            { color: 'Navy', size: 'M', printfulVariantId: 11562, sku: '6A400952DC1B9_Navy-M' },
+            { color: 'Navy', size: 'L', printfulVariantId: 11563, sku: '6A400952DC1B9_Navy-L' },
+            { color: 'Navy', size: 'XL', printfulVariantId: 11564, sku: '6A400952DC1B9_Navy-XL' },
+            { color: 'Navy', size: '2XL', printfulVariantId: 11565, sku: '6A400952DC1B9_Navy-2XL' },
+            { color: 'Forest Green', size: 'S', printfulVariantId: 20453, sku: '6A400952DC1B9_Forest-Green-S' },
+            { color: 'Forest Green', size: 'M', printfulVariantId: 20454, sku: '6A400952DC1B9_Forest-Green-M' },
+            { color: 'Forest Green', size: 'L', printfulVariantId: 20455, sku: '6A400952DC1B9_Forest-Green-L' },
+            { color: 'Forest Green', size: 'XL', printfulVariantId: 20456, sku: '6A400952DC1B9_Forest-Green-XL' },
+            { color: 'Forest Green', size: '2XL', printfulVariantId: 20457, sku: '6A400952DC1B9_Forest-Green-2XL' },
+            { color: 'Dark Chocolate', size: 'S', printfulVariantId: 15837, sku: '6A400952DC1B9_Dark-Chocolate-S' },
+            { color: 'Dark Chocolate', size: 'M', printfulVariantId: 15838, sku: '6A400952DC1B9_Dark-Chocolate-M' },
+            { color: 'Dark Chocolate', size: 'L', printfulVariantId: 15839, sku: '6A400952DC1B9_Dark-Chocolate-L' },
+            { color: 'Dark Chocolate', size: 'XL', printfulVariantId: 15840, sku: '6A400952DC1B9_Dark-Chocolate-XL' },
+            { color: 'Dark Chocolate', size: '2XL', printfulVariantId: 15841, sku: '6A400952DC1B9_Dark-Chocolate-2XL' },
+            { color: 'Cardinal', size: 'S', printfulVariantId: 15819, sku: '6A400952DC1B9_Cardinal-S' },
+            { color: 'Cardinal', size: 'M', printfulVariantId: 15820, sku: '6A400952DC1B9_Cardinal-M' },
+            { color: 'Cardinal', size: 'L', printfulVariantId: 15821, sku: '6A400952DC1B9_Cardinal-L' },
+            { color: 'Cardinal', size: 'XL', printfulVariantId: 15822, sku: '6A400952DC1B9_Cardinal-XL' },
+            { color: 'Cardinal', size: '2XL', printfulVariantId: 15823, sku: '6A400952DC1B9_Cardinal-2XL' },
+            { color: 'Charcoal', size: 'S', printfulVariantId: 15831, sku: '6A400952DC1B9_Charcoal-S' },
+            { color: 'Charcoal', size: 'M', printfulVariantId: 15832, sku: '6A400952DC1B9_Charcoal-M' },
+            { color: 'Charcoal', size: 'L', printfulVariantId: 15833, sku: '6A400952DC1B9_Charcoal-L' },
+            { color: 'Charcoal', size: 'XL', printfulVariantId: 15834, sku: '6A400952DC1B9_Charcoal-XL' },
+            { color: 'Charcoal', size: '2XL', printfulVariantId: 15835, sku: '6A400952DC1B9_Charcoal-2XL' },
+            { color: 'Sand', size: 'S', printfulVariantId: 12639, sku: '6A400952DC1B9_Sand-S' },
+            { color: 'Sand', size: 'M', printfulVariantId: 12640, sku: '6A400952DC1B9_Sand-M' },
+            { color: 'Sand', size: 'L', printfulVariantId: 12641, sku: '6A400952DC1B9_Sand-L' },
+            { color: 'Sand', size: 'XL', printfulVariantId: 12642, sku: '6A400952DC1B9_Sand-XL' },
+            { color: 'Sand', size: '2XL', printfulVariantId: 12643, sku: '6A400952DC1B9_Sand-2XL' }
         ]
     },
     {
         id: 'p2',
-        slug: 'pure-tee',
-        name: 'Pure Tee',
+        slug: 'discipline-tank',
+        name: 'Discipline Tank',
         priceEUR: 25,
         category: 'Tops',
         colors: ['Black', 'Cream'],
         sizes: ['XS', 'S', 'M', 'L'],
-        descriptionShort: 'Pureza en el diseño. Tejido suave y transpirable que se siente como una segunda piel.',
+        descriptionShort: 'Camiseta de tirantes Discipline. Máxima comodidad, transpirabilidad y libertad de movimiento para tus entrenamientos más exigentes.',
         status: 'in_stock',
-        images: ['/images/pure-tee-1.jpg'],
-        printfulProductId: undefined, // TODO: Enlazar con printfulProductId de la tienda de producción en la siguiente fase
+        images: ['/images/discipline-tank-1.jpg'],
+        printfulProductId: 443083427, // Enlazado con printfulProductId de la tienda de producción
         variants: [
             { color: 'Black', size: 'XS', printfulVariantId: undefined, sku: undefined },
             { color: 'Black', size: 'S', printfulVariantId: undefined, sku: undefined },
@@ -310,3 +338,120 @@ export function getProductByPrintfulVariantId(variantId: number): { product: Pro
   }
   return undefined;
 }
+
+/**
+ * --- CONSULTAS DE BASE DE DATOS DILIGENTES (NEON POSTGRESQL) ---
+ */
+import { db } from './db';
+import { ensureInitialDropsSeeded } from './drops';
+
+/**
+ * Retorna todos los productos de la base de datos Neon (ejecuta autoseed si está vacío).
+ */
+export async function getDbProducts(): Promise<any[]> {
+  await ensureInitialDropsSeeded();
+  return db.product.findMany({
+    orderBy: { createdAt: 'asc' },
+  });
+}
+
+/**
+ * Busca un producto por su Slug en Neon.
+ */
+export async function getDbProductBySlug(slug: string): Promise<any | null> {
+  await ensureInitialDropsSeeded();
+  return db.product.findUnique({
+    where: { slug },
+    include: { drop: true },
+  });
+}
+
+/**
+ * Busca un producto por su ID en Neon.
+ */
+export async function getDbProductById(id: string): Promise<any | null> {
+  await ensureInitialDropsSeeded();
+  return db.product.findUnique({
+    where: { id },
+    include: { drop: true },
+  });
+}
+
+/**
+ * Busca un producto y su variante por el código SKU en la base de datos.
+ */
+export async function getDbProductBySku(sku: string): Promise<{ product: any; colorVariant: ColorVariant; sizeVariant: SizeVariant } | null> {
+  await ensureInitialDropsSeeded();
+  const dbProducts = await db.product.findMany();
+  
+  for (const p of dbProducts) {
+    const colorVariants = (p.colorVariants as any as ColorVariant[]) || [];
+    for (const cv of colorVariants) {
+      const sizeVariant = cv.sizes.find(sz => sz.sku === sku);
+      if (sizeVariant) {
+        return { product: p, colorVariant: cv, sizeVariant };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Busca un producto y su variante por el ID de variante de Printful.
+ */
+export async function getDbProductByPrintfulVariantId(variantId: number): Promise<{ product: any; colorVariant: ColorVariant; sizeVariant: SizeVariant } | null> {
+  await ensureInitialDropsSeeded();
+  const dbProducts = await db.product.findMany();
+  
+  for (const p of dbProducts) {
+    const colorVariants = (p.colorVariants as any as ColorVariant[]) || [];
+    for (const cv of colorVariants) {
+      const sizeVariant = cv.sizes.find(sz => sz.printfulVariantId === variantId);
+      if (sizeVariant) {
+        return { product: p, colorVariant: cv, sizeVariant };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Reduce el stock virtual de una variante tras una venta confirmada.
+ */
+export async function decrementVirtualStock(productId: string, sku: string, quantity: number): Promise<void> {
+  const p = await db.product.findUnique({ where: { id: productId } });
+  if (!p) return;
+
+  const colorVariants = (p.colorVariants as any as ColorVariant[]) || [];
+  let updated = false;
+
+  const newColorVariants = colorVariants.map(cv => {
+    return {
+      ...cv,
+      sizes: cv.sizes.map(sz => {
+        if (sz.sku === sku) {
+          updated = true;
+          const currentStock = sz.virtualStock ?? 50;
+          const newStock = Math.max(0, currentStock - quantity);
+          return {
+            ...sz,
+            virtualStock: newStock,
+            available: newStock > 0,
+          };
+        }
+        return sz;
+      })
+    };
+  });
+
+  if (updated) {
+    await db.product.update({
+      where: { id: productId },
+      data: {
+        colorVariants: newColorVariants as any
+      }
+    });
+    console.log(`📉 [Stock Virtual] Reducido stock virtual para producto ${productId} SKU ${sku} en ${quantity} uds.`);
+  }
+}
+

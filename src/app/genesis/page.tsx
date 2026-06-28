@@ -1,18 +1,55 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { products } from '@/lib/products';
+import { getDbProducts } from '@/lib/products';
 import { formatPrice } from '@/lib/utils';
 import { ArrowUpRight } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Colección Genesis | Alpha Addiction',
+  description: 'Explora la colección fundacional de Alpha Addiction. 5 piezas exclusivas de edición limitada con diseño minimalista.',
+  alternates: {
+    canonical: '/genesis',
+  },
+};
 
 export default async function GenesisPage({
     searchParams,
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+    const products = await getDbProducts();
     const params = await searchParams;
     const waitlistSuccess = params['waitlist'] === 'ok';
 
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alpha-addiction.com';
+    
+    const collectionJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        'name': 'Colección Genesis | Alpha Addiction',
+        'description': 'Explora la colección fundacional de Alpha Addiction. 5 piezas exclusivas de edición limitada con diseño minimalista.',
+        'url': `${baseUrl}/genesis`,
+        'mainEntity': {
+            '@type': 'ItemList',
+            'itemListElement': products.map((product, index) => ({
+                '@type': 'ListItem',
+                'position': index + 1,
+                'url': `${baseUrl}/product/${product.slug}`,
+                'name': product.name,
+            })),
+        },
+    };
+
     return (
         <div className="min-h-screen pb-20">
+            {/* Marcado de datos estructurados JSON-LD */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+            />
+
             {/* Optional Banner (Discrete/Option B) - Adjusted for Light Theme */}
             {waitlistSuccess && (
                 <div className="bg-[var(--surface)] text-[var(--surface-foreground)] border-b border-[var(--primary)]/20 text-[10px] uppercase tracking-[0.2em] text-center py-3 fixed top-16 w-full z-40 animate-in slide-in-from-top">
@@ -37,17 +74,24 @@ export default async function GenesisPage({
             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16 pb-32">
                 {products.map((product) => {
                     let imageSrc: string | null = null;
-                    if (product.mockups && product.mockups.length > 0) {
-                        const activeMockup = product.mockups.find(m => m.enabled);
-                        if (activeMockup) imageSrc = activeMockup.url;
+                    if (product.colorVariants) {
+                        const colorVariants = (product.colorVariants as any[]) || [];
+                        const firstColor = colorVariants[0];
+                        if (firstColor && firstColor.mockups && firstColor.mockups.length > 0) {
+                            const activeMockup = firstColor.mockups.find((m: any) => m.enabled) || firstColor.mockups[0];
+                            if (activeMockup) imageSrc = activeMockup.url;
+                        }
                     }
-                    if (!imageSrc && product.images && product.images.length > 0) {
-                        const firstImg = product.images[0];
-                        if (typeof firstImg === 'string') {
-                            imageSrc = firstImg;
-                        } else if (firstImg && typeof firstImg === 'object') {
-                            const activeImg = (product.images as any[]).find(img => img.enabled);
-                            imageSrc = activeImg ? activeImg.src : firstImg.src;
+                    if (!imageSrc && product.images) {
+                        const images = (product.images as any[]) || [];
+                        if (images.length > 0) {
+                            const firstImg = images[0];
+                            if (typeof firstImg === 'string') {
+                                imageSrc = firstImg;
+                            } else {
+                                const activeImg = images.find((img: any) => img.enabled) || firstImg;
+                                imageSrc = activeImg ? activeImg.src : null;
+                            }
                         }
                     }
 
@@ -60,26 +104,16 @@ export default async function GenesisPage({
                             {/* Image / Placeholder: Dark Surface for Contrast */}
                             <div className="relative aspect-[3/4] overflow-hidden bg-[var(--surface)] mb-5 shadow-sm">
                                 <div className="w-full h-full group-hover:scale-105 transition-transform duration-1000 ease-out relative">
-                                    {imageSrc ? (
-                                        <img
-                                            src={imageSrc}
-                                            alt={product.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <>
-                                            {/* Minimal Placeholder */}
-                                            <div className="absolute inset-0 flex items-end p-6">
-                                                <span className="text-white/8 text-[9px] tracking-[0.3em] uppercase font-light">
-                                                    AlphaAddiction
-                                                </span>
-                                            </div>
-                                            {/* Use actual images when available, for now overlay text to simulate product */}
-                                            <div className="absolute inset-0 flex items-center justify-center text-white/5 text-4xl font-serif">
-                                                {product.name.split(' ')[0].toUpperCase()}
-                                            </div>
-                                        </>
-                                    )}
+                                    {/* Minimal Placeholder */}
+                                    <div className="absolute inset-0 flex items-end p-6">
+                                        <span className="text-white/8 text-[9px] tracking-[0.3em] uppercase font-light">
+                                            AlphaAddiction
+                                        </span>
+                                    </div>
+                                    {/* Use actual images when available, for now overlay text to simulate product */}
+                                    <div className="absolute inset-0 flex items-center justify-center text-white/5 text-4xl font-serif">
+                                        {product.name.split(' ')[0].toUpperCase()}
+                                    </div>
                                 </div>
 
                             {/* Status Badge: Discrete */}

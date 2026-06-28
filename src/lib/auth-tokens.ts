@@ -76,3 +76,68 @@ export async function verifySessionToken(token: string): Promise<{ sessionId: st
     return null;
   }
 }
+
+/**
+ * Firma un token temporal de 2FA para el segundo paso del login (duración 5 minutos).
+ */
+export async function signTemporary2faToken(userId: string, expiresAt: number): Promise<string> {
+  const data = `${userId}:${expiresAt}`;
+  const key = await crypto.subtle.importKey(
+    'raw',
+    stringToBuffer(JWT_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signatureBuffer = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    stringToBuffer(data)
+  );
+  
+  const signatureHex = bufferToHex(signatureBuffer);
+  return `${data}:${signatureHex}`;
+}
+
+/**
+ * Verifica la vigencia y firma de un token temporal de 2FA.
+ */
+export async function verifyTemporary2faToken(token: string): Promise<string | null> {
+  try {
+    const parts = token.split(':');
+    if (parts.length !== 3) return null;
+    const [userId, expiresAtStr, signature] = parts;
+    const expiresAt = parseInt(expiresAtStr, 10);
+    
+    if (isNaN(expiresAt) || expiresAt < Date.now()) {
+      return null; // Expirado
+    }
+    
+    const data = `${userId}:${expiresAtStr}`;
+    const key = await crypto.subtle.importKey(
+      'raw',
+      stringToBuffer(JWT_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signatureBuffer = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      stringToBuffer(data)
+    );
+    
+    const expectedSignature = bufferToHex(signatureBuffer);
+    
+    if (signature !== expectedSignature) {
+      return null;
+    }
+    
+    return userId;
+  } catch (error) {
+    console.error('❌ [Auth Tokens] Error al verificar token temporal 2FA:', error);
+    return null;
+  }
+}

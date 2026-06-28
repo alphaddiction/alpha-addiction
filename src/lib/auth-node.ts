@@ -226,15 +226,12 @@ export async function logAuditEvent(
   }
 }
 
+import { verifyTotpToken } from './auth-2fa';
+
 /**
  * Arquitectura preparada para verificación de segundo factor (TOTP).
  * Compatible con Google Authenticator, Microsoft Authenticator y Authy.
  */
 export function verifyTwoFactorToken(secret: string, token: string): boolean {
-  // En fase de producción se instalará otplib o speakeasy
-  // const { authenticator } = require('otplib');
-  // return authenticator.verify({ token, secret });
-  console.log(`🔒 [2FA MOCK] Verificando token: ${token} contra secreto de base de datos.`);
-  // Bypass de pruebas temporal
-  return token === '123456';
+  return verifyTotpToken(secret, token);
 }

@@ -13,10 +13,15 @@ model AdminUser {
   email            String         @unique
   passwordHash     String
   role             String         @default("ADMIN")
-  twoFactorSecret  String?
-  twoFactorEnabled Boolean        @default(false)
-  recoveryCodes    String?        // Guardados encriptados/hasheados o separados por comas
-  passwordChangedAt DateTime      @default(now())
+  twoFactorSecret          String?
+  twoFactorEnabled         Boolean        @default(false)
+  recoveryCodes            String?        // Guardados encriptados/hasheados o separados por comas
+  twoFactorSecretEncrypted String?
+  twoFactorConfirmedAt     DateTime?
+  twoFactorLastUsedAt      DateTime?
+  recoveryCodesHash        String?
+  lastSecurityEventAt      DateTime?
+  passwordChangedAt        DateTime       @default(now())
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   sessions         AdminSession[]
@@ -88,6 +93,10 @@ model Order {
   events          OrderEvent[]
   emailLogs       EmailLog[]
   internalNotes   String?
+  discountId      String?
+  discountRel     Discount?    @relation(fields: [discountId], references: [id], onDelete: SetNull)
+  discountCode    String?
+  redemptions     DiscountRedemption[]
 }
 
 model OrderItem {
@@ -127,5 +136,199 @@ model EmailLog {
   status       String   // "success", "failed"
   errorMessage String?
   sentAt       DateTime @default(now())
+}
+
+model Drop {
+  id              String         @id @default(uuid())
+  name            String
+  slug            String         @unique
+  description     String
+  mainImage       String
+  banner          String
+  videoUrl        String?
+  status          String         @default("DRAFT") // DRAFT, COMING_SOON, LIVE, SOLD_OUT, ENDED, ARCHIVED
+  openingAt       DateTime
+  closingAt       DateTime
+  publishedAt     DateTime?
+  primaryColor    String         @default("#d4af37")
+  order           Int            @default(0)
+  metaTitle       String?
+  metaDescription String?
+  visible         Boolean        @default(true)
+  featured        Boolean        @default(false)
+  products        Product[]
+  waitlist        DropWaitlist[]
+  discounts       Discount[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Product {
+  id                String   @id // local ID (e.g. p1, p3)
+  slug              String   @unique
+  name              String
+  priceEUR          Float
+  category          String
+  descriptionShort  String
+  status            String   // 'in_stock', 'sold_out'
+  images            Json     // ProductImage[]
+  printfulProductId Int?
+  colors            Json?    // string[]
+  sizes             Json?    // string[]
+  colorVariants     Json?    // ColorVariant[] (contiene mockup y sizes con virtualStock)
+  dropId            String?
+  drop              Drop?    @relation(fields: [dropId], references: [id], onDelete: SetNull)
+  discounts         Discount[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model DropWaitlist {
+  id            String    @id @default(uuid())
+  dropId        String
+  drop          Drop      @relation(fields: [dropId], references: [id], onDelete: Cascade)
+  email         String
+  name          String?
+  origin        String?   @default("web")
+  status        String    @default("registered") // registered, confirmed, notified, pending
+  createdAt     DateTime  @default(now())
+  confirmedAt   DateTime?
+  ipHash        String?
+  userAgentHash String?
+
+  @@unique([dropId, email])
+}
+
+model Discount {
+  id                 String               @id @default(uuid())
+  code               String               @unique // Guardar siempre en mayúsculas
+  type               String               // PERCENTAGE, FIXED_AMOUNT, FREE_SHIPPING
+  value              Float
+  status             String               @default("ACTIVE") // ACTIVE, INACTIVE
+  maxUses            Int?                 // null significa ilimitado
+  usedCount          Int                  @default(0)
+  startsAt           DateTime
+  endsAt             DateTime
+  dropId             String?              // Restringido opcionalmente a un Drop
+  drop               Drop?                @relation(fields: [dropId], references: [id], onDelete: SetNull)
+  productId          String?              // Restringido opcionalmente a un Producto
+  product            Product?             @relation(fields: [productId], references: [id], onDelete: SetNull)
+  customerEmail      String?              // Restringido opcionalmente a un Email
+  minimumOrderAmount Float                @default(0.0)
+  isWaitlistOnly     Boolean              @default(false) // Si es exclusivo para registrados de la waitlist
+  showInPromoBar     Boolean              @default(false) // Si se muestra automáticamente en la barra superior
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  redemptions        DiscountRedemption[]
+  orders             Order[]
+}
+
+model DiscountRedemption {
+  id         String   @id @default(uuid())
+  discountId String
+  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ipHash     String?
+  createdAt  DateTime @default(now())
+}
+
+model Announcement {
+  id                 String    @id @default(uuid())
+  type               String    @default("MANUAL") // MANUAL, AUTOMATIC
+  category           String    @default("PROMOTION") // PROMOTION, SYSTEM, ALERT, COUNTDOWN
+  title              String
+  text               String
+  icon               String?
+  url                String?
+  openInNewTab       Boolean   @default(false)
+  priority           Int       @default(0)
+  order              Int       @default(0)
+  displayMode        String    @default("CONTINUOUS") // CONTINUOUS, ROTATE, CAROUSEL
+  active             Boolean   @default(true)
+  startsAt           DateTime?
+  endsAt             DateTime?
+  config             Json?     // Custom CSS/styling options (e.g. colors, speed, height)
+  autoConditions     Json?     // Automatic trigger conditions (e.g. low stock, drop countdown)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model SystemSetting {
+  key         String   @id
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model AutomationLog {
+  id           String   @id @default(uuid())
+  eventType    String
+  status       String   // SUCCESS, FAILED
+  message      String?
+  durationMs   Int
+  error        String?
+  createdAt    DateTime @default(now())
+}
+
+model SupportTicket {
+  id            String           @id @default(uuid())
+  ticketNumber  String           @unique // Legible format like TK-10001
+  customerEmail String
+  customerName  String
+  orderId       String?
+  orderNumber   String?
+  category      String
+  subject       String
+  status        String           @default("open") // open, pending, replied, resolved, closed
+  priority      String           @default("normal") // low, normal, high, urgent
+  source        String           @default("web") // web, email, etc.
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  closedAt      DateTime?
+  messages      SupportMessage[]
+}
+
+model SupportMessage {
+  id           String        @id @default(uuid())
+  ticketId     String
+  ticket       SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderType   String        // "customer" o "agent"
+  senderEmail  String
+  body         String
+  createdAt    DateTime      @default(now())
+  internalNote Boolean       @default(false)
+  attachments  Json?         // Preparado para metadatos de adjuntos
+}
+
+model SupportOtp {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  ipAddress String
+  createdAt DateTime @default(now())
+}
+
+model CustomerAccessLog {
+  id              String   @id @default(uuid())
+  email           String
+  orderNumber     String?
+  accessType      String   // "OTP", "TOKEN", "CREDENTIALS"
+  durationSeconds Int?     // Duración de la auth OTP en segundos
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime @default(now())
+}
+
+model ActiveToken {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  email       String
+  orderNumber String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
 }
 
