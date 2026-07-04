@@ -12,6 +12,7 @@ export interface CartItem {
     color?: string;
     printfulVariantId?: number;
     qty: number;
+    image?: string;
 }
 
 interface CartContextType {
@@ -63,6 +64,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 );
             }
 
+            let image = '';
+            if (color && product.colorVariants) {
+                const variant = product.colorVariants.find(
+                    (v) => v.name.toLowerCase() === color.toLowerCase()
+                );
+                if (variant && variant.mockups && variant.mockups.length > 0) {
+                    image = variant.mockups[0].url;
+                }
+            }
+            if (!image && product.images && product.images.length > 0) {
+                const firstImg = product.images[0];
+                image = typeof firstImg === 'string' ? firstImg : firstImg.src;
+            }
+
             return [
                 ...prevItems,
                 {
@@ -74,6 +89,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     color,
                     printfulVariantId,
                     qty,
+                    image
                 },
             ];
         });

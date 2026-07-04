@@ -64,7 +64,18 @@ export default function CartPage() {
                         <div key={item.cartItemId} className="grid grid-cols-1 md:grid-cols-12 gap-4 py-4 border-b border-[var(--border)] items-center">
                             {/* Product Info */}
                             <div className="col-span-1 md:col-span-6 flex gap-4">
-                                <div className="w-20 h-24 bg-[var(--surface)] flex-shrink-0" />
+                                <div className="w-20 h-24 bg-[var(--surface)] flex-shrink-0 overflow-hidden relative border border-white/5">
+                                    {item.image ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img 
+                                            src={item.image} 
+                                            alt={item.name} 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-white/5" />
+                                    )}
+                                </div>
                                 <div className="flex flex-col justify-center">
                                     <Link href={`/product/${item.slug}`} className="text-base font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors">
                                         {item.name}

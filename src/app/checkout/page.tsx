@@ -243,8 +243,18 @@ export default function CheckoutPage() {
                         <div className="space-y-6 mb-8 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                             {items.map((item) => (
                                 <div key={item.cartItemId} className="flex gap-4">
-                                    <div className="w-16 h-20 bg-[var(--surface)] flex-shrink-0 relative">
-                                        <span className="absolute -top-2 -right-2 bg-[var(--foreground)] text-[var(--background)] text-[10px] w-5 h-5 flex items-center justify-center rounded-full leading-none z-10">
+                                    <div className="w-16 h-20 bg-[var(--surface)] flex-shrink-0 relative overflow-hidden border border-white/5">
+                                        {item.image ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img 
+                                                src={item.image} 
+                                                alt={item.name} 
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-white/5" />
+                                        )}
+                                        <span className="absolute -top-2 -right-2 bg-[var(--foreground)] text-[var(--background)] text-[10px] w-5 h-5 flex items-center justify-center rounded-full leading-none z-10 font-bold">
                                             {item.qty}
                                         </span>
                                     </div>
