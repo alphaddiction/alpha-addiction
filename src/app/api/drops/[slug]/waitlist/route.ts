@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { db } from '@/lib/db';
 import { dispatchEvent } from '@/lib/events/dispatcher';
+import { saveCustomerConsent } from '@/lib/email/consents';
 
 // Interface para el control de rate limit en memoria
 interface RateLimitEntry {
@@ -58,7 +59,7 @@ export async function POST(
 
     // 2. Parsear y validar cuerpo de petición
     const body = await req.json();
-    const { email, name } = body;
+    const { email, name, consentMarketing } = body;
 
     if (!email) {
       return NextResponse.json(
@@ -132,6 +133,18 @@ export async function POST(
         userAgentHash,
       },
     });
+
+    // Registrar consentimiento de marketing si se especificó el checkbox
+    if (typeof consentMarketing === 'boolean') {
+      await saveCustomerConsent({
+        email: cleanEmail,
+        consentType: 'marketing',
+        accepted: consentMarketing,
+        ipAddress: ip,
+        userAgent,
+        legalTextVersion: 'v1.0'
+      });
+    }
 
     console.log(`✉️ [Waitlist API] Nuevo registro en lista de espera para el Drop "${drop.name}": ${cleanEmail}`);
 

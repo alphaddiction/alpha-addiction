@@ -48,34 +48,32 @@ export async function GET() {
     const robotsExists = fs.existsSync(path.join(rootDir, 'src', 'app', 'robots.ts'));
 
     // 3. Ejecutar validación del Checklist de Producción
-    const pendingItems: string[] = [];
+    const pendingTechnicalItems: string[] = [];
+    const pendingLegalItems: string[] = [];
 
-    // Validar base de datos
-    for (const item of PRODUCTION_CHECKLIST_KEYS) {
-      const val = settings[item.key];
-      if (!val || val.trim() === '') {
-        pendingItems.push(item.label);
-      }
+    // --- REQUISITOS TÉCNICOS ---
+    const hasPaypalLive = !!process.env.PAYPAL_CLIENT_ID && 
+                          !!process.env.PAYPAL_CLIENT_SECRET && 
+                          !!process.env.PAYPAL_WEBHOOK_ID && 
+                          process.env.PAYPAL_API === 'https://api-m.paypal.com';
+
+    if (!process.env.PAYPAL_CLIENT_ID) pendingTechnicalItems.push('PAYPAL_CLIENT_ID configurado');
+    if (!process.env.PAYPAL_CLIENT_SECRET) pendingTechnicalItems.push('PAYPAL_CLIENT_SECRET configurado');
+    if (!process.env.PAYPAL_WEBHOOK_ID) pendingTechnicalItems.push('PAYPAL_WEBHOOK_ID configurado');
+    if (process.env.PAYPAL_API !== 'https://api-m.paypal.com') {
+      pendingTechnicalItems.push('PAYPAL_API establecido en https://api-m.paypal.com');
     }
 
-    // Validar SSL (el dominio debe tener https://)
-    const domain = settings['company_domain'] || '';
-    if (!domain.toLowerCase().startsWith('https://')) {
-      pendingItems.push('Dominio Seguro con SSL (Debe comenzar con https://)');
+    if (!process.env.DATABASE_URL) pendingTechnicalItems.push('DATABASE_URL configurado');
+    if (!process.env.PRINTFUL_API_KEY) pendingTechnicalItems.push('API de Producción de Printful (PRINTFUL_API_KEY) configurada');
+    if (!process.env.RESEND_API_KEY) pendingTechnicalItems.push('Servidor de Envío de Correos (RESEND_API_KEY) configurado');
+    if (!process.env.JWT_SECRET) pendingTechnicalItems.push('JWT_SECRET configurada');
+    if (!process.env.ADMIN_SESSION_SECRET) pendingTechnicalItems.push('ADMIN_SESSION_SECRET configurada');
+    if (!process.env.TWO_FACTOR_ENCRYPTION_KEY) pendingTechnicalItems.push('TWO_FACTOR_ENCRYPTION_KEY configurada');
+
+    if (process.env.ENABLE_TEST_PURCHASES === 'true') {
+      pendingTechnicalItems.push('Las compras de prueba deben estar desactivadas (ENABLE_TEST_PURCHASES = false)');
     }
-
-    // Validar archivos
-    if (!sitemapExists) pendingItems.push('Archivo de Mapa del Sitio (sitemap.ts)');
-    if (!robotsExists) pendingItems.push('Archivo de Directivas del Buscador (robots.ts)');
-
-    // Validar integraciones críticas en producción
-    const hasPrintfulProd = !!process.env.PRINTFUL_API_KEY; // En producción real se lee desde env
-    const hasPaypalProd = !!process.env.PAYPAL_CLIENT_ID;
-    const hasResend = !!process.env.RESEND_API_KEY;
-
-    if (!hasPrintfulProd) pendingItems.push('API de Producción de Printful configurada');
-    if (!hasPaypalProd) pendingItems.push('Credenciales de Producción de PayPal configuradas');
-    if (!hasResend) pendingItems.push('Servidor de Envío de Correos Resend configurado');
 
     // Validar salud del sistema (no debe haber fallas críticas en Neon ni servicios)
     try {
@@ -83,16 +81,10 @@ export async function GET() {
         where: { status: { in: ['offline', 'degraded'] } }
       });
       if (degradedServices > 0) {
-        pendingItems.push('Health Center libre de errores críticos');
+        pendingTechnicalItems.push('Health Center libre de errores críticos');
       }
     } catch (healthErr) {
       console.warn('No se pudo verificar el estado de salud del sistema:', healthErr);
-    }
-
-    // Validar Sentry en producción
-    const hasSentry = !!process.env.NEXT_PUBLIC_SENTRY_DSN;
-    if (!hasSentry) {
-      pendingItems.push('Monitorización de errores (Sentry DSN) configurado en variables de entorno');
     }
 
     // Validar 2FA del Administrador Principal
@@ -101,23 +93,60 @@ export async function GET() {
       include: { user: true }
     });
     if (!session || !session.user || !session.user.twoFactorEnabled) {
-      pendingItems.push('Autenticación de Doble Factor (2FA) activa para la cuenta del Administrador');
+      pendingTechnicalItems.push('Autenticación de Doble Factor (2FA) activa para la cuenta del Administrador');
+    }
+
+    // --- REQUISITOS LEGALES / COMERCIALES ---
+    for (const item of PRODUCTION_CHECKLIST_KEYS) {
+      const val = settings[item.key];
+      if (!val || val.trim() === '') {
+        pendingLegalItems.push(item.label);
+      }
+    }
+
+    // Validar SSL (el dominio debe tener https://)
+    const domain = settings['company_domain'] || '';
+    if (domain && !domain.toLowerCase().startsWith('https://')) {
+      pendingLegalItems.push('Dominio Seguro con SSL (Debe comenzar con https://)');
+    }
+
+    // Validar archivos
+    if (!sitemapExists) pendingLegalItems.push('Archivo de Mapa del Sitio (sitemap.ts)');
+    if (!robotsExists) pendingLegalItems.push('Archivo de Directivas del Buscador (robots.ts)');
+
+    // Determinar modo activo seleccionado
+    const activeMode = settings['system_mode'] || 'development';
+    let pendingItems: string[] = [];
+
+    if (activeMode === 'production_verification') {
+      pendingItems = pendingTechnicalItems;
+    } else if (activeMode === 'production_open') {
+      pendingItems = [...pendingTechnicalItems, ...pendingLegalItems];
+    } else {
+      // En modo development mostramos ambos como guía
+      pendingItems = [...pendingTechnicalItems, ...pendingLegalItems];
     }
 
     // Calcular porcentaje de completado
-    const totalChecks = PRODUCTION_CHECKLIST_KEYS.length + 8; // 12 db + ssl + sitemap + robots + printful + paypal + resend + 2fa + sentry
-    const completedChecks = totalChecks - pendingItems.length;
+    const totalChecks = PRODUCTION_CHECKLIST_KEYS.length + 11 + 2; // 12 db + 11 tech + 2 files
+    const completedChecks = totalChecks - (pendingTechnicalItems.length + pendingLegalItems.length);
     const completionPercentage = Math.round((completedChecks / totalChecks) * 100);
 
-    const isReadyForProduction = pendingItems.length === 0;
+    const isReadyForProduction = activeMode === 'production_verification'
+      ? pendingTechnicalItems.length === 0
+      : (pendingTechnicalItems.length === 0 && pendingLegalItems.length === 0);
 
     // 4. Mapear estado de integraciones enmascarado
+    const hasPrintfulProd = !!process.env.PRINTFUL_API_KEY;
+    const hasPaypalProd = !!process.env.PAYPAL_CLIENT_ID;
+    const hasResend = !!process.env.RESEND_API_KEY;
+
     const integrations = {
       printful: hasPrintfulProd 
-        ? (settings['system_mode'] === 'production' ? 'configured' : 'sandbox') 
+        ? (activeMode !== 'development' ? 'configured' : 'sandbox') 
         : 'pending',
       paypal: hasPaypalProd 
-        ? (settings['system_mode'] === 'production' ? 'configured' : 'sandbox') 
+        ? (activeMode !== 'development' ? 'configured' : 'sandbox') 
         : 'pending',
       resend: hasResend ? 'configured' : 'pending',
       google_analytics: settings['ga_measurement_id'] ? 'configured' : 'pending',
@@ -132,6 +161,8 @@ export async function GET() {
       checklist: {
         completionPercentage,
         isReadyForProduction,
+        pendingTechnicalItems,
+        pendingLegalItems,
         pendingItems
       },
       integrations
@@ -164,52 +195,81 @@ export async function POST(req: Request) {
 
     Object.assign(mergedSettings, settings);
 
-    // 2. Si se intenta activar el Modo Producción, ejecutar checklist estricto
-    if (settings['system_mode'] === 'production') {
-      const pendingItems: string[] = [];
+    // 2. Ejecutar validaciones según el modo de destino
+    const targetMode = settings['system_mode'] || mergedSettings['system_mode'] || 'development';
 
-      for (const item of PRODUCTION_CHECKLIST_KEYS) {
-        const val = mergedSettings[item.key];
-        if (!val || val.trim() === '') {
-          pendingItems.push(item.label);
-        }
+    if (targetMode === 'production_verification' || targetMode === 'production_open') {
+      const pendingTechnicalItems: string[] = [];
+
+      // Validar requisitos técnicos
+      if (!process.env.PAYPAL_CLIENT_ID) pendingTechnicalItems.push('PAYPAL_CLIENT_ID configurado');
+      if (!process.env.PAYPAL_CLIENT_SECRET) pendingTechnicalItems.push('PAYPAL_CLIENT_SECRET configurado');
+      if (!process.env.PAYPAL_WEBHOOK_ID) pendingTechnicalItems.push('PAYPAL_WEBHOOK_ID configurado');
+      if (process.env.PAYPAL_API !== 'https://api-m.paypal.com') {
+        pendingTechnicalItems.push('PAYPAL_API establecido en https://api-m.paypal.com');
       }
 
-      const domain = mergedSettings['company_domain'] || '';
-      if (!domain.toLowerCase().startsWith('https://')) {
-        pendingItems.push('Dominio Seguro con SSL (Debe comenzar con https://)');
+      if (!process.env.DATABASE_URL) pendingTechnicalItems.push('DATABASE_URL configurado');
+      if (!process.env.PRINTFUL_API_KEY) pendingTechnicalItems.push('API de Producción de Printful (PRINTFUL_API_KEY) configurada');
+      if (!process.env.RESEND_API_KEY) pendingTechnicalItems.push('Servidor de Envío de Correos (RESEND_API_KEY) configurado');
+      if (!process.env.JWT_SECRET) pendingTechnicalItems.push('JWT_SECRET configurada');
+      if (!process.env.ADMIN_SESSION_SECRET) pendingTechnicalItems.push('ADMIN_SESSION_SECRET configurada');
+      if (!process.env.TWO_FACTOR_ENCRYPTION_KEY) pendingTechnicalItems.push('TWO_FACTOR_ENCRYPTION_KEY configurada');
+
+      if (process.env.ENABLE_TEST_PURCHASES === 'true') {
+        pendingTechnicalItems.push('Las compras de prueba deben estar desactivadas (ENABLE_TEST_PURCHASES = false)');
       }
 
-      const rootDir = process.cwd();
-      const sitemapExists = fs.existsSync(path.join(rootDir, 'src', 'app', 'sitemap.ts'));
-      const robotsExists = fs.existsSync(path.join(rootDir, 'src', 'app', 'robots.ts'));
-
-      if (!sitemapExists) pendingItems.push('Archivo de Mapa del Sitio (sitemap.ts)');
-      if (!robotsExists) pendingItems.push('Archivo de Directivas del Buscador (robots.ts)');
-
-      const hasPrintfulProd = !!process.env.PRINTFUL_API_KEY;
-      const hasPaypalProd = !!process.env.PAYPAL_CLIENT_ID;
-      const hasResend = !!process.env.RESEND_API_KEY;
-
-      if (!hasPrintfulProd) pendingItems.push('API de Producción de Printful');
-      if (!hasPaypalProd) pendingItems.push('Credenciales de Producción de PayPal');
-      if (!hasResend) pendingItems.push('Servidor de Envío de Correos Resend');
-
-      // Validar que el Administrador tenga activado el Doble Factor de Autenticación (2FA)
+      // Validar 2FA del Administrador Principal
       const session = await db.adminSession.findUnique({
         where: { id: verified.sessionId },
         include: { user: true }
       });
       if (!session || !session.user || !session.user.twoFactorEnabled) {
-        pendingItems.push('Autenticación de Doble Factor (2FA) activa para la cuenta del Administrador');
+        pendingTechnicalItems.push('Autenticación de Doble Factor (2FA) activa para la cuenta del Administrador');
       }
 
-      if (pendingItems.length > 0) {
-        return NextResponse.json({
-          error: 'No se puede activar el Modo Producción.',
-          message: 'Quedan requisitos críticos pendientes por configurar.',
-          pendingItems
-        }, { status: 400 });
+      if (targetMode === 'production_verification') {
+        if (pendingTechnicalItems.length > 0) {
+          return NextResponse.json({
+            error: 'No se puede activar el Modo Producción Verificación.',
+            message: 'Quedan requisitos técnicos críticos pendientes por configurar.',
+            pendingItems: pendingTechnicalItems
+          }, { status: 400 });
+        }
+      } else if (targetMode === 'production_open') {
+        const pendingLegalItems: string[] = [];
+
+        // Validar base de datos
+        for (const item of PRODUCTION_CHECKLIST_KEYS) {
+          const val = mergedSettings[item.key];
+          if (!val || val.trim() === '') {
+            pendingLegalItems.push(item.label);
+          }
+        }
+
+        // Validar SSL (el dominio debe tener https://)
+        const domain = mergedSettings['company_domain'] || '';
+        if (domain && !domain.toLowerCase().startsWith('https://')) {
+          pendingLegalItems.push('Dominio Seguro con SSL (Debe comenzar con https://)');
+        }
+
+        // Validar archivos
+        const rootDir = process.cwd();
+        const sitemapExists = fs.existsSync(path.join(rootDir, 'src', 'app', 'sitemap.ts'));
+        const robotsExists = fs.existsSync(path.join(rootDir, 'src', 'app', 'robots.ts'));
+
+        if (!sitemapExists) pendingLegalItems.push('Archivo de Mapa del Sitio (sitemap.ts)');
+        if (!robotsExists) pendingLegalItems.push('Archivo de Directivas del Buscador (robots.ts)');
+
+        const allPending = [...pendingTechnicalItems, ...pendingLegalItems];
+        if (allPending.length > 0) {
+          return NextResponse.json({
+            error: 'No se puede activar el Modo Producción Abierta.',
+            message: 'Quedan requisitos técnicos o legales pendientes por configurar.',
+            pendingItems: allPending
+          }, { status: 400 });
+        }
       }
     }
 

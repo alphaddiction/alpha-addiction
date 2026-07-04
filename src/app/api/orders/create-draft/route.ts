@@ -19,10 +19,34 @@ function getProductionCost(category: string): number {
   return 15.00; // Por defecto
 }
 
+import { cookies } from 'next/headers';
+import { verifySessionToken } from '@/lib/auth-tokens';
+
+import { saveCustomerConsent } from '@/lib/email/consents';
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { shippingAddress, items, discountCode } = body;
+    const { shippingAddress, items, discountCode, consentMarketing, consentNewsletter } = body;
+
+    // Check system mode in database
+    const systemModeSetting = await db.systemSetting.findUnique({
+      where: { key: 'system_mode' }
+    });
+    const systemMode = systemModeSetting?.value || 'development';
+
+    if (systemMode === 'production_verification') {
+      const cookieStore = await cookies();
+      const sessionToken = cookieStore.get('alpha_session')?.value;
+      const isAdmin = sessionToken ? await verifySessionToken(sessionToken) : null;
+
+      if (!isAdmin) {
+        return NextResponse.json(
+          { error: 'Acceso denegado.', message: 'La tienda se encuentra en modo de verificación. Solo los administradores pueden realizar compras.' },
+          { status: 403 }
+        );
+      }
+    }
 
     // 1. Validaciones básicas
     if (!shippingAddress) {
@@ -35,6 +59,32 @@ export async function POST(req: Request) {
     const { firstName, lastName, email, address, city, postalCode, province, country, phone } = shippingAddress;
     if (!firstName || !lastName || !email || !address || !city || !postalCode || !province || !country) {
       return NextResponse.json({ error: 'Faltan campos requeridos en la dirección de envío.' }, { status: 400 });
+    }
+
+    // Registrar consentimientos de forma asíncrona o antes de crear la orden
+    const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+
+    if (typeof consentMarketing === 'boolean') {
+      await saveCustomerConsent({
+        email: email.trim().toLowerCase(),
+        consentType: 'marketing',
+        accepted: consentMarketing,
+        ipAddress,
+        userAgent,
+        legalTextVersion: 'v1.0'
+      });
+    }
+
+    if (typeof consentNewsletter === 'boolean') {
+      await saveCustomerConsent({
+        email: email.trim().toLowerCase(),
+        consentType: 'newsletter',
+        accepted: consentNewsletter,
+        ipAddress,
+        userAgent,
+        legalTextVersion: 'v1.0'
+      });
     }
 
      // 2. Procesamiento y validación de artículos desde el Backend

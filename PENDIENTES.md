@@ -7,12 +7,13 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 ## 📋 Estado general del proyecto
  
 *   **Porcentaje aproximado completado:** 99.99% (🟡 En progreso)
-*   **Última actualización:** 28/06/2026 02:40
+*   **Última actualización:** 04/07/2026 15:35
 *   **Próximos objetivos:**
     1. Registrar y configurar los Webhooks de producción de PayPal y Printful.
     2. Habilitar autenticación de doble factor (2FA/TOTP) real en el panel.
-    3. Realizar auditoría legal y de políticas RGPD/LSSI.
-    4. Implementar suite de pruebas end-to-end completas.
+    3. Registrar y configurar la recepción de correo (Inbound) en el proveedor Resend.
+    4. Implementar notificaciones push y resúmenes diarios del Centro de Notificaciones.
+    5. Conectar Slack o Telegram opcional al Centro de Notificaciones.
 
 ---
 
@@ -80,6 +81,38 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ---
 
+## 🔔 Centro de Notificaciones Internas
+
+*   **Base de datos (Prisma)**: ✅ Completada (Añadido el modelo `Notification` al esquema y sincronizado con Neon).
+*   **Servicio centralizado**: ✅ Completada (Implementado `src/lib/notifications/service.ts` con lógica de creación, lectura, archivado y consolidación temporal).
+*   **Consolidación anti-ruido (UX)**: ✅ Completada (Los eventos de errores de email, fallos de automatización, y waitlist se agrupan en bloques de 10 minutos para evitar spam).
+*   **Eventos e integraciones**: ✅ Completada (Conectados eventos de pedidos, paypal, printful, soporte, correos entrantes, backups, y cupones).
+*   **Panel Admin Header**: ✅ Completada (Icono de campana con contador reactivo y dropdown interactivo con severidades y enlaces rápidos).
+*   **Página del Centro**: ✅ Completada (Vista unificada en `/admin/notifications` con buscador y filtros dinámicos por estado, severidad y módulo).
+*   **Health Center**: ✅ Completada (Integrado el diagnóstico de notificaciones en el endpoint de salud del sistema).
+
+---
+
+## 🔌 Integration Hub
+
+*   **Lógica de Monitorización**: ✅ Completada (Reescrito `src/lib/integrations/index.ts` para verificar la operatividad y latencia en vivo de 9 servicios y APIs externas).
+*   **Consola de Visualización**: ✅ Completada (Desplegado el dashboard premium en `/admin/comunicaciones` con filtros, buscador y el historial anterior de email logs).
+*   **Widget en Dashboard**: ✅ Completada (Integrada la tarjeta de KPI `X/Y Operativas` con listado de bullets y redirección al Hub y al Health Center).
+*   **Seguridad**: ✅ Completada (Filtro total de variables y claves API, mostrando únicamente estados y latencias).
+
+---
+
+## 🎛️ Mission Control (Centro de Mando)
+
+*   **Puntuación General de Salud**: ✅ Completada (Algoritmo interactivo de puntuación porcentual global de operatividad cruzando Health Center e Integration Hub).
+*   **Command Palette / Buscador Global**: ✅ Completada (Buscador reactivo modal que localiza pedidos, productos, drops y tickets en base de datos).
+*   **Configuración y Personalización**: ✅ Completada (Widgets con opción de visibilidad y orden reordenable de forma dinámica persistente en `localStorage`).
+*   **Actividad Reciente (Timeline)**: ✅ Completada (Actividad unificada de eventos de base de datos, tickets, waitlist y notificaciones).
+*   **Checklist Diario**: ✅ Completada (Checklist interactivo y persistente para las tareas diarias del administrador).
+*   **Preservación de Vistas**: ✅ Completada (Sección interactiva para alternar entre "Mission Control" y "Panel Clásico" sin perder funcionalidades).
+
+---
+
 ## 🚀 Mejoras futuras
 
 *   Implementación de códigos de descuento dinámicos validados en backend.
@@ -99,6 +132,39 @@ Este documento es la fuente de verdad principal del estado de desarrollo y el ro
 
 ## 📝 Historial de cambios
  
+### 04/07/2026 15:55 (Fase 16 — Mission Control)
+
+Archivos modificados:
+*   `src/app/api/admin/dashboard-stats/route.ts` (Calcula ventas semanales, balances netos/brutos, actividad reciente combinada, segmentos de clientes VIP y drops activos)
+*   `src/app/admin/dashboard/page.tsx` (Completado con vistas alternativas Mission Control y panel clásico, configurador de widgets persistente, checklist interactivo y buscador modal integrado)
+
+### 04/07/2026 15:45 (Fase 15 — Integration Hub)
+
+Archivos modificados:
+*   `src/lib/integrations/index.ts` (Reescrito para consultar estado y latencia en vivo de 9 servicios y APIs externas)
+*   `src/app/admin/comunicaciones/page.tsx` (Rediseñado como panel del Integration Hub con filtros, buscador y pestaña secundaria de Email Audit logs)
+*   `src/app/admin/dashboard/page.tsx` (Widget dinámico `X/Y Operativas` con bullets de estado de integraciones)
+
+### 04/07/2026 15:35 (Fase 14 — Centro de Notificaciones Internas)
+
+Archivos creados:
+*   `src/lib/notifications/service.ts` (Servicio de creación, lectura, archivado y consolidación temporal)
+*   `src/app/api/admin/notifications/route.ts` (API control con paginación, filtros y acciones bulk)
+*   `src/app/admin/notifications/page.tsx` (Página de administración unificada con filtros de estado, severidad y módulo)
+*   `scripts/test-notifications.ts` (Script para testing del centro y lógica anti-ruido)
+
+Archivos modificados:
+*   `prisma/schema.prisma` (Añadido modelo `Notification` e índices de rendimiento)
+*   `src/lib/events/dispatcher.ts` (Integración de creación de notificaciones y fallos de automatización)
+*   `src/lib/email/inbound-processor.ts` (Notificación de tickets y mensajes entrantes de soporte)
+*   `src/lib/email/resend.ts` (Notificación de errores en envíos de correo)
+*   `src/app/api/webhooks/paypal/route.ts` (Notificación de firmas y fallos de webhook PayPal)
+*   `src/app/api/webhooks/printful/route.ts` (Notificación de firmas y fallos de webhook Printful)
+*   `scripts/backup-neon.ts` (Notificación de fallos críticos de backup)
+*   `src/components/admin/header.tsx` (Campana de notificaciones con contador y dropdown rápido)
+*   `src/app/api/admin/system/health/route.ts` (Diagnóstico de notificaciones añadidas a salud del sistema)
+*   `src/app/admin/monitoring/page.tsx` (Widget de diagnóstico en el Health Center)
+
 ### 27/06/2026 16:11 (Fase 11 — Área de Cliente sin registro)
 
 Archivos creados:
@@ -824,6 +890,30 @@ Se ha reorganizado la experiencia de usuario (UX) del panel de administración u
 
 ---
 
+### Fase 21 — Communication Center, Consentimientos RGPD/LSSI y CRM Readiness (04/07/2026 15:02)
+
+Archivos creados:
+*   `src/lib/email/inbound-processor.ts` (Procesador modular de correos entrantes, hilos mediante RFC 2822, auto-tickets y enlaces a pedidos)
+*   `src/app/api/inbound/resend/route.ts` (Webhook de entrada para procesar llamadas de Resend Inbound Email)
+*   `src/lib/email/consents.ts` (Gestión inmutable y logs de consentimientos RGPD con hashes criptográficos de privacidad)
+*   `src/app/api/customer/unsubscribe/route.ts` (Enlace de baja voluntaria y desestimiento comercial para el pie de los correos)
+*   `src/app/api/admin/customers/route.ts` (API de consulta, paginación, filtros de consentimiento y búsqueda para la base de clientes)
+
+Archivos modificados:
+*   `prisma/schema.prisma` (Nuevos campos en `SupportMessage` y creación del modelo `CustomerConsent`)
+*   `src/app/api/orders/create-draft/route.ts` (Captura y guardado de consentimientos en el checkout)
+*   `src/app/api/drops/[slug]/waitlist/route.ts` (Captura y guardado de consentimiento opcional en la lista de espera)
+*   `src/app/checkout/page.tsx` (Casillas de doble consentimiento en el checkout y enlaces de privacidad)
+*   `src/components/paypal/paypal-button.tsx` (Propagación de consentimientos reactivos en PayPalButton)
+*   `src/components/drops/drop-detail-client.tsx` (Casilla de marketing opcional en el formulario de la lista de espera)
+*   `src/app/admin/customers/page.tsx` (Consola administrativa interactiva de clientes, KPI centralizado y baja voluntaria manual)
+*   `src/app/api/admin/system/health/route.ts` (Monitoreo e integración de métricas de Communication Center y logs en Health Center)
+
+Descripción:
+Se ha implementado el Communication Center y el sistema de consentimiento RGPD/LSSI en Alpha Addiction. Ahora el sistema puede recibir correos entrantes de clientes, agruparlos automáticamente en hilos de conversación existentes si responden a un correo anterior (usando cabeceras de mensaje o números de ticket) o crear tickets de soporte nuevos con prioridad calculada inteligentemente. También se han añadido casillas de doble consentimiento opcionales e independientes desmarcadas por defecto en el Checkout y la lista de espera (Drops) que guardan un registro de auditoría inmutable de la IP y User-Agent hasheados. Los administradores disponen de un panel interactivo para filtrar, buscar y gestionar clientes por consentimiento, incluyendo la opción de darlos de baja manualmente a petición.
+
+---
+
 ## ✅ Checklist antes del lanzamiento
  
 - [ ] **PayPal Sandbox & Webhooks**: Validar el entorno completo en Sandbox con compras de prueba y registrar los webhooks automáticos de PayPal.
@@ -833,7 +923,7 @@ Se ha reorganizado la experiencia de usuario (UX) del panel de administración u
 - [x] **Centro de Soporte**: Formulario público, inbox de administración y módulo de incidencias en pedidos integrados.
 - [x] **Portal Inteligente del Cliente**: Autenticación por OTP/Token 30d, Timeline de 6 pasos, Recompras y soporte rápido.
 - [x] **Centro de Configuración Global**: Módulos unificados, checklist de producción, exportación y modos del proyecto.
-- [ ] **Inbound Email**: Integrar receptor de correos entrantes de Gmail/Resend/SendGrid para automatizar hilos de soporte.
+- [x] **Inbound Email**: Integrar receptor de correos entrantes de Gmail/Resend/SendGrid para automatizar hilos de soporte.
 - [ ] **Soporte con adjuntos**: Permitir a los clientes y agentes adjuntar capturas y documentos de prueba.
 - [x] **2FA Real**: Implementar la capa de visualización e inicio de sesión de dos factores (TOTP) usando los campos ya preparados en la base de datos.
 - [x] **Auditoría legal**: Páginas de aviso legal, privacidad y cookies dinámicas adaptadas al RGPD y LSSI con Neon DB.

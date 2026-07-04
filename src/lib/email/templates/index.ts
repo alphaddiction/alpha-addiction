@@ -59,24 +59,24 @@ function renderItemsTable(items: OrderItemInfo[], subtotal: number, discount: nu
         <tbody>
           ${rows}
           <tr class="total-row">
-            <td colspan="2" style="border-top: 1px dashed #eae6df; padding-top: 15px;"></td>
-            <td style="text-align: right; color: #8a8a8a; font-size: 12px; font-weight: normal; border-top: 1px dashed #eae6df; padding-top: 15px;">Subtotal</td>
-            <td style="text-align: right; font-family: monospace; border-top: 1px dashed #eae6df; padding-top: 15px;">${formatPrice(subtotal)}</td>
+            <td colspan="2" style="border-top: 1px dashed #1a1a1a; padding-top: 15px;"></td>
+            <td style="text-align: right; color: #737373; font-size: 12px; font-weight: normal; border-top: 1px dashed #1a1a1a; padding-top: 15px;">Subtotal</td>
+            <td style="text-align: right; font-family: monospace; border-top: 1px dashed #1a1a1a; padding-top: 15px;">${formatPrice(subtotal)}</td>
           </tr>
           ${
             discount > 0
               ? `
           <tr>
             <td colspan="2"></td>
-            <td style="text-align: right; color: #d43737; font-size: 12px;">Descuento</td>
-            <td style="text-align: right; font-family: monospace; color: #d43737; font-weight: bold;">-${formatPrice(discount)}</td>
+            <td style="text-align: right; color: #ff4e4e; font-size: 12px;">Descuento</td>
+            <td style="text-align: right; font-family: monospace; color: #ff4e4e; font-weight: bold;">-${formatPrice(discount)}</td>
           </tr>`
               : ''
           }
           <tr>
             <td colspan="2"></td>
-            <td style="text-align: right; font-size: 14px; font-weight: bold; border-top: 1px solid #000000; padding-top: 12px;">TOTAL VENTA</td>
-            <td style="text-align: right; font-family: monospace; font-size: 16px; font-weight: bold; color: #d4af37; border-top: 1px solid #000000; padding-top: 12px;">${formatPrice(total)}</td>
+            <td style="text-align: right; font-size: 14px; font-weight: bold; border-top: 1px solid #1a1a1a; padding-top: 12px;">TOTAL VENTA</td>
+            <td style="text-align: right; font-family: monospace; font-size: 16px; font-weight: bold; color: #d4af37; border-top: 1px solid #1a1a1a; padding-top: 12px;">${formatPrice(total)}</td>
           </tr>
         </tbody>
       </table>
@@ -115,7 +115,7 @@ export function getReceivedEmail(order: OrderInfo): string {
     <p class="text">Una vez confirmemos la recepción de tu pago por PayPal, iniciaremos la preparación y fabricación de tus prendas de diseño exclusivo.</p>
     ${renderConsultBtn(order.orderNumber, order.secureToken)}
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, order.email);
 }
 
 /**
@@ -139,7 +139,7 @@ export function getPaymentConfirmedEmail(order: OrderInfo): string {
     </ol>
     ${renderConsultBtn(order.orderNumber, order.secureToken)}
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, order.email);
 }
 
 /**
@@ -154,7 +154,7 @@ export function getProductionEmail(order: OrderInfo): string {
     <p class="text">Te notificaremos tan pronto como tus prendas salgan del centro de distribución hacia tu domicilio.</p>
     ${renderConsultBtn(order.orderNumber, order.secureToken)}
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, order.email);
 }
 
 /**
@@ -170,9 +170,9 @@ export function getShippedEmail(order: OrderInfo): string {
     <p class="text">Hola <strong>${order.name}</strong>,</p>
     <p class="text">¡Excelentes noticias! Tus prendas exclusivas de la orden <strong>#${order.orderNumber}</strong> han superado el control de calidad y ya se encuentran en camino a tu domicilio.</p>
     
-    <div style="background-color: #fdfbf7; border: 1px solid #eae6df; padding: 20px; margin: 25px 0; text-align: center; font-family: monospace; font-size: 13px;">
-      <span style="color: #8a8a8a; uppercase; display: block; font-size: 10px; letter-spacing: 0.1em; margin-bottom: 5px;">Código de Seguimiento</span>
-      <strong style="font-size: 16px; color: #111111; display: block; margin-bottom: 15px;">${trackingNumber}</strong>
+    <div style="background-color: #121212; border: 1px solid #1a1a1a; padding: 25px; margin: 25px 0; text-align: center; font-family: monospace; font-size: 13px;">
+      <span style="color: #737373; text-transform: uppercase; display: block; font-size: 10px; letter-spacing: 0.12em; margin-bottom: 5px;">Código de Seguimiento</span>
+      <strong style="font-size: 18px; color: #ffffff; display: block; margin-bottom: 15px; letter-spacing: 0.05em;">${trackingNumber}</strong>
       
       <div class="btn-container" style="margin: 0;">
         <a href="${trackingUrl}" target="_blank" class="btn">Seguir Envío</a>
@@ -182,7 +182,7 @@ export function getShippedEmail(order: OrderInfo): string {
     <p class="text">El transportista asignado gestionará la entrega en los próximos días. Asegúrate de que haya alguien disponible en la dirección de entrega.</p>
     ${renderConsultBtn(order.orderNumber, order.secureToken)}
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, order.email);
 }
 
 /**
@@ -198,7 +198,7 @@ export function getDeliveredEmail(order: OrderInfo): string {
     <p class="text">Si tienes cualquier consulta sobre tus prendas o necesitas asistencia, responde directamente a este correo.</p>
     ${renderConsultBtn(order.orderNumber, order.secureToken)}
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, order.email);
 }
 
 /**
@@ -213,7 +213,7 @@ export function getCanceledEmail(order: OrderInfo): string {
     <p class="text">Si se ha debido a un error o deseas volver a tramitar la compra, puedes acceder a nuestro catálogo en cualquier momento o ponerte en contacto con nuestro servicio de atención al cliente.</p>
     ${renderConsultBtn(order.orderNumber, order.secureToken)}
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, order.email);
 }
 
 /**
@@ -225,14 +225,14 @@ export function getRefundEmail(order: OrderInfo): string {
     <h2 class="title">${title}</h2>
     <p class="text">Hola <strong>${order.name}</strong>,</p>
     <p class="text">Te informamos que hemos procesado con éxito un reembolso para tu pedido <strong>#${order.orderNumber}</strong>.</p>
-    <div style="background-color: #fdfbf7; border: 1px solid #eae6df; padding: 20px; margin: 25px 0; text-align: center;">
-      <span style="color: #8a8a8a; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 5px;">Importe Reembolsado</span>
-      <strong style="font-size: 20px; color: #d4af37; font-family: monospace;">${formatPrice(order.total)}</strong>
+    <div style="background-color: #121212; border: 1px solid #1a1a1a; padding: 20px; margin: 25px 0; text-align: center;">
+      <span style="color: #737373; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; display: block; margin-bottom: 5px;">Importe Reembolsado</span>
+      <strong style="font-size: 22px; color: #d4af37; font-family: monospace;">${formatPrice(order.total)}</strong>
     </div>
     <p class="text">El reembolso se abonará directamente en la misma cuenta de PayPal que utilizaste para realizar el pago. Dependiendo de PayPal, el importe se verá reflejado en tu saldo o tarjeta en un plazo de 2 a 5 días hábiles.</p>
     ${renderConsultBtn(order.orderNumber, order.secureToken)}
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, order.email);
 }
 
 /**
@@ -248,13 +248,13 @@ export function getDisputeEmail(order: OrderInfo): string {
     <p class="text">Si deseas acelerar la resolución o tienes información adicional, no dudes en responder directamente a este correo electrónico para hablar con nuestro equipo.</p>
     ${renderConsultBtn(order.orderNumber, order.secureToken)}
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, order.email);
 }
 
 /**
  * 9. Confirmación de Registro en Waitlist
  */
-export function getWaitlistConfirmationEmail(dropName: string): string {
+export function getWaitlistConfirmationEmail(dropName: string, email?: string): string {
   const title = 'Te has unido a la lista de espera';
   const body = `
     <h2 class="title" style="color: #d4af37; font-size: 20px; text-transform: uppercase; tracking-wider: true;">${title}</h2>
@@ -262,14 +262,14 @@ export function getWaitlistConfirmationEmail(dropName: string): string {
     <p class="text">Te confirmamos que te has registrado con éxito en la lista de espera oficial de nuestro próximo lanzamiento exclusivo: <strong>${dropName}</strong>.</p>
     <p class="text">Serás de las primeras personas en recibir una notificación directa y el enlace exclusivo de acceso en cuanto el drop pase a estar activo en nuestra tienda online.</p>
     <p class="text">Recuerda que las unidades son estrictamente limitadas y se asignarán por orden de llegada.</p>
-    <div style="margin-top: 30px; padding: 15px; border-left: 2px solid #d4af37; background-color: #fcfbfa; font-style: italic;" class="text">
+    <div style="margin-top: 30px; padding: 20px; border-left: 3px solid #d4af37; background-color: #121212; font-style: italic; color: #ffffff; letter-spacing: 0.05em;" class="text">
       "Designed for the bold. Addicted to the alpha."
     </div>
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, email);
 }
 
-export function getDropLiveNotificationEmail(dropName: string, dropSlug: string): string {
+export function getDropLiveNotificationEmail(dropName: string, dropSlug: string, email?: string): string {
   const title = '¡El Drop ya está activo!';
   const body = `
     <h2 class="title" style="color: #d4af37; font-size: 20px; text-transform: uppercase; tracking-wider: true;">¡${dropName} está LIVE!</h2>
@@ -281,13 +281,13 @@ export function getDropLiveNotificationEmail(dropName: string, dropSlug: string)
     </div>
     <p class="text" style="font-size: 11px; color: #8a8a8a; margin-top: 20px;">Las unidades de este lanzamiento son estrictamente limitadas. Si tienes un cupón exclusivo, puedes aplicarlo directamente en el checkout.</p>
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, email);
 }
 
 /**
  * 11. Confirmación de Ticket de Soporte Recibido
  */
-export function getTicketReceivedEmail(ticketNumber: string, customerName: string, subject: string, category: string): string {
+export function getTicketReceivedEmail(ticketNumber: string, customerName: string, subject: string, category: string, email?: string): string {
   const title = `Hemos recibido tu solicitud ${ticketNumber}`;
   const body = `
     <h2 class="title">${title}</h2>
@@ -301,13 +301,13 @@ export function getTicketReceivedEmail(ticketNumber: string, customerName: strin
     <p class="text">Nuestro equipo de soporte revisará tu solicitud y te responderá a la mayor brevedad posible.</p>
     <p class="text" style="font-size: 11px; color: #8a8a8a; margin-top: 20px;">Por favor, no respondas a este correo. Recibirás una notificación en cuanto tengamos novedades de tu ticket.</p>
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, email);
 }
 
 /**
  * 12. Respuesta de Soporte del Equipo
  */
-export function getTicketRepliedEmail(ticketNumber: string, customerName: string, replyBody: string, originalSubject: string): string {
+export function getTicketRepliedEmail(ticketNumber: string, customerName: string, replyBody: string, originalSubject: string, email?: string): string {
   const title = `Respuesta a tu solicitud ${ticketNumber}`;
   const cleanBody = replyBody.replace(/\n/g, '<br>');
   const body = `
@@ -315,19 +315,19 @@ export function getTicketRepliedEmail(ticketNumber: string, customerName: string
     <p class="text">Hola <strong>${customerName}</strong>,</p>
     <p class="text">El equipo de soporte de Alpha Addiction ha respondido a tu solicitud <strong>${ticketNumber}</strong> (<em>${originalSubject}</em>):</p>
     
-    <div style="background-color: #f7f5f0; border-left: 3px solid #d4af37; padding: 15px; margin: 20px 0; font-size: 14px; color: #1c1c1c; line-height: 1.6;">
+    <div style="background-color: #121212; border-left: 3px solid #d4af37; border: 1px solid #1a1a1a; border-left-width: 3px; padding: 20px; margin: 20px 0; font-size: 14px; color: #e5e5e5; line-height: 1.7;">
       ${cleanBody}
     </div>
 
     <p class="text">Si necesitas aportar más detalles o continuar la conversación, puedes ponerte en contacto con nosotros indicando el número de tu solicitud.</p>
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, email);
 }
 
 /**
  * 13. Solicitud de Soporte Cerrada
  */
-export function getTicketClosedEmail(ticketNumber: string, customerName: string, originalSubject: string): string {
+export function getTicketClosedEmail(ticketNumber: string, customerName: string, originalSubject: string, email?: string): string {
   const title = `Solicitud de soporte resuelta ${ticketNumber}`;
   const body = `
     <h2 class="title">${title}</h2>
@@ -336,13 +336,13 @@ export function getTicketClosedEmail(ticketNumber: string, customerName: string,
     <p class="text">Esperamos haber resuelto tu consulta de forma satisfactoria. Si tienes cualquier otra duda, puedes abrir una nueva solicitud desde nuestro formulario de contacto en cualquier momento.</p>
     <p class="text">¡Gracias por formar parte de Alpha Addiction!</p>
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, email);
 }
 
 /**
  * 14. Código de Acceso OTP al Portal
  */
-export function getPortalOtpEmail(code: string): string {
+export function getPortalOtpEmail(code: string, email?: string): string {
   const title = `Tu código de acceso temporal`;
   const body = `
     <h2 class="title" style="font-family: serif; color: #f5f5f0; font-size: 20px; text-transform: uppercase; margin-bottom: 20px;">${title}</h2>
@@ -358,7 +358,7 @@ export function getPortalOtpEmail(code: string): string {
     <p class="text">Este código es de <strong>un solo uso</strong> y caducará en <strong>10 minutos</strong>. Si tú no has solicitado este acceso, puedes ignorar este correo de forma segura.</p>
     <p class="text" style="font-size: 11px; color: #8a8a8a; margin-top: 25px; border-t: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">Por motivos de seguridad, nunca compartas este código con nadie.</p>
   `;
-  return emailLayout(title, body);
+  return emailLayout(title, body, email);
 }
 
 

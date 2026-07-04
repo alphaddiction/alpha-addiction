@@ -1,3 +1,7 @@
+import { loadEnvConfig } from '@next/env';
+// Cargar variables de entorno estilo Next.js (soporta .env.local, .env, etc.)
+loadEnvConfig(process.cwd(), process.env.NODE_ENV !== 'production');
+
 import { printfulFetch } from './printful';
 
 async function main() {

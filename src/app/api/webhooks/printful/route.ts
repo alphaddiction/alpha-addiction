@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { verifyPrintfulWebhookSignature } from '@/lib/printful';
 import { PrintfulWebhookEvent } from '@/types/printful';
 import { sendOrderInProduction, sendOrderShipped } from '@/lib/email/send-email';
+import { createNotification } from '@/lib/notifications/service';
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +14,15 @@ export async function POST(req: Request) {
     const isValid = verifyPrintfulWebhookSignature(rawBody, signature);
     if (!isValid) {
       console.error('❌ Error de validación de firma de Webhook de Printful.');
+      
+      createNotification({
+        type: 'printful_webhook_error',
+        title: 'Firma inválida en Webhook Printful',
+        message: 'Se ha recibido una llamada al webhook de Printful con una firma criptográfica HMAC inválida o no configurada.',
+        severity: 'error',
+        module: 'printful'
+      }).catch(err => console.error('⚠️ [Printful Webhook Notification]:', err));
+
       return new Response('Firma no autorizada.', { status: 401 });
     }
 
@@ -167,6 +177,15 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('❌ Error crítico al procesar webhook de Printful:', error);
+
+    createNotification({
+      type: 'printful_webhook_error',
+      title: 'Fallo crítico en Webhook Printful',
+      message: `Excepción al procesar webhook: ${(error as Error).message}`,
+      severity: 'error',
+      module: 'printful'
+    }).catch(err => console.error('⚠️ [Printful Webhook Notification]:', err));
+
     return NextResponse.json(
       { error: 'Error interno al procesar el webhook', details: (error as Error).message },
       { status: 500 }

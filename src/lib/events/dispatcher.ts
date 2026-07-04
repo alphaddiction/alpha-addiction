@@ -102,6 +102,22 @@ export async function dispatchEvent<T extends EventType>(
     });
 
     console.log(`✅ [Event Engine] Event [${eventType}] processed in ${durationMs}ms. Status: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+
+    // Disparar notificaciones correspondientes
+    if (result.success) {
+      dispatchNotificationForEvent(eventType, data).catch(nErr => 
+        console.error('⚠️ [Event Engine] Error al notificar evento:', nErr)
+      );
+    } else {
+      createNotification({
+        type: 'automation_error',
+        title: `Fallo en automatización [${eventType}]`,
+        message: `Error al procesar el evento ${eventType}: ${result.error || 'Desconocido'}.`,
+        severity: 'error',
+        module: 'automations'
+      }).catch(nErr => console.error('⚠️ [Event Engine] Error al registrar error de automatización:', nErr));
+    }
+
     return result;
   } catch (err: any) {
     const durationMs = Date.now() - startTime;
@@ -122,6 +138,119 @@ export async function dispatchEvent<T extends EventType>(
       console.error('❌ [Event Engine] No se pudo guardar el log de error crítico en la base de datos:', dbErr);
     }
 
+    // Registrar notificación de excepción crítica en automatización
+    createNotification({
+      type: 'automation_error',
+      title: `Error crítico en automatización [${eventType}]`,
+      message: `Excepción al procesar ${eventType}: ${errorMsg}.`,
+      severity: 'critical',
+      module: 'automations'
+    }).catch(nErr => console.error('⚠️ [Event Engine] Error al registrar excepción de automatización:', nErr));
+
     return { success: false, error: errorMsg };
+  }
+}
+
+import { createNotification } from '../notifications/service';
+import { formatPrice } from '../email/helpers';
+
+async function dispatchNotificationForEvent(eventType: EventType, data: any) {
+  try {
+    if (eventType === 'ORDER_CREATED') {
+      const order = await db.order.findUnique({ where: { id: data.orderId } });
+      if (order) {
+        await createNotification({
+          type: 'order_created',
+          title: `Nuevo pedido ${order.orderNumber}`,
+          message: `Se ha registrado un nuevo pedido por valor de ${formatPrice(order.total)}.`,
+          severity: 'info',
+          module: 'orders',
+          entityType: 'Order',
+          entityId: order.id,
+          actionUrl: `/admin/orders`,
+        });
+      }
+    } else if (eventType === 'PAYMENT_CONFIRMED') {
+      const order = await db.order.findUnique({ where: { id: data.orderId } });
+      if (order) {
+        await createNotification({
+          type: 'payment_confirmed',
+          title: `Pago confirmado: ${order.orderNumber}`,
+          message: `El cobro de ${formatPrice(order.total)} ha sido procesado correctamente vía ${order.paymentMethod.toUpperCase()}.`,
+          severity: 'success',
+          module: 'paypal',
+          entityType: 'Order',
+          entityId: order.id,
+          actionUrl: `/admin/orders`,
+        });
+      }
+    } else if (eventType === 'PAYMENT_FAILED') {
+      const order = await db.order.findUnique({ where: { id: data.orderId } });
+      if (order) {
+        await createNotification({
+          type: 'payment_failed',
+          title: `Pago fallido: ${order.orderNumber}`,
+          message: `El cobro del pedido ha fallado en la pasarela PayPal.`,
+          severity: 'critical',
+          module: 'paypal',
+          entityType: 'Order',
+          entityId: order.id,
+          actionUrl: `/admin/orders`,
+        });
+      }
+    } else if (eventType === 'ORDER_SENT_TO_PRINTFUL') {
+      const order = await db.order.findUnique({ where: { id: data.orderId } });
+      if (order) {
+        await createNotification({
+          type: 'order_sent_to_printful',
+          title: `Pedido enviado a Printful`,
+          message: `El pedido ${order.orderNumber} ha sido lanzado a confección en Printful. ID de Printful: ${data.printfulOrderId}.`,
+          severity: 'info',
+          module: 'printful',
+          entityType: 'Order',
+          entityId: order.id,
+          actionUrl: `/admin/orders`,
+        });
+      }
+    } else if (eventType === 'ORDER_SHIPPED') {
+      const order = await db.order.findUnique({ where: { id: data.orderId } });
+      if (order) {
+        await createNotification({
+          type: 'order_shipped',
+          title: `Pedido enviado: ${order.orderNumber}`,
+          message: `El pedido ya está en reparto. Código de seguimiento: ${data.trackingNumber}.`,
+          severity: 'success',
+          module: 'printful',
+          entityType: 'Order',
+          entityId: order.id,
+          actionUrl: `/admin/orders`,
+        });
+      }
+    } else if (eventType === 'WAITLIST_REGISTERED') {
+      await createNotification({
+        type: 'waitlist_registered',
+        title: `Nuevo registro en Waitlist`,
+        message: `El correo ${data.email} se ha unido a la lista de espera del Drop "${data.dropName}".`,
+        severity: 'info',
+        module: 'waitlist',
+        entityType: 'DropWaitlist',
+        entityId: data.waitlistId,
+        actionUrl: `/admin/drops`,
+        metadata: { dropName: data.dropName }
+      });
+    } else if (eventType === 'COUPON_EXPIRED') {
+      await createNotification({
+        type: 'coupon_expired',
+        title: `Cupón caducado: ${data.code}`,
+        message: `El código de descuento ${data.code} ha caducado o alcanzado su límite de usos.`,
+        severity: 'warning',
+        module: 'marketing',
+        entityType: 'Discount',
+        entityId: data.couponId,
+        actionUrl: `/admin/discounts`,
+      });
+    }
+  } catch (err) {
+    console.error('⚠️ [Dispatcher Notification] Error al procesar notificación de evento:', err);
   }
 }

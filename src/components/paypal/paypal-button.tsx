@@ -13,6 +13,8 @@ interface PayPalButtonProps {
   onSuccess: (localOrderId: string) => void;
   onError: (errorMessage: string) => void;
   discountCode?: string;
+  consentMarketing: boolean;
+  consentNewsletter: boolean;
 }
 
 export default function PayPalButton({
@@ -22,6 +24,8 @@ export default function PayPalButton({
   onSuccess,
   onError,
   discountCode,
+  consentMarketing,
+  consentNewsletter,
 }: PayPalButtonProps) {
   const [clientId, setClientId] = useState<string | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(true);
@@ -113,6 +117,8 @@ export default function PayPalButton({
                   shippingAddress,
                   items,
                   discountCode,
+                  consentMarketing,
+                  consentNewsletter,
                 }),
               });
 

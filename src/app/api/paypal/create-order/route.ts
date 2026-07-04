@@ -2,10 +2,31 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { createPayPalOrder } from '@/lib/paypal';
 import { OrderItem } from '@/types/order';
+import { cookies } from 'next/headers';
+import { verifySessionToken } from '@/lib/auth-tokens';
 
 export async function POST(req: Request) {
   try {
     const { orderId } = await req.json();
+
+    // Check system mode in database
+    const systemModeSetting = await db.systemSetting.findUnique({
+      where: { key: 'system_mode' }
+    });
+    const systemMode = systemModeSetting?.value || 'development';
+
+    if (systemMode === 'production_verification') {
+      const cookieStore = await cookies();
+      const sessionToken = cookieStore.get('alpha_session')?.value;
+      const isAdmin = sessionToken ? await verifySessionToken(sessionToken) : null;
+
+      if (!isAdmin) {
+        return NextResponse.json(
+          { error: 'Acceso denegado.', message: 'La tienda se encuentra en modo de verificación. Solo los administradores pueden realizar compras.' },
+          { status: 403 }
+        );
+      }
+    }
 
     if (!orderId) {
       return NextResponse.json({ error: 'El ID del pedido es obligatorio.' }, { status: 400 });

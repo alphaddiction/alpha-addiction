@@ -55,6 +55,93 @@ export default function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const resultsContainerRef = useRef<HTMLDivElement>(null);
 
+  // Estados de Notificaciones Internas
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const fetchNotificationStats = async () => {
+    try {
+      const res = await fetch('/api/admin/notifications?limit=5&page=1');
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching notification statistics:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotificationStats();
+    // Refrescar cada 30 segundos
+    const interval = setInterval(fetchNotificationStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Cerrar al hacer click fuera
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowNotificationsDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      const res = await fetch('/api/admin/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'mark_all_read' })
+      });
+      if (res.ok) {
+        setUnreadCount(0);
+        setNotifications(prev => prev.map(n => ({ ...n, status: 'read' })));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleNotificationClick = async (notif: any) => {
+    setShowNotificationsDropdown(false);
+    if (notif.status === 'unread') {
+      try {
+        await fetch('/api/admin/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'mark_read', ids: [notif.id] })
+        });
+        fetchNotificationStats();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    if (notif.actionUrl) {
+      router.push(notif.actionUrl);
+    }
+  };
+
+  const getSeverityStyle = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+        return { dot: 'bg-red-500 animate-pulse', text: 'text-red-400' };
+      case 'error':
+        return { dot: 'bg-orange-500', text: 'text-orange-400' };
+      case 'warning':
+        return { dot: 'bg-yellow-500', text: 'text-yellow-400' };
+      case 'success':
+        return { dot: 'bg-emerald-500', text: 'text-emerald-400' };
+      default:
+        return { dot: 'bg-blue-400', text: 'text-[#f5f5f0]/60' };
+    }
+  };
+
   // Inicializar estado de favorito de la página actual
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -303,10 +390,81 @@ export default function Header() {
           </button>
 
           {/* Notificaciones */}
-          <button className="p-2 text-[#f5f5f0]/60 hover:text-[#f5f5f0] transition-colors hover:bg-white/5 rounded relative cursor-pointer" aria-label="Notificaciones">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[var(--primary)] rounded-full" />
-          </button>
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              onClick={() => {
+                setShowNotificationsDropdown(!showNotificationsDropdown);
+                fetchNotificationStats();
+              }}
+              className="p-2 text-[#f5f5f0]/60 hover:text-[#f5f5f0] transition-colors hover:bg-white/5 rounded relative cursor-pointer" 
+              aria-label="Notificaciones"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 px-1 py-0.5 text-[8px] leading-none bg-red-600 text-white font-bold rounded-full min-w-[12px] flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotificationsDropdown && (
+              <div className="absolute right-0 mt-2 w-80 bg-[#121212] border border-white/10 shadow-2xl font-mono text-left z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-black/40">
+                  <span className="text-[10px] tracking-widest font-bold text-[#f5f5f0] uppercase">Notificaciones</span>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={handleMarkAllAsRead}
+                      className="text-[9px] uppercase tracking-wider text-[var(--primary)] hover:underline"
+                    >
+                      Leer todo
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-64 overflow-y-auto divide-y divide-white/5 custom-scrollbar">
+                  {notifications.length === 0 ? (
+                    <div className="py-8 text-center text-[10px] text-[var(--muted)]">
+                      Sin notificaciones nuevas
+                    </div>
+                  ) : (
+                    notifications.map((n) => {
+                      const styles = getSeverityStyle(n.severity);
+                      return (
+                        <div 
+                          key={n.id}
+                          onClick={() => handleNotificationClick(n)}
+                          className={`p-3.5 hover:bg-white/[0.02] cursor-pointer transition-colors border-l-2 ${n.severity === 'critical' ? 'border-l-red-500' : (n.severity === 'error' ? 'border-l-orange-500' : (n.severity === 'warning' ? 'border-l-yellow-500' : 'border-l-transparent'))} ${n.status === 'unread' ? 'bg-white/[0.01]' : ''}`}
+                        >
+                          <div className="flex items-start gap-2 justify-between">
+                            <span className="text-[11px] font-bold text-[#f5f5f0] line-clamp-1">{n.title}</span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className={`w-1.5 h-1.5 rounded-full ${styles.dot}`} />
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-[var(--muted)] leading-relaxed mt-1 line-clamp-2">
+                            {n.message}
+                          </p>
+                          <div className="flex items-center justify-between text-[8px] text-[var(--muted)]/50 mt-2 font-mono uppercase">
+                            <span>{n.module}</span>
+                            <span>{new Date(n.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div className="border-t border-white/5 py-2.5 text-center bg-black/20">
+                  <button 
+                    onClick={() => { setShowNotificationsDropdown(false); router.push('/admin/notifications'); }}
+                    className="text-[10px] uppercase tracking-widest text-[#f5f5f0]/60 hover:text-[var(--primary)] font-bold cursor-pointer"
+                  >
+                    Ver todas
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Perfil del Usuario */}
           <div className="h-8 w-px bg-white/5 hidden md:block" />

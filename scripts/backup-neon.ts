@@ -139,6 +139,20 @@ async function main() {
       backupContent = zlib.gzipSync(Buffer.from(jsonContent));
     } catch (fallbackErr: any) {
       console.error('❌ Error crítico: Falló tanto pg_dump como la consulta de fallback:', fallbackErr.message);
+      
+      try {
+        const { createNotification } = await import('../src/lib/notifications/service');
+        await createNotification({
+          type: 'backup_failed',
+          title: 'Fallo crítico de Backup',
+          message: `Fallaron tanto pg_dump como la consulta alternativa. Error: ${fallbackErr.message}`,
+          severity: 'critical',
+          module: 'backups'
+        });
+      } catch (nErr) {
+        console.error('No se pudo crear la notificación de fallo de backup:', nErr);
+      }
+
       process.exit(1);
     } finally {
       await prisma.$disconnect();
@@ -160,6 +174,20 @@ async function main() {
       console.log('✅ Archivo cifrado correctamente.');
     } catch (cryptErr: any) {
       console.error('❌ Error de cifrado:', cryptErr.message);
+      
+      try {
+        const { createNotification } = await import('../src/lib/notifications/service');
+        await createNotification({
+          type: 'backup_failed',
+          title: 'Fallo de Cifrado en Backup',
+          message: `El proceso de cifrado AES del backup falló. Error: ${cryptErr.message}`,
+          severity: 'critical',
+          module: 'backups'
+        });
+      } catch (nErr) {
+        console.error(nErr);
+      }
+
       process.exit(1);
     }
   } else {
@@ -176,7 +204,19 @@ async function main() {
   console.log(`- Tamaño: ${(finalContent.length / 1024).toFixed(2)} KB`);
 }
 
-main().catch(err => {
+main().catch(async err => {
   console.error('❌ Error inesperado ejecutando backup:', err);
+  try {
+    const { createNotification } = await import('../src/lib/notifications/service');
+    await createNotification({
+      type: 'backup_failed',
+      title: 'Error inesperado en proceso de Backup',
+      message: `Se lanzó una excepción no controlada: ${err.message || String(err)}`,
+      severity: 'critical',
+      module: 'backups'
+    });
+  } catch (nErr) {
+    console.error(nErr);
+  }
   process.exit(1);
 });

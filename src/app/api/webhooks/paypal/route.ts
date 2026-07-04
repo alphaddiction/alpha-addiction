@@ -4,6 +4,7 @@ import { verifyPayPalWebhook } from '@/lib/paypal';
 import { PayPalWebhookEvent } from '@/types/paypal';
 import { dispatchEvent } from '@/lib/events/dispatcher';
 import { recordDiscountRedemption } from '@/lib/discounts';
+import { createNotification } from '@/lib/notifications/service';
 
 export async function POST(req: Request) {
   try {
@@ -14,6 +15,15 @@ export async function POST(req: Request) {
     const isValid = await verifyPayPalWebhook(headers, rawBody);
     if (!isValid) {
       console.error('❌ Error de validación de firma de Webhook de PayPal.');
+      
+      createNotification({
+        type: 'paypal_webhook_error',
+        title: 'Firma inválida en Webhook PayPal',
+        message: 'Se ha recibido una llamada al webhook de PayPal con una firma criptográfica inválida o no configurada.',
+        severity: 'error',
+        module: 'paypal'
+      }).catch(err => console.error('⚠️ [PayPal Webhook Notification]:', err));
+
       return new Response('Firma no autorizada.', { status: 401 });
     }
 
@@ -188,6 +198,15 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('❌ Error crítico al procesar webhook de PayPal:', error);
+    
+    createNotification({
+      type: 'paypal_webhook_error',
+      title: 'Fallo crítico en Webhook PayPal',
+      message: `Excepción al procesar webhook: ${(error as Error).message}`,
+      severity: 'error',
+      module: 'paypal'
+    }).catch(err => console.error('⚠️ [PayPal Webhook Notification]:', err));
+
     return NextResponse.json(
       { error: 'Error interno al procesar el webhook', details: (error as Error).message },
       { status: 500 }

@@ -299,6 +299,10 @@ model SupportMessage {
   createdAt    DateTime      @default(now())
   internalNote Boolean       @default(false)
   attachments  Json?         // Preparado para metadatos de adjuntos
+  messageId    String?       // ID único de mensaje RFC 2822
+  inReplyTo    String?       // ID de mensaje al que responde
+  references   String?       // IDs de mensajes relacionados
+  htmlBody     String?       // Cuerpo del correo en formato HTML
 }
 
 model SupportOtp {
@@ -331,4 +335,38 @@ model ActiveToken {
   expiresAt   DateTime
   createdAt   DateTime @default(now())
 }
+
+model CustomerConsent {
+  id               String   @id @default(uuid())
+  email            String
+  consentType      String   // "marketing" o "newsletter"
+  accepted         Boolean
+  ipHash           String
+  userAgentHash    String
+  legalTextVersion String
+  createdAt        DateTime @default(now())
+
+  @@index([email])
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  type        String    // ej. "order_created", "ticket_created", "email_error", etc.
+  title       String
+  message     String
+  severity    String    // "info", "success", "warning", "error", "critical"
+  status      String    // "unread", "read", "archived"
+  module      String    // "orders", "paypal", "printful", "email", "support", "waitlist", "automations", "backups", "sentry"
+  entityType  String?   // ej. "Order", "SupportTicket", "DropWaitlist"
+  entityId    String?   // ID de la entidad relacionada
+  actionUrl   String?   // URL relativa para redirección directa (ej. "/admin/orders/AA-10001")
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+  metadata    Json?     // Metadatos adicionales (ej. { count: 5, errorDetails: "..." })
+
+  @@index([status])
+  @@index([severity])
+  @@index([createdAt])
+}
+
 

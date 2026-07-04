@@ -9,6 +9,12 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const timestamp = new Date().toISOString();
   let settings: Record<string, string> = {};
+
+  // Variables para diagnóstico de notificaciones
+  let unreadNotificationsCount = 0;
+  let criticalNotificationsCount = 0;
+  let last24hNotificationsCount = 0;
+  let lastCriticalErrorNotification: any = null;
   
   // 1. Diagnóstico de Base de Datos (Neon PostgreSQL)
   let dbStatus: 'connected' | 'error' = 'error';
@@ -32,10 +38,23 @@ export async function GET() {
   let printfulLastOrder = 'Ninguno';
   let paypalLastWebhook = 'Ninguno';
 
+  let printfulStoreId: number | null = null;
+  let printfulStoreName: string | null = null;
+  let printfulLinkedProductsCount = 0;
+  let printfulErrorsCount = 0;
+  let printfulWebhookUrl = 'No registrado';
+
   try {
     const printfulCheck = await printfulFetch<any>('store');
     if (printfulCheck && printfulCheck.code === 200) {
       printfulStatus = 'connected';
+      printfulStoreId = printfulCheck.result?.id || null;
+      printfulStoreName = printfulCheck.result?.name || null;
+    }
+
+    const webhookCheck = await printfulFetch<any>('webhooks');
+    if (webhookCheck && webhookCheck.code === 200 && webhookCheck.result) {
+      printfulWebhookUrl = webhookCheck.result.url || 'No registrado';
     }
   } catch (error) {
     console.error('❌ [Health API] Printful API connection failed:', error);
@@ -71,6 +90,17 @@ export async function GET() {
       if (lastOrderSubmitted) {
         printfulLastOrder = `#${lastOrderSubmitted.orderNumber} (Printful ID: #${lastOrderSubmitted.printfulOrderId})`;
       }
+
+      // Productos vinculados a Printful
+      printfulLinkedProductsCount = await db.product.count({
+        where: { printfulProductId: { not: null } }
+      });
+
+      // Errores de envío a Printful
+      printfulErrorsCount = await db.order.count({
+        where: { orderStatus: 'fulfillment_failed' }
+      });
+
       // Último webhook de PayPal recibido
       const lastPaypalEvent = await db.orderEvent.findFirst({
         where: { type: { startsWith: 'PAYPAL_' } },
@@ -85,6 +115,36 @@ export async function GET() {
         acc[r.key] = r.value;
         return acc;
       }, {} as Record<string, string>);
+
+      // Diagnóstico de Notificaciones Internas
+      try {
+        unreadNotificationsCount = await db.notification.count({
+          where: { status: 'unread' }
+        });
+
+        criticalNotificationsCount = await db.notification.count({
+          where: { severity: 'critical', status: 'unread' }
+        });
+
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        last24hNotificationsCount = await db.notification.count({
+          where: { createdAt: { gte: twentyFourHoursAgo } }
+        });
+
+        const lastCritical = await db.notification.findFirst({
+          where: { severity: 'critical' },
+          orderBy: { createdAt: 'desc' }
+        });
+        if (lastCritical) {
+          lastCriticalErrorNotification = {
+            title: lastCritical.title,
+            message: lastCritical.message,
+            createdAt: lastCritical.createdAt.toISOString()
+          };
+        }
+      } catch (notifErr) {
+        console.warn('⚠️ [Health API] Error recuperando métricas de notificaciones:', notifErr);
+      }
     } catch (dbError) {
       console.warn('⚠️ [Health API] Error recuperando detalles de la base de datos:', dbError);
     }
@@ -98,9 +158,42 @@ export async function GET() {
   let resendStatus = 'pending_setup';
   let resendLastEmail = 'Ninguno';
   let resendTotalErrors = 0;
+  let resendDomain = 'No configurado';
+  let resendDnsStatus = 'N/A';
+  let resendLatency = 0;
 
   if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'MOCK_RESEND_API_KEY') {
     resendStatus = 'configured';
+    try {
+      const resendStart = Date.now();
+      const resendRes = await fetch('https://api.resend.com/domains', {
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      resendLatency = Date.now() - resendStart;
+
+      if (resendRes.ok) {
+        const domainsData = await resendRes.json();
+        const domainsList = domainsData.data || [];
+        if (domainsList.length > 0) {
+          const mainDomain = domainsList[0];
+          resendDomain = mainDomain.name;
+          resendDnsStatus = mainDomain.status; // 'verified', 'pending', etc.
+        } else {
+          resendDomain = 'Sin dominios registrados';
+          resendDnsStatus = 'Pendiente';
+        }
+      } else {
+        resendStatus = 'degraded';
+        resendDnsStatus = 'Error de API';
+      }
+    } catch (resendError) {
+      console.warn('⚠️ [Health API] Fallo al consultar dominios de Resend:', resendError);
+      resendStatus = 'degraded';
+      resendDnsStatus = 'Error de red';
+    }
   }
 
   // 4. Variables de entorno (Comprobación de existencia únicamente, sin exponer valores)
@@ -424,6 +517,46 @@ export async function GET() {
     }
   }
 
+  // 6f. Diagnóstico de Communication Center y Consentimientos
+  let commsCenterStats = {
+    inboundEmailStatus: 'active',
+    marketingConsents: 0,
+    newsletterConsents: 0,
+    emailProvider: 'resend',
+    lastEmailReceived: 'Ninguno',
+    lastInboundError: 'Ninguno',
+    lastAutoCreatedTicket: 'Ninguno'
+  };
+
+  if (dbStatus === 'connected') {
+    try {
+      commsCenterStats.marketingConsents = await db.customerConsent.count({
+        where: { consentType: 'marketing', accepted: true }
+      });
+      commsCenterStats.newsletterConsents = await db.customerConsent.count({
+        where: { consentType: 'newsletter', accepted: true }
+      });
+
+      const lastReceivedMsg = await db.supportMessage.findFirst({
+        where: { messageId: { not: null }, senderType: 'customer' },
+        orderBy: { createdAt: 'desc' }
+      });
+      if (lastReceivedMsg) {
+        commsCenterStats.lastEmailReceived = `${lastReceivedMsg.createdAt.toLocaleString('es-ES')} - de ${lastReceivedMsg.senderEmail}`;
+      }
+
+      const lastAutoTicket = await db.supportTicket.findFirst({
+        where: { source: 'email' },
+        orderBy: { createdAt: 'desc' }
+      });
+      if (lastAutoTicket) {
+        commsCenterStats.lastAutoCreatedTicket = `${lastAutoTicket.ticketNumber} (${lastAutoTicket.createdAt.toLocaleString('es-ES')})`;
+      }
+    } catch (commsErr) {
+      console.warn('⚠️ [Health API] Error obteniendo estadísticas de comms center:', commsErr);
+    }
+  }
+
   // 6c. Diagnóstico de SEO y Rendimiento
   let sitemapExists = false;
   let robotsExists = false;
@@ -564,6 +697,11 @@ export async function GET() {
     },
     printful: {
       status: printfulStatus,
+      storeId: printfulStoreId,
+      storeName: printfulStoreName,
+      webhookUrl: printfulWebhookUrl,
+      linkedProductsCount: printfulLinkedProductsCount,
+      errorsCount: printfulErrorsCount,
       lastSync: printfulLastSync,
       lastWebhook: printfulLastWebhook,
       lastOrder: printfulLastOrder,
@@ -577,11 +715,15 @@ export async function GET() {
     },
     resend: {
       status: resendStatus,
-      configured: !!process.env.RESEND_API_KEY,
+      configured: !!process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'MOCK_RESEND_API_KEY',
+      domain: resendDomain,
+      dnsStatus: resendDnsStatus,
+      latencyMs: resendLatency,
       lastEmail: resendLastEmail,
       totalErrors: resendTotalErrors,
     },
     automations: automationStats,
+    commsCenter: commsCenterStats,
     seoPerformance,
     support: supportStats,
     portal: portalStats,
@@ -666,6 +808,12 @@ export async function GET() {
       expired: discountsExpiredCount,
       used: discountsUsedCount,
       appliedToday: discountsAppliedTodaySum,
+    },
+    notifications: {
+      unreadCount: unreadNotificationsCount,
+      criticalCount: criticalNotificationsCount,
+      last24hCount: last24hNotificationsCount,
+      lastCriticalError: lastCriticalErrorNotification
     },
     envVariables: envStatus,
     orders: ordersCount,

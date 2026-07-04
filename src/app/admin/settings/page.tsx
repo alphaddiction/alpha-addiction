@@ -26,6 +26,8 @@ interface SettingsData {
 interface Checklist {
   completionPercentage: number;
   isReadyForProduction: boolean;
+  pendingTechnicalItems: string[];
+  pendingLegalItems: string[];
   pendingItems: string[];
 }
 
@@ -141,6 +143,39 @@ function SettingsCenterInner() {
     return '🔴 No configurada';
   };
 
+  const getPendingItemsToDisplay = () => {
+    if (!checklist) return [];
+    const mode = settings['system_mode'] || 'development';
+    if (mode === 'production_verification') {
+      return checklist.pendingTechnicalItems || [];
+    }
+    if (mode === 'production_open') {
+      return [
+        ...(checklist.pendingTechnicalItems || []),
+        ...(checklist.pendingLegalItems || [])
+      ];
+    }
+    // development or default
+    return [
+      ...(checklist.pendingTechnicalItems || []),
+      ...(checklist.pendingLegalItems || [])
+    ];
+  };
+
+  const pendingItemsToDisplay = getPendingItemsToDisplay();
+
+  const isReadyForSelectedMode = () => {
+    if (!checklist) return false;
+    const mode = settings['system_mode'] || 'development';
+    if (mode === 'production_verification') {
+      return (checklist.pendingTechnicalItems || []).length === 0;
+    }
+    if (mode === 'production_open') {
+      return (checklist.pendingTechnicalItems || []).length === 0 && (checklist.pendingLegalItems || []).length === 0;
+    }
+    return false;
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] gap-3">
@@ -152,7 +187,7 @@ function SettingsCenterInner() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      
+
       {/* Cabecera del Panel */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 pb-6 border-b border-white/5">
         <div>
@@ -179,7 +214,7 @@ function SettingsCenterInner() {
 
       {/* Grid: Lado Izquierdo (Módulos/Tabs) y Lado Derecho (Detalle del Formulario + Barra Progreso) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* Columna Izquierda: Listado de Módulos (col-span-3) */}
         <div className="lg:col-span-3 space-y-2 font-mono">
           <span className="text-[9px] uppercase tracking-widest text-white/40 block px-3 mb-2">Módulos del Sistema</span>
@@ -202,11 +237,10 @@ function SettingsCenterInner() {
                   setError(null);
                   setSuccess(null);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 border text-xs tracking-wider uppercase font-bold text-left transition-all cursor-pointer ${
-                  activeTab === tab.id
+                className={`w-full flex items-center gap-3 px-4 py-3 border text-xs tracking-wider uppercase font-bold text-left transition-all cursor-pointer ${activeTab === tab.id
                     ? 'bg-white/[0.02] border-[var(--primary)] text-[var(--primary)] font-bold'
                     : 'bg-[#111111]/40 border-white/5 text-[var(--muted)] hover:text-white hover:border-white/10'
-                }`}
+                  }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 {tab.label}
@@ -217,7 +251,7 @@ function SettingsCenterInner() {
 
         {/* Columna Derecha: Formulario y Checklist (col-span-9) */}
         <div className="lg:col-span-9 space-y-6">
-          
+
           {/* Card de Progreso General */}
           {checklist && (
             <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative">
@@ -227,8 +261,8 @@ function SettingsCenterInner() {
                 <div className="flex items-center gap-3">
                   <span className="text-3xl font-serif font-bold text-[#f5f5f0]">{checklist.completionPercentage}%</span>
                   <div className="w-48 bg-white/5 h-2 rounded overflow-hidden">
-                    <div 
-                      className="bg-[var(--primary)] h-2 rounded transition-all duration-500" 
+                    <div
+                      className="bg-[var(--primary)] h-2 rounded transition-all duration-500"
                       style={{ width: `${checklist.completionPercentage}%` }}
                     />
                   </div>
@@ -240,7 +274,7 @@ function SettingsCenterInner() {
 
               <div className="flex flex-col items-start sm:items-end gap-1 font-mono text-[9px]">
                 <span className="text-white/40 uppercase">Preparado para producción:</span>
-                {checklist.isReadyForProduction ? (
+                {isReadyForSelectedMode() ? (
                   <span className="px-2 py-1 bg-green-500/10 border border-green-500/20 text-green-400 font-bold rounded">
                     ✓ SÍ (APTO)
                   </span>
@@ -256,11 +290,11 @@ function SettingsCenterInner() {
           {error && (
             <div className="bg-red-500/5 border border-red-500/20 p-4 text-xs font-mono text-red-400 flex flex-col gap-2">
               <span className="flex items-center gap-1.5 font-bold"><AlertTriangle className="w-4 h-4" /> {error}</span>
-              {checklist && checklist.pendingItems.length > 0 && settings['system_mode'] === 'production' && (
+              {checklist && pendingItemsToDisplay.length > 0 && settings['system_mode'] !== 'development' && (
                 <div className="mt-2 pt-2 border-t border-red-500/10">
                   <span className="text-[10px] font-bold block mb-1">Debes configurar:</span>
                   <ul className="list-disc pl-4 space-y-1 text-[10px]">
-                    {checklist.pendingItems.map((item, idx) => <li key={idx}>{item}</li>)}
+                    {pendingItemsToDisplay.map((item, idx) => <li key={idx}>{item}</li>)}
                   </ul>
                 </div>
               )}
@@ -275,7 +309,7 @@ function SettingsCenterInner() {
 
           {/* Formulario Principal */}
           <form onSubmit={handleSubmit} className="bg-[#111111]/90 border border-white/5 p-6 sm:p-8 space-y-8 relative">
-            
+
             {/* TIPO 1: EMPRESA */}
             {activeTab === 'empresa' && (
               <div className="space-y-6 text-xs">
@@ -539,7 +573,7 @@ function SettingsCenterInner() {
                 <h3 className="text-sm uppercase tracking-widest text-[#f5f5f0] font-bold font-mono border-b border-white/5 pb-3">
                   Estado de las Integraciones Externas
                 </h3>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {[
                     { label: 'Printful API', key: 'printful' as const, desc: 'Gestión y sincronización de stock y pedidos físicas con Printful.' },
@@ -901,18 +935,17 @@ function SettingsCenterInner() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
                       { id: 'development', label: '🛠 Desarrollo', desc: 'Permite operar sin validaciones estrictas de datos ni credenciales completas de pasarelas.' },
-                      { id: 'sandbox', label: '🧪 Sandbox', desc: 'Preparado para simulaciones de compras en pruebas de PayPal, Printful y Resend en sandbox.' },
-                      { id: 'production', label: '🟢 Producción', desc: 'Operación real con pasarelas productivas y control de integridad absoluto.' }
+                      { id: 'production_verification', label: '🧪 Verificación', desc: 'Operación real con pasarelas productivas para pruebas E2E, pero con la tienda cerrada al público.' },
+                      { id: 'production_open', label: '🟢 Producción Abierta', desc: 'Operación en vivo para el público en general. Requiere cumplir con todas las normativas legales.' }
                     ].map(mode => (
                       <button
                         key={mode.id}
                         type="button"
                         onClick={() => handleInputChange('system_mode', mode.id)}
-                        className={`p-4 border text-left flex flex-col gap-2.5 transition-all cursor-pointer ${
-                          settings['system_mode'] === mode.id
+                        className={`p-4 border text-left flex flex-col gap-2.5 transition-all cursor-pointer ${settings['system_mode'] === mode.id
                             ? 'bg-white/[0.02] border-[var(--primary)] text-[var(--primary)] font-bold'
                             : 'bg-[#111111]/40 border-white/5 text-[var(--muted)] hover:text-[#f5f5f0]'
-                        }`}
+                          }`}
                       >
                         <span className="text-xs uppercase font-bold">{mode.label}</span>
                         <p className="text-[8px] font-sans leading-relaxed text-[var(--muted)]">{mode.desc}</p>

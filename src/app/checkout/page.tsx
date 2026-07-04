@@ -12,6 +12,9 @@ export default function CheckoutPage() {
     const router = useRouter();
     const { items, subtotal, clearCart } = useCart();
     const [mounted, setMounted] = useState(false);
+    const [systemMode, setSystemMode] = useState<string>('development');
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
+    const [isLoadingConfig, setIsLoadingConfig] = useState<boolean>(true);
 
     const [formData, setFormData] = useState({
         firstName: '',
@@ -28,6 +31,10 @@ export default function CheckoutPage() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const [isCreatingDraft, setIsCreatingDraft] = useState(false);
+
+    // Estados para consentimiento RGPD/LSSI
+    const [consentMarketing, setConsentMarketing] = useState(false);
+    const [consentNewsletter, setConsentNewsletter] = useState(false);
 
     // Estados para los cupones de descuento
     const [discountCode, setDiscountCode] = useState('');
@@ -82,6 +89,8 @@ export default function CheckoutPage() {
                     items: items,
                     discountCode: appliedDiscount ? appliedDiscount.code : undefined,
                     isTestOrder: true,
+                    consentMarketing,
+                    consentNewsletter,
                 }),
             });
 
@@ -102,12 +111,55 @@ export default function CheckoutPage() {
     };
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
+        async function fetchConfig() {
+            try {
+                const res = await fetch('/api/paypal/config');
+                if (res.ok) {
+                    const data = await res.json();
+                    setSystemMode(data.systemMode || 'development');
+                    setIsAdmin(!!data.isAdmin);
+                }
+            } catch (err) {
+                console.error('Error fetching config on checkout:', err);
+            } finally {
+                setIsLoadingConfig(false);
+            }
+        }
+        fetchConfig();
     }, []);
 
     // Evitar hidratación mismatch
-    if (!mounted) return null;
+    if (!mounted || isLoadingConfig) {
+        return (
+            <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
+                <div className="w-8 h-8 border-2 border-white/10 border-t-[var(--primary)] rounded-full animate-spin" />
+                <span className="text-xs uppercase tracking-widest text-[var(--foreground)]/50">Cargando pasarela de pago...</span>
+            </div>
+        );
+    }
+
+    if (systemMode === 'production_verification' && !isAdmin) {
+        return (
+            <div className="min-h-[75vh] flex flex-col items-center justify-center text-center px-6 py-12 max-w-xl mx-auto animate-in fade-in duration-500 font-mono">
+                <div className="w-16 h-16 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 flex items-center justify-center rounded-full mb-6">
+                    <span className="text-2xl font-bold">🧪</span>
+                </div>
+                <h1 className="text-xl font-serif font-bold text-[#f5f5f0] uppercase tracking-widest mb-4">
+                    Tienda en Verificación Técnica
+                </h1>
+                <p className="text-xs text-[var(--muted)] leading-relaxed mb-8">
+                    La pasarela de pagos se encuentra temporalmente cerrada al público general por tareas de verificación y auditoría técnica de los administradores.
+                </p>
+                <Link
+                    href="/"
+                    className="px-6 py-3 border border-white/10 hover:border-white/20 bg-white/5 text-[10px] uppercase tracking-widest font-bold transition-all text-[#f5f5f0]"
+                >
+                    Volver al Inicio
+                </Link>
+            </div>
+        );
+    }
 
     if (items.length === 0) {
         return (
@@ -438,7 +490,6 @@ export default function CheckoutPage() {
                                 </div>
                             </div>
                         </section>
-
                         {/* Pagar ahora Action */}
                         <div className="pt-8 space-y-6">
                             {paymentError && (
@@ -447,11 +498,40 @@ export default function CheckoutPage() {
                                 </div>
                             )}
 
+                            {/* Consentimientos RGPD / LSSI */}
+                            <div className="space-y-4 pt-6 border-t border-[var(--border)]/30">
+                                <label className="flex items-start gap-3 cursor-pointer text-xs text-[var(--foreground)]/80 leading-relaxed select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={consentMarketing}
+                                        onChange={(e) => setConsentMarketing(e.target.checked)}
+                                        className="mt-0.5 w-4 h-4 border border-[var(--border)] bg-transparent text-[var(--primary)] focus:ring-0 focus:ring-offset-0 rounded-none accent-[var(--primary)]"
+                                    />
+                                    <span>Quiero recibir novedades, lanzamientos exclusivos, promociones y descuentos de Alpha Addiction.</span>
+                                </label>
+
+                                <label className="flex items-start gap-3 cursor-pointer text-xs text-[var(--foreground)]/80 leading-relaxed select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={consentNewsletter}
+                                        onChange={(e) => setConsentNewsletter(e.target.checked)}
+                                        className="mt-0.5 w-4 h-4 border border-[var(--border)] bg-transparent text-[var(--primary)] focus:ring-0 focus:ring-offset-0 rounded-none accent-[var(--primary)]"
+                                    />
+                                    <span>Quiero recibir contenido exclusivo, inspiración, noticias y comunicaciones relacionadas con la marca Alpha Addiction.</span>
+                                </label>
+
+                                <p className="text-[10px] text-[var(--foreground)]/50 leading-relaxed mt-2 tracking-wide uppercase">
+                                    Al marcar estas casillas aceptas que procesemos tus datos conforme a nuestra <a href="/legal/privacidad" target="_blank" className="text-[var(--primary)] hover:underline">Política de Privacidad</a>.
+                                </p>
+                            </div>
+
                             <PayPalButton
                                 shippingAddress={formData}
                                 items={items}
                                 discountCode={appliedDiscount ? appliedDiscount.code : undefined}
                                 onValidate={validateForm}
+                                consentMarketing={consentMarketing}
+                                consentNewsletter={consentNewsletter}
                                 onSuccess={(localOrderId) => {
                                     clearCart();
                                     router.push(`/checkout/success?orderId=${localOrderId}`);

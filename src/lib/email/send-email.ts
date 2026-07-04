@@ -257,7 +257,7 @@ export async function sendWaitlistConfirmation(email: string, dropName: string):
       return { success: false, error: 'Email inválido' };
     }
 
-    const html = templates.getWaitlistConfirmationEmail(dropName);
+    const html = templates.getWaitlistConfirmationEmail(dropName, cleanEmail);
     const subject = `Te avisaremos cuando salga ${dropName}`;
     const result = await sendViaResend(cleanEmail, subject, html);
     
@@ -293,7 +293,7 @@ export async function sendDropLiveNotification(email: string, dropName: string, 
       return { success: false, error: 'Email inválido' };
     }
 
-    const html = templates.getDropLiveNotificationEmail(dropName, dropSlug);
+    const html = templates.getDropLiveNotificationEmail(dropName, dropSlug, cleanEmail);
     const subject = `🔥 ¡Ya está activo: ${dropName}!`;
     const result = await sendViaResend(cleanEmail, subject, html);
     

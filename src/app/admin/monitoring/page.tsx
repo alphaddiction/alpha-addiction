@@ -37,6 +37,11 @@ interface SystemHealthData {
   };
   printful: {
     status: 'connected' | 'error';
+    storeId: number | null;
+    storeName: string | null;
+    webhookUrl: string;
+    linkedProductsCount: number;
+    errorsCount: number;
     lastSync: string;
     lastWebhook: string;
     lastOrder: string;
@@ -71,8 +76,11 @@ interface SystemHealthData {
     createdAt: string;
   }>;
   resend?: {
-    status: 'configured' | 'pending_setup';
+    status: 'configured' | 'pending_setup' | 'degraded';
     configured: boolean;
+    domain: string;
+    dnsStatus: string;
+    latencyMs: number;
     lastEmail?: string;
     totalErrors: number;
   };
@@ -134,6 +142,16 @@ interface SystemHealthData {
     lastBackupSize: string | null;
     lastBackupTime: string | null;
     recommendation: string;
+  };
+  notifications?: {
+    unreadCount: number;
+    criticalCount: number;
+    last24hCount: number;
+    lastCriticalError: {
+      title: string;
+      message: string;
+      createdAt: string;
+    } | null;
   };
 }
 
@@ -413,18 +431,40 @@ export default function HealthCenterPage() {
             <h3 className="text-xl font-serif font-bold text-[#f5f5f0] uppercase tracking-wider">
               {data.printful.status === 'connected' ? 'CONECTADO' : 'ERROR CONEXIÓN'}
             </h3>
-            <div className="text-[10px] text-[var(--muted)] font-mono mt-4 space-y-1.5">
+            <div className="text-[9px] text-[var(--muted)] font-mono mt-4 space-y-1.5">
               <div className="flex justify-between">
-                <span>Última Sincronización:</span>
+                <span>Tienda Conectada:</span>
+                <span className="text-[#f5f5f0] truncate max-w-[110px]" title={`${data.printful.storeName || 'N/A'} (ID: ${data.printful.storeId || '—'})`}>
+                  {data.printful.storeName || 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Sincronización:</span>
                 <span className="text-[#f5f5f0]">{data.printful.lastSync}</span>
               </div>
               <div className="flex justify-between">
+                <span>Productos Vinculados:</span>
+                <span className="text-[#f5f5f0]">{data.printful.linkedProductsCount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Webhook URL:</span>
+                <span className="text-[#f5f5f0] truncate max-w-[110px]" title={data.printful.webhookUrl}>
+                  {data.printful.webhookUrl}
+                </span>
+              </div>
+              <div className="flex justify-between">
                 <span>Último Webhook:</span>
-                <span className="text-[#f5f5f0] truncate max-w-[100px]" title={data.printful.lastWebhook}>{data.printful.lastWebhook}</span>
+                <span className="text-[#f5f5f0] truncate max-w-[110px]" title={data.printful.lastWebhook}>{data.printful.lastWebhook}</span>
               </div>
               <div className="flex justify-between">
                 <span>Último Envío:</span>
-                <span className="text-[#f5f5f0] truncate max-w-[100px]" title={data.printful.lastOrder}>{data.printful.lastOrder}</span>
+                <span className="text-[#f5f5f0] truncate max-w-[110px]" title={data.printful.lastOrder}>{data.printful.lastOrder}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Errores de Envío:</span>
+                <span className={data.printful.errorsCount > 0 ? 'text-red-400 font-bold' : 'text-green-400'}>
+                  {data.printful.errorsCount}
+                </span>
               </div>
             </div>
           </div>
@@ -460,21 +500,44 @@ export default function HealthCenterPage() {
           <div>
             <div className="flex justify-between items-start mb-4">
               <span className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-semibold">Resend Email</span>
-              <span className={`p-2 rounded ${(data as any).resend?.status === 'configured' ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-500'}`}>
+              <span className={`p-2 rounded ${
+                data.resend?.status === 'configured' ? 'bg-green-500/10 text-green-400' :
+                data.resend?.status === 'degraded' ? 'bg-amber-500/10 text-amber-400' :
+                'bg-red-500/10 text-red-500'
+              }`}>
                 <Mail className="w-4 h-4" />
               </span>
             </div>
             <h3 className="text-xl font-serif font-bold text-[#f5f5f0] uppercase tracking-wider">
-              {(data as any).resend?.status === 'configured' ? 'ACTIVO' : 'PENDIENTE'}
+              {data.resend?.status === 'configured' ? 'ACTIVO' :
+               data.resend?.status === 'degraded' ? 'DEGRADADO' : 'PENDIENTE'}
             </h3>
-            <div className="text-[10px] text-[var(--muted)] font-mono mt-4 space-y-1.5">
+            <div className="text-[9px] text-[var(--muted)] font-mono mt-4 space-y-1.5">
+              <div className="flex justify-between">
+                <span>Dominio:</span>
+                <span className="text-[#f5f5f0] truncate max-w-[110px]" title={data.resend?.domain || 'No configurado'}>
+                  {data.resend?.domain || 'No configurado'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Estado DNS:</span>
+                <span className={`font-bold ${data.resend?.dnsStatus === 'verified' ? 'text-green-400' : 'text-amber-400'}`}>
+                  {data.resend?.dnsStatus || 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Latencia API:</span>
+                <span className="text-[#f5f5f0]">{data.resend?.latencyMs || 0} ms</span>
+              </div>
               <div className="flex justify-between">
                 <span>Envíos Fallidos:</span>
-                <span className="text-[#f5f5f0]">{(data as any).resend?.totalErrors || 0}</span>
+                <span className={data.resend?.totalErrors && data.resend.totalErrors > 0 ? 'text-red-400 font-bold' : 'text-[#f5f5f0]'}>
+                  {data.resend?.totalErrors || 0}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Último Envío:</span>
-                <span className="text-[#f5f5f0] truncate max-w-[100px]" title={(data as any).resend?.lastEmail || 'Ninguno'}>{(data as any).resend?.lastEmail || 'Ninguno'}</span>
+                <span className="text-[#f5f5f0] truncate max-w-[110px]" title={data.resend?.lastEmail || 'Ninguno'}>{data.resend?.lastEmail || 'Ninguno'}</span>
               </div>
             </div>
           </div>
@@ -634,6 +697,51 @@ export default function HealthCenterPage() {
               <div className="pt-1.5 border-t border-white/5 flex flex-col text-[8px] text-[var(--muted)]">
                 <span>Recomendación:</span>
                 <span className="text-white font-sans mt-0.5 leading-normal">{data.backups?.recommendation}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Panel de Notificaciones Internas */}
+        <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col justify-between font-mono">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-semibold">Notificaciones</span>
+              <span className={`p-2 rounded ${
+                data.notifications?.criticalCount && data.notifications.criticalCount > 0 ? 'bg-red-500/10 text-red-500 animate-pulse' :
+                data.notifications?.unreadCount && data.notifications.unreadCount > 0 ? 'bg-amber-500/10 text-amber-400' :
+                'bg-green-500/10 text-green-400'
+              }`}>
+                <Activity className="w-4 h-4" />
+              </span>
+            </div>
+            <h3 className="text-lg font-serif font-bold text-[#f5f5f0] uppercase tracking-wider">
+              {data.notifications?.criticalCount && data.notifications.criticalCount > 0 ? '🚨 CRÍTICO' :
+               data.notifications?.unreadCount && data.notifications.unreadCount > 0 ? `${data.notifications.unreadCount} PENDIENTES` :
+               'SISTEMA LIMPIO'}
+            </h3>
+            <div className="text-[9px] text-[var(--muted)] mt-4 space-y-1.5 leading-relaxed">
+              <div className="flex justify-between">
+                <span>No Leídas:</span>
+                <span className={data.notifications?.unreadCount && data.notifications.unreadCount > 0 ? 'text-amber-400 font-bold' : 'text-[#f5f5f0]'}>
+                  {data.notifications?.unreadCount || 0}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Alertas Críticas:</span>
+                <span className={data.notifications?.criticalCount && data.notifications.criticalCount > 0 ? 'text-red-400 font-bold animate-pulse' : 'text-[#f5f5f0]'}>
+                  {data.notifications?.criticalCount || 0}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Últimas 24h:</span>
+                <span className="text-[#f5f5f0]">{data.notifications?.last24hCount || 0}</span>
+              </div>
+              <div className="pt-1.5 border-t border-white/5 flex flex-col text-[8px] text-[var(--muted)]">
+                <span>Último Error Crítico:</span>
+                <span className="text-white font-sans mt-0.5 leading-normal truncate max-w-[130px]" title={data.notifications?.lastCriticalError?.message || 'Ninguno'}>
+                  {data.notifications?.lastCriticalError ? `[${new Date(data.notifications.lastCriticalError.createdAt).toLocaleTimeString('es-ES')}] ${data.notifications.lastCriticalError.title}` : 'Ninguno'}
+                </span>
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { getEnv } from '../validations';
 import { ResendResponse } from './types';
+import { createNotification } from '../notifications/service';
 
 /**
  * Cliente HTTP ligero y directo para enviar correos usando la API REST de Resend.
@@ -47,10 +48,21 @@ export async function sendViaResend(
     const data = (await response.json()) as ResendResponse;
 
     if (!response.ok || data.error) {
+      const errorMsg = data.error?.message || `Error HTTP Resend [${response.status}]: ${response.statusText}`;
       console.error('❌ Error de API de Resend:', data.error);
+
+      createNotification({
+        type: 'email_error',
+        title: 'Error de envío de email',
+        message: `Fallo al enviar correo a ${to}. Razón: ${errorMsg}`,
+        severity: 'error',
+        module: 'email',
+        metadata: { recipient: to, error: errorMsg }
+      }).catch(err => console.error('⚠️ [Resend Notification Error]:', err));
+
       return {
         success: false,
-        error: data.error?.message || `Error HTTP Resend [${response.status}]: ${response.statusText}`,
+        error: errorMsg,
         latencyMs,
       };
     }
@@ -62,10 +74,21 @@ export async function sendViaResend(
     };
   } catch (error) {
     const latencyMs = Date.now() - startTime;
+    const errorMsg = (error as Error).message;
     console.error('❌ Error de red/excepción al enviar con Resend:', error);
+
+    createNotification({
+      type: 'email_error',
+      title: 'Excepción de red al enviar email',
+      message: `Error al enviar correo a ${to}. Detalle: ${errorMsg}`,
+      severity: 'critical',
+      module: 'email',
+      metadata: { recipient: to, error: errorMsg }
+    }).catch(err => console.error('⚠️ [Resend Notification Error]:', err));
+
     return {
       success: false,
-      error: (error as Error).message,
+      error: errorMsg,
       latencyMs,
     };
   }

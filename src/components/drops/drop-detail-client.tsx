@@ -36,6 +36,7 @@ export default function DropDetailClient({ drop }: DropDetailClientProps) {
   const [name, setName] = useState('');
   const [waitlistStatus, setWaitlistStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [consentMarketing, setConsentMarketing] = useState(false);
   const [failedProducts, setFailedProducts] = useState<Set<string>>(new Set());
 
   // Efecto de cuenta atrás para Coming Soon
@@ -82,7 +83,7 @@ export default function DropDetailClient({ drop }: DropDetailClientProps) {
       const res = await fetch(`/api/drops/${drop.slug}/waitlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name }),
+        body: JSON.stringify({ email, name, consentMarketing }),
       });
 
       const data = await res.json();
@@ -204,6 +205,18 @@ export default function DropDetailClient({ drop }: DropDetailClientProps) {
                   <Mail className="w-3.5 h-3.5" /> Avisadme del lanzamiento
                 </button>
               </form>
+
+              <div className="text-left pt-2">
+                <label className="flex items-start gap-2.5 cursor-pointer text-[10px] text-[var(--foreground)]/70 leading-relaxed select-none">
+                  <input
+                    type="checkbox"
+                    checked={consentMarketing}
+                    onChange={(e) => setConsentMarketing(e.target.checked)}
+                    className="mt-0.5 w-3.5 h-3.5 border border-black/15 bg-white/50 text-[var(--primary)] focus:ring-0 focus:ring-offset-0 rounded-none accent-[var(--primary)]"
+                  />
+                  <span>Quiero recibir información sobre futuros Drops y novedades de Alpha Addiction. Acepto la <a href="/legal/privacidad" target="_blank" className="underline text-black font-semibold">Política de Privacidad</a>.</span>
+                </label>
+              </div>
 
               {waitlistStatus && (
                 <div className={`p-3 text-[10px] border font-mono text-left flex gap-1.5 items-start ${
