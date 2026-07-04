@@ -8,14 +8,12 @@ function AnalyticsScripts() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Estructura preparada para el futuro consentimiento de cookies (GDPR/LSSI)
-    // Actualmente inactivo hasta que se implemente un banner de consentimiento real.
     const consent = typeof window !== 'undefined' && (window as any).COOKIE_CONSENT;
-    const hasAnalyticsConsent = consent?.analytics === true;
-    const hasMarketingConsent = consent?.marketing === true;
+    // Si no existe gestor de cookies, asumimos activado por defecto para medir en esta fase
+    const hasAnalyticsConsent = consent ? consent.analytics === true : true;
+    const hasMarketingConsent = consent ? consent.marketing === true : true;
 
     if (!hasAnalyticsConsent && !hasMarketingConsent) {
-      // Registrar en consola en modo de desarrollo que los píxeles están pausados
       if (process.env.NODE_ENV === 'development') {
         console.log('🔒 [Analytics] Bloqueado. Esperando consentimiento del usuario.');
       }
