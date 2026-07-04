@@ -34,7 +34,10 @@ import {
   SlidersHorizontal,
   Layers,
   HelpCircle,
-  FileText
+  FileText,
+  Brain,
+  Network,
+  GraduationCap
 } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { Order } from '@/types/order';
@@ -60,6 +63,84 @@ export default function DashboardPage() {
   const [searching, setSearching] = useState(false);
 
   // Lista de checklist diario
+  const [dashboardMemories, setDashboardMemories] = useState<any[]>([]);
+  const [academyStats, setAcademyStats] = useState({ coursesCount: 0, lessonsCount: 0, coveragePercentage: 0, suggestedCount: 0, lastUpdated: 'Nunca' });
+
+  const fetchAcademyStats = async () => {
+    try {
+      const [coursesRes, covRes, sugRes] = await Promise.all([
+        fetch('/api/admin/ai/academy?mode=courses'),
+        fetch('/api/admin/ai/academy?mode=coverage'),
+        fetch('/api/admin/ai/academy?status=suggested')
+      ]);
+      const coursesData = await coursesRes.json();
+      const covData = await covRes.json();
+      const sugData = await sugRes.json();
+      if (coursesData.success && covData.success && sugData.success) {
+        let lessonsCount = 0;
+        coursesData.courses.forEach((c: any) => lessonsCount += c._count?.lessons || 0);
+
+        setAcademyStats({
+          coursesCount: coursesData.courses?.length || 0,
+          lessonsCount,
+          coveragePercentage: covData.coverage?.totalPercentage || 0,
+          suggestedCount: sugData.courses?.length || 0,
+          lastUpdated: new Date().toLocaleTimeString('es-ES')
+        });
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    fetchAcademyStats();
+  }, []);
+  const [brainStats, setBrainStats] = useState({ entitiesCount: 0, relationsCount: 0, avgConfidence: 75, lastUpdated: 'Nunca' });
+
+  const fetchBrainStats = async () => {
+    try {
+      const [entRes, relRes] = await Promise.all([
+        fetch('/api/admin/ai/knowledge?mode=entities'),
+        fetch('/api/admin/ai/knowledge?mode=relationships')
+      ]);
+      const entData = await entRes.json();
+      const relData = await relRes.json();
+      if (entData.success && relData.success) {
+        const entCount = entData.entities?.length || 0;
+        const relCount = relData.relationships?.length || 0;
+        
+        let sumImportance = 0;
+        if (entCount > 0) {
+          entData.entities.forEach((e: any) => sumImportance += e.importance || 50);
+        }
+        
+        setBrainStats({
+          entitiesCount: entCount,
+          relationsCount: relCount,
+          avgConfidence: entCount > 0 ? Math.round(sumImportance / entCount) : 50,
+          lastUpdated: new Date().toLocaleTimeString('es-ES')
+        });
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    fetchBrainStats();
+  }, []);
+
+  const fetchDashboardMemories = async () => {
+    try {
+      const res = await fetch('/api/admin/ai/memory');
+      const data = await res.json();
+      if (data.success) {
+        setDashboardMemories(data.memories || []);
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    fetchDashboardMemories();
+  }, []);
+
   const [checklist, setChecklist] = useState<any[]>([
     { id: '1', task: 'Revisar pedidos pendientes de envío', completed: false },
     { id: '2', task: 'Responder tickets de soporte abiertos', completed: false },
@@ -71,6 +152,9 @@ export default function DashboardPage() {
   // Preferencias de widgets (Mission Control)
   const [widgets, setWidgets] = useState<WidgetPreference[]>([
     { key: 'summary', name: 'Resumen Ejecutivo', visible: true },
+    { key: 'alphaMemory', name: 'Alpha Recuerda (Memoria)', visible: true },
+    { key: 'alphaBrain', name: 'Alpha Brain (Grafo Conocimiento)', visible: true },
+    { key: 'alphaAcademy', name: 'Alpha Academy (Entrenamiento)', visible: true },
     { key: 'checklist', name: 'Checklist Diario', visible: true },
     { key: 'alerts', name: 'Alertas del Sistema', visible: true },
     { key: 'financial', name: 'Centro Financiero', visible: true },
@@ -464,6 +548,137 @@ export default function DashboardPage() {
                         <p className="text-[8px] text-[var(--muted)] mt-3 uppercase tracking-widest">
                           {metrics.visitsCount} visitas estimadas
                         </p>
+                      </div>
+                    </div>
+                  );
+
+                // ==========================================
+                // Alpha Brain (Knowledge Widget)
+                // ==========================================
+                case 'alphaBrain':
+                  return (
+                    <div key="widget-alpha-brain" className="bg-[#121212] border border-white/5 p-5 shadow-sm">
+                      <h2 className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-bold mb-4 pb-2 border-b border-white/5 flex items-center gap-1.5">
+                        <Network className="w-4 h-4 text-[var(--primary)] animate-pulse" /> Alpha Brain (Conocimiento Estructurado)
+                      </h2>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-xs">
+                        <div className="bg-[#0a0a0a] border border-white/5 p-4 flex flex-col justify-between">
+                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Nodos (Entidades)</span>
+                          <span className="text-xl font-bold text-white mt-1">{brainStats.entitiesCount}</span>
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-white/5 p-4 flex flex-col justify-between">
+                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Bordes (Relaciones)</span>
+                          <span className="text-xl font-bold text-white mt-1">{brainStats.relationsCount}</span>
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-white/5 p-4 flex flex-col justify-between">
+                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Confianza Media</span>
+                          <span className="text-xl font-bold text-white mt-1">{brainStats.avgConfidence}%</span>
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-white/5 p-4 flex flex-col justify-between">
+                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Último Update</span>
+                          <span className="text-[10px] text-white/80 mt-1 truncate">{brainStats.lastUpdated}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+
+                // ==========================================
+                // Alpha Academy (Training Widget)
+                // ==========================================
+                case 'alphaAcademy':
+                  return (
+                    <div key="widget-alpha-academy" className="bg-[#121212] border border-white/5 p-5 shadow-sm">
+                      <h2 className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-bold mb-4 pb-2 border-b border-white/5 flex items-center gap-1.5">
+                        <GraduationCap className="w-4 h-4 text-[var(--primary)] animate-pulse" /> Alpha Academy & Knowledge Base Viva
+                      </h2>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 font-mono text-xs">
+                        <div className="bg-[#0a0a0a] border border-white/5 p-4 flex flex-col justify-between">
+                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Cursos Creados</span>
+                          <span className="text-xl font-bold text-white mt-1">{academyStats.coursesCount}</span>
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-white/5 p-4 flex flex-col justify-between">
+                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Lecciones Guardadas</span>
+                          <span className="text-xl font-bold text-white mt-1">{academyStats.lessonsCount}</span>
+                        </div>
+                        <div className="bg-[#0a0a0a] border border-white/5 p-4 flex flex-col justify-between">
+                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Índice Cobertura</span>
+                          <span className="text-xl font-bold text-white mt-1">{academyStats.coveragePercentage}%</span>
+                        </div>
+                        <Link href="/admin/academy/review" className="bg-[#0a0a0a] border border-white/5 p-4 flex flex-col justify-between hover:border-amber-500/30 transition-all cursor-pointer">
+                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Sugerencias Pendientes</span>
+                          <span className={`text-xl font-bold mt-1 ${academyStats.suggestedCount > 0 ? 'text-amber-400 animate-pulse' : 'text-white'}`}>
+                            {academyStats.suggestedCount}
+                          </span>
+                        </Link>
+                        <div className="bg-[#0a0a0a] border border-white/5 p-4 flex flex-col justify-between col-span-2 md:col-span-1">
+                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted)]">Sincronizado</span>
+                          <span className="text-[10px] text-white/80 mt-1 truncate">{academyStats.lastUpdated}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+
+                // ==========================================
+                // Alpha Recuerda (Memory Widget)
+                // ==========================================
+                case 'alphaMemory':
+                  const decisions = dashboardMemories.filter(m => m.type === 'decision');
+                  const recommendations = dashboardMemories.filter(m => m.type === 'recommendation');
+                  const projectNotes = dashboardMemories.filter(m => m.type === 'project');
+
+                  return (
+                    <div key="widget-alpha-memory" className="bg-[#121212] border border-white/5 p-5 shadow-sm">
+                      <h2 className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-bold mb-4 pb-2 border-b border-white/5 flex items-center gap-1.5">
+                        <Brain className="w-4 h-4 text-[var(--primary)] animate-pulse" /> Alpha Recuerda (Conocimiento)
+                      </h2>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-sans">
+                        {/* Decisiones */}
+                        <div className="space-y-3">
+                          <h4 className="text-[9px] uppercase tracking-widest font-mono font-bold text-purple-400 border-b border-purple-500/10 pb-1.5">Decisiones Recientes</h4>
+                          {decisions.length === 0 ? (
+                            <div className="text-[10px] text-[var(--muted)] py-2 font-mono">No hay decisiones registradas.</div>
+                          ) : (
+                            <ul className="space-y-2 text-xs">
+                              {decisions.slice(0, 4).map((dec) => (
+                                <li key={dec.id} className="text-white/85 leading-relaxed pl-3 border-l border-purple-500/30">
+                                  {dec.value}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+
+                        {/* Recomendaciones */}
+                        <div className="space-y-3">
+                          <h4 className="text-[9px] uppercase tracking-widest font-mono font-bold text-amber-400 border-b border-amber-500/10 pb-1.5">Recomendaciones Activas</h4>
+                          {recommendations.length === 0 ? (
+                            <div className="text-[10px] text-[var(--muted)] py-2 font-mono">No hay recomendaciones pendientes.</div>
+                          ) : (
+                            <ul className="space-y-2 text-xs">
+                              {recommendations.slice(0, 4).map((rec) => (
+                                <li key={rec.id} className="text-white/85 leading-relaxed pl-3 border-l border-amber-500/30 font-sans">
+                                  {rec.value}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+
+                        {/* Proyecto */}
+                        <div className="space-y-3">
+                          <h4 className="text-[9px] uppercase tracking-widest font-mono font-bold text-blue-400 border-b border-blue-500/10 pb-1.5">Notas del Proyecto</h4>
+                          {projectNotes.length === 0 ? (
+                            <div className="text-[10px] text-[var(--muted)] py-2 font-mono">No hay notas de arquitectura.</div>
+                          ) : (
+                            <ul className="space-y-2 text-xs">
+                              {projectNotes.slice(0, 4).map((proj) => (
+                                <li key={proj.id} className="text-white/85 leading-relaxed pl-3 border-l border-blue-500/30 font-sans">
+                                  {proj.value}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

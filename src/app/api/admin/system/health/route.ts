@@ -639,6 +639,460 @@ export async function GET() {
     testPurchasesRecommendation = 'Las compras de prueba están desactivadas correctamente.';
   }
 
+  // 6g. Diagnóstico de Alpha Intelligence
+  let aiStats = {
+    enabled: false,
+    provider: 'openai',
+    model: 'gpt-4o',
+    temperature: 0.7,
+    totalConversations: 0,
+    totalMessages: 0,
+    avgLatencyMs: 0,
+    recentErrorsCount: 0
+  };
+
+  if (dbStatus === 'connected') {
+    try {
+      const aiEnabledSetting = await db.systemSetting.findUnique({ where: { key: 'ai_enabled' } });
+      aiStats.enabled = aiEnabledSetting?.value === 'true';
+
+      const providerSetting = await db.systemSetting.findUnique({ where: { key: 'ai_provider' } });
+      aiStats.provider = providerSetting?.value || 'openai';
+
+      const modelSetting = await db.systemSetting.findUnique({ where: { key: 'ai_model' } });
+      aiStats.model = modelSetting?.value || 'gpt-4o';
+
+      const tempSetting = await db.systemSetting.findUnique({ where: { key: 'ai_temperature' } });
+      aiStats.temperature = parseFloat(tempSetting?.value || '0.7');
+
+      aiStats.totalConversations = await db.aiConversation.count({ where: { status: 'active' } });
+      aiStats.totalMessages = await db.aiMessage.count();
+
+      const avgLatencyObj = await db.aiMessage.aggregate({
+        where: { role: 'assistant', latencyMs: { not: null } },
+        _avg: { latencyMs: true }
+      });
+      aiStats.avgLatencyMs = Math.round(avgLatencyObj._avg.latencyMs || 0);
+
+      aiStats.recentErrorsCount = await db.aiMessage.count({
+        where: {
+          role: 'assistant',
+          content: { startsWith: '⚠️ Error' }
+        }
+      });
+
+      // Calcular métricas de herramientas (Capabilities)
+      let totalToolsCount = 6;
+      let activeToolsCount = 0;
+      let lastUsedTool = 'Ninguno';
+      let lastUsedAt = null;
+      let avgToolLatencyMs = 0;
+      let toolErrorsCount = 0;
+
+      const toolSettings = await db.systemSetting.findMany({
+        where: {
+          key: {
+            in: [
+              'ai_tool_orders',
+              'ai_tool_customers',
+              'ai_tool_finance',
+              'ai_tool_health',
+              'ai_tool_notifications',
+              'ai_tool_mission_control'
+            ]
+          }
+        }
+      });
+      
+      const settingsMap = toolSettings.reduce((acc, curr) => {
+        acc[curr.key] = curr.value === 'true';
+        return acc;
+      }, {} as Record<string, boolean>);
+      
+      activeToolsCount = 
+        (settingsMap['ai_tool_orders'] !== false ? 1 : 0) +
+        (settingsMap['ai_tool_customers'] !== false ? 1 : 0) +
+        (settingsMap['ai_tool_finance'] !== false ? 1 : 0) +
+        (settingsMap['ai_tool_health'] !== false ? 1 : 0) +
+        (settingsMap['ai_tool_notifications'] !== false ? 1 : 0) +
+        (settingsMap['ai_tool_mission_control'] !== false ? 1 : 0);
+
+      const lastToolLog = await db.auditLog.findFirst({
+        where: { action: 'AI_TOOL_EXECUTE' },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (lastToolLog) {
+        try {
+          const details = JSON.parse(lastToolLog.details || '{}');
+          lastUsedTool = `${details.tool || 'N/A'} (${lastToolLog.createdAt.toLocaleTimeString()})`;
+          lastUsedAt = lastToolLog.createdAt.toISOString();
+        } catch (_) {
+          lastUsedTool = `N/A (${lastToolLog.createdAt.toLocaleTimeString()})`;
+        }
+      }
+
+      const toolLogs = await db.auditLog.findMany({
+        where: { action: 'AI_TOOL_EXECUTE' },
+        take: 100
+      });
+
+      if (toolLogs.length > 0) {
+        let sumLatency = 0;
+        let failCount = 0;
+        for (const log of toolLogs) {
+          try {
+            const details = JSON.parse(log.details || '{}');
+            sumLatency += details.durationMs || 0;
+            if (details.success === false) {
+              failCount++;
+            }
+          } catch (_) {}
+        }
+        avgToolLatencyMs = Math.round(sumLatency / toolLogs.length);
+        toolErrorsCount = failCount;
+      }
+
+      Object.assign(aiStats, {
+        totalToolsCount,
+        activeToolsCount,
+        lastUsedTool,
+        lastUsedAt,
+        avgToolLatencyMs,
+        toolErrorsCount
+      });
+    } catch (aiErr) {
+      console.warn('⚠️ [Health API] Error obteniendo estadísticas de Alpha Intelligence:', aiErr);
+    }
+  }
+
+  // 6h. Diagnóstico de Alpha Core (The Brain)
+  let aiCoreStats = {
+    enabled: false,
+    status: 'disabled',
+    activeModulesCount: 0,
+    totalModulesCount: 9,
+    avgLatencyMs: 0,
+    errorsCount: 0,
+    lastExecution: 'Ninguna',
+    activeModulesList: [] as string[]
+  };
+
+  if (dbStatus === 'connected') {
+    try {
+      const coreSettings = await db.systemSetting.findMany({
+        where: { key: { startsWith: 'ai_core_' } }
+      });
+
+      const coreMap = coreSettings.reduce((acc, curr) => {
+        acc[curr.key] = curr.value === 'true';
+        return acc;
+      }, {} as Record<string, boolean>);
+
+      aiCoreStats.enabled = coreMap['ai_core_enabled'] !== false;
+
+      const moduleKeys = [
+        { key: 'ai_core_personality_enabled', label: 'Personality' },
+        { key: 'ai_core_context_enabled', label: 'Context' },
+        { key: 'ai_core_memory_enabled', label: 'Memory' },
+        { key: 'ai_core_security_enabled', label: 'Security' },
+        { key: 'ai_core_logging_enabled', label: 'Logging' },
+        { key: 'ai_core_skills_enabled', label: 'Skills' },
+        { key: 'ai_core_events_enabled', label: 'Events' },
+        { key: 'ai_core_scheduler_enabled', label: 'Scheduler' }
+      ];
+
+      const activeList: string[] = [];
+      for (const mod of moduleKeys) {
+        if (coreMap[mod.key] !== false) {
+          activeList.push(mod.label);
+        }
+      }
+      aiCoreStats.activeModulesList = activeList;
+      aiCoreStats.activeModulesCount = activeList.length;
+
+      if (aiCoreStats.enabled) {
+        aiCoreStats.status = activeList.length >= 6 ? 'healthy' : 'degraded';
+      } else {
+        aiCoreStats.status = 'disabled';
+      }
+
+      const coreLogs = await db.auditLog.findMany({
+        where: { action: 'AI_CORE_EXECUTE' },
+        take: 100
+      });
+
+      if (coreLogs.length > 0) {
+        let sumLatency = 0;
+        let failCount = 0;
+        for (const log of coreLogs) {
+          try {
+            const details = JSON.parse(log.details || '{}');
+            sumLatency += details.durationMs || 0;
+            if (details.success === false) {
+              failCount++;
+            }
+          } catch (_) {}
+        }
+        aiCoreStats.avgLatencyMs = Math.round(sumLatency / coreLogs.length);
+        aiCoreStats.errorsCount = failCount;
+      }
+
+      const lastCoreLog = await db.auditLog.findFirst({
+        where: { action: 'AI_CORE_EXECUTE' },
+        orderBy: { createdAt: 'desc' }
+      });
+      if (lastCoreLog) {
+        try {
+          const details = JSON.parse(lastCoreLog.details || '{}');
+          aiCoreStats.lastExecution = `${lastCoreLog.createdAt.toLocaleTimeString('es-ES')} (${details.success ? 'Éxito' : 'Error'})`;
+        } catch (_) {
+          aiCoreStats.lastExecution = lastCoreLog.createdAt.toLocaleTimeString('es-ES');
+        }
+      }
+
+    } catch (coreErr) {
+      console.warn('⚠️ [Health API] Error obteniendo estadísticas de Alpha Core:', coreErr);
+    }
+  }
+
+  // 6i. Diagnóstico de Alpha Reasoning Engine
+  let aiReasoningStats = {
+    enabled: false,
+    status: 'disabled',
+    avgLatencyMs: 0,
+    avgConfidence: 0,
+    totalSkillsExecuted: 0,
+    cacheHitRate: 0,
+    errorsCount: 0
+  };
+
+  if (dbStatus === 'connected') {
+    try {
+      const reasoningSetting = await db.systemSetting.findUnique({
+        where: { key: 'ai_reasoning_enabled' }
+      });
+      aiReasoningStats.enabled = reasoningSetting?.value === 'true';
+
+      if (aiReasoningStats.enabled) {
+        aiReasoningStats.status = 'healthy';
+      }
+
+      const reasoningLogs = await db.auditLog.findMany({
+        where: { action: 'AI_REASONING_EXECUTE' },
+        take: 100,
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (reasoningLogs.length > 0) {
+        let sumLatency = 0;
+        let sumConfidence = 0;
+        let sumSkills = 0;
+        let cacheHits = 0;
+        let fails = 0;
+
+        for (const log of reasoningLogs) {
+          try {
+            const details = JSON.parse(log.details || '{}');
+            sumLatency += details.latencyMs || 0;
+            sumConfidence += details.confidenceScore || 0;
+            sumSkills += (details.skills || []).length;
+            if (details.cacheHit === true) {
+              cacheHits++;
+            }
+            if (details.confidenceScore < 40) {
+              fails++;
+            }
+          } catch (_) {}
+        }
+
+        aiReasoningStats.avgLatencyMs = Math.round(sumLatency / reasoningLogs.length);
+        aiReasoningStats.avgConfidence = Math.round(sumConfidence / reasoningLogs.length);
+        aiReasoningStats.totalSkillsExecuted = sumSkills;
+        aiReasoningStats.cacheHitRate = Math.round((cacheHits / reasoningLogs.length) * 100);
+        aiReasoningStats.errorsCount = fails;
+      }
+    } catch (reasoningErr) {
+      console.warn('⚠️ [Health API] Error obteniendo estadísticas de Alpha Reasoning Engine:', reasoningErr);
+    }
+  }
+
+  // 6j. Diagnóstico de Alpha Memory Engine
+  let aiMemoryStats = {
+    enabled: false,
+    status: 'disabled',
+    totalMemories: 0,
+    activeMemories: 0,
+    expiredMemories: 0,
+    avgSearchTimeMs: 0,
+    consolidationsCount: 0,
+    errorsCount: 0
+  };
+
+  if (dbStatus === 'connected') {
+    try {
+      const coreSetting = await db.systemSetting.findUnique({
+        where: { key: 'ai_core_memory_enabled' }
+      });
+      aiMemoryStats.enabled = coreSetting?.value !== 'false';
+      aiMemoryStats.status = aiMemoryStats.enabled ? 'healthy' : 'disabled';
+
+      const now = new Date();
+      const [totalCount, activeCount, expiredCount] = await Promise.all([
+        db.aiMemory.count(),
+        db.aiMemory.count({
+          where: {
+            OR: [
+              { expiration: null },
+              { expiration: { gt: now } }
+            ]
+          }
+        }),
+        db.aiMemory.count({
+          where: {
+            expiration: { lt: now }
+          }
+        })
+      ]);
+
+      aiMemoryStats.totalMemories = totalCount;
+      aiMemoryStats.activeMemories = activeCount;
+      aiMemoryStats.expiredMemories = expiredCount;
+
+      const memoryLogs = await db.auditLog.findMany({
+        where: { action: 'AI_MEMORY_RETRIEVE' },
+        take: 100
+      });
+
+      if (memoryLogs.length > 0) {
+        let sumSearch = 0;
+        for (const log of memoryLogs) {
+          try {
+            const details = JSON.parse(log.details || '{}');
+            sumSearch += details.durationMs || 0;
+          } catch (_) {}
+        }
+        aiMemoryStats.avgSearchTimeMs = Math.round(sumSearch / memoryLogs.length);
+      }
+
+    } catch (memErr) {
+      console.warn('⚠️ [Health API] Error obteniendo estadísticas de Alpha Memory Engine:', memErr);
+    }
+  }
+
+  // 6k. Diagnóstico de Alpha Knowledge Engine (Graph)
+  let aiBrainStats = {
+    enabled: false,
+    status: 'disabled',
+    totalEntities: 0,
+    totalRelationships: 0,
+    conflictsCount: 0,
+    avgConfidence: 50,
+    avgSearchTimeMs: 0,
+    errorsCount: 0
+  };
+
+  if (dbStatus === 'connected') {
+    try {
+      const brainSetting = await db.systemSetting.findUnique({
+        where: { key: 'ai_core_brain_enabled' }
+      });
+      aiBrainStats.enabled = brainSetting?.value !== 'false';
+      aiBrainStats.status = aiBrainStats.enabled ? 'healthy' : 'disabled';
+
+      const { KnowledgeManager } = await import('@/modules/alpha-intelligence/brain/knowledge-manager');
+      const [totalEntities, totalRelationships, conflicts] = await Promise.all([
+        db.aiEntity.count(),
+        db.aiRelationship.count(),
+        KnowledgeManager.detectConflicts('alpha-addiction')
+      ]);
+
+      aiBrainStats.totalEntities = totalEntities;
+      aiBrainStats.totalRelationships = totalRelationships;
+      aiBrainStats.conflictsCount = conflicts.length;
+
+      if (totalEntities > 0) {
+        const avgImportance = await db.aiEntity.aggregate({
+          _avg: { importance: true }
+        });
+        aiBrainStats.avgConfidence = Math.round(avgImportance._avg.importance || 50);
+      }
+
+      const graphLogs = await db.auditLog.findMany({
+        where: { action: 'AI_KNOWLEDGE_RETRIEVE' },
+        take: 100
+      });
+
+      if (graphLogs.length > 0) {
+        let sumSearch = 0;
+        for (const log of graphLogs) {
+          try {
+            const details = JSON.parse(log.details || '{}');
+            sumSearch += details.durationMs || 0;
+          } catch (_) {}
+        }
+        aiBrainStats.avgSearchTimeMs = Math.round(sumSearch / graphLogs.length);
+      }
+
+    } catch (brainErr) {
+      console.warn('⚠️ [Health API] Error obteniendo estadísticas de Alpha Brain:', brainErr);
+    }
+  }
+
+  // 6l. Diagnóstico de Alpha Academy Engine
+  let aiAcademyStats = {
+    enabled: false,
+    status: 'disabled',
+    totalCourses: 0,
+    totalLessons: 0,
+    outdatedCount: 0,
+    overallCoverage: 0,
+    avgSearchTimeMs: 0,
+    errorsCount: 0
+  };
+
+  if (dbStatus === 'connected') {
+    try {
+      const academySetting = await db.systemSetting.findUnique({
+        where: { key: 'ai_core_academy_enabled' }
+      });
+      aiAcademyStats.enabled = academySetting?.value !== 'false';
+      aiAcademyStats.status = aiAcademyStats.enabled ? 'healthy' : 'disabled';
+
+      const { AcademyManager } = await import('@/modules/alpha-intelligence/academy/academy-manager');
+      const [totalCourses, totalLessons, reviewCount, coverage] = await Promise.all([
+        db.aiCourse.count(),
+        db.aiLesson.count(),
+        db.aiCourse.count({ where: { status: 'review' } }),
+        AcademyManager.calculateCoverage('alpha-addiction')
+      ]);
+
+      aiAcademyStats.totalCourses = totalCourses;
+      aiAcademyStats.totalLessons = totalLessons;
+      aiAcademyStats.outdatedCount = reviewCount;
+      aiAcademyStats.overallCoverage = coverage.totalPercentage;
+
+      const academyLogs = await db.auditLog.findMany({
+        where: { action: 'AI_ACADEMY_RETRIEVE' },
+        take: 100
+      });
+
+      if (academyLogs.length > 0) {
+        let sumSearch = 0;
+        for (const log of academyLogs) {
+          try {
+            const details = JSON.parse(log.details || '{}');
+            sumSearch += details.durationMs || 0;
+          } catch (_) {}
+        }
+        aiAcademyStats.avgSearchTimeMs = Math.round(sumSearch / academyLogs.length);
+      }
+
+    } catch (academyErr) {
+      console.warn('⚠️ [Health API] Error obteniendo estadísticas de Alpha Academy:', academyErr);
+    }
+  }
+
   // Determinar estado general del Health Center
   let systemStatus: 'green' | 'yellow' | 'red' = 'green';
   if (dbStatus === 'error' || printfulStatus === 'error' || testPurchasesStatus === 'error') {
@@ -727,6 +1181,12 @@ export async function GET() {
     seoPerformance,
     support: supportStats,
     portal: portalStats,
+    ai: aiStats,
+    aiCore: aiCoreStats,
+    aiReasoning: aiReasoningStats,
+    aiMemory: aiMemoryStats,
+    aiBrain: aiBrainStats,
+    aiAcademy: aiAcademyStats,
     twoFactorAdmin: {
       enabled: isTwoFactorEnabled,
       lastEventAt: last2faEventAt,

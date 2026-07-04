@@ -29,7 +29,9 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
-  Star
+  Star,
+  Network,
+  GraduationCap
 } from 'lucide-react';
 
 const menuGroups = [
@@ -76,6 +78,9 @@ const menuGroups = [
     key: 'sistema',
     items: [
       { href: '/admin/monitoring', label: 'Health Center', icon: Activity },
+      { href: '/admin/memory', label: 'Memory Center', icon: Brain },
+      { href: '/admin/knowledge', label: 'Knowledge Center', icon: Network },
+      { href: '/admin/academy', label: 'Alpha Academy', icon: GraduationCap },
       { href: '/admin/printful', label: 'Printful Status', icon: Layers },
     ]
   },

@@ -369,4 +369,118 @@ model Notification {
   @@index([createdAt])
 }
 
+model AiConversation {
+  id        String       @id @default(uuid())
+  project   String       @default("alpha-addiction")
+  title     String       @default("Nueva conversación")
+  status    String       @default("active") // active, deleted
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  messages  AiMessage[]
+}
+
+model AiMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String         // "user" or "assistant"
+  content        String
+  model          String?
+  latencyMs      Int?
+  contextPath    String?        // path at the time message was sent (e.g. "/admin/dashboard")
+  createdAt      DateTime       @default(now())
+}
+
+model AiMemory {
+  id          String    @id @default(uuid())
+  project     String    @default("alpha-addiction")
+  type        String    // "session", "preference", "decision", "recommendation", "project"
+  key         String    @unique
+  value       String    // Contenido de la memoria
+  importance  Int       @default(50)
+  expiration  DateTime?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([project])
+  @@index([type])
+}
+
+model AiEntity {
+  id          String   @id @default(uuid())
+  project     String   @default("alpha-addiction")
+  type        String   // "Proyecto", "Producto", "Drop", "Cliente", "Pedido", "Proveedor", etc.
+  name        String
+  description String?
+  status      String   @default("active")
+  metadata    Json?
+  importance  Int      @default(50) // 0-100
+  version     Int      @default(1)
+  source      String   @default("system") // system, memory, admin, API
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  incomingRelations AiRelationship[] @relation("TargetEntity")
+  outgoingRelations AiRelationship[] @relation("SourceEntity")
+
+  @@index([project])
+  @@index([type])
+}
+
+model AiRelationship {
+  id             String   @id @default(uuid())
+  project        String   @default("alpha-addiction")
+  type           String   // "PERTENECE_A", "UTILIZA", "DEPENDE_DE", etc.
+  sourceEntityId String
+  targetEntityId String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  sourceEntity   AiEntity @relation("SourceEntity", fields: [sourceEntityId], references: [id], onDelete: Cascade)
+  targetEntity   AiEntity @relation("TargetEntity", fields: [targetEntityId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceEntityId, targetEntityId, type])
+  @@index([project])
+  @@index([type])
+}
+
+model AiCourse {
+  id          String     @id @default(uuid())
+  project     String     @default("alpha-addiction")
+  title       String
+  description String?
+  category    String     // "Empresa", "Producto", "Marketing", "Soporte", "Legal", etc.
+  version     Int        @default(1)
+  status      String     @default("draft") // draft, published, review
+  priority    String     @default("normal") // low, normal, high, critical
+  author      String     @default("admin")
+  level       String     @default("basic") // basic, intermediate, advanced
+  tags        Json?      // string[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  lessons     AiLesson[]
+
+  @@index([project])
+  @@index([category])
+}
+
+model AiLesson {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    AiCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  objective String?
+  examples  Json?    // Array de ejemplos reales { input, output, note }
+  rules     Json?    // string[] de reglas de negocio
+  cases     Json?    // string[] de casos reales
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId])
+}
+
 

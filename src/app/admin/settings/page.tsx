@@ -17,6 +17,7 @@ import {
   Loader2,
   Download,
   Upload,
+  Bot,
 } from 'lucide-react';
 
 interface SettingsData {
@@ -227,6 +228,7 @@ function SettingsCenterInner() {
             { id: 'drops', label: 'Drops', icon: Calendar },
             { id: 'seguridad', label: 'Seguridad', icon: ShieldAlert },
             { id: 'sistema', label: 'Sistema', icon: Sliders },
+            { id: 'alpha_intelligence', label: 'Alpha Intelligence', icon: Bot },
           ].map(tab => {
             const Icon = tab.icon;
             return (
@@ -967,6 +969,507 @@ function SettingsCenterInner() {
                     <option value="true">🔴 Mantenimiento Activo</option>
                     <option value="false">🟢 Tienda en Línea</option>
                   </select>
+                </div>
+              </div>
+            )}
+
+            {/* TIPO 9: ALPHA INTELLIGENCE */}
+            {activeTab === 'alpha_intelligence' && (
+              <div className="space-y-6 text-xs font-mono">
+                <h3 className="text-sm uppercase tracking-widest text-[#f5f5f0] font-bold font-mono border-b border-white/5 pb-3">
+                  Configuración de Alpha Intelligence
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1.5 font-sans">
+                    <label className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-bold">Estado del Asistente</label>
+                    <select
+                      value={settings['ai_enabled'] || 'false'}
+                      onChange={(e) => handleInputChange('ai_enabled', e.target.value)}
+                      className="w-full bg-[#0d0d0d] border border-white/10 p-3 text-white focus:border-[var(--primary)] outline-none font-sans cursor-pointer"
+                    >
+                      <option value="true">🟢 Activado (Alpha Disponible)</option>
+                      <option value="false">🔴 Desactivado (Alpha Oculto)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5 font-sans">
+                    <label className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-bold">Proveedor de IA</label>
+                    <select
+                      value={settings['ai_provider'] || 'openai'}
+                      onChange={(e) => handleInputChange('ai_provider', e.target.value)}
+                      className="w-full bg-[#0d0d0d] border border-white/10 p-3 text-white focus:border-[var(--primary)] outline-none font-sans cursor-pointer"
+                    >
+                      <option value="openai">OpenAI (v1 Default)</option>
+                      <option value="gemini">Google Gemini (Beta REST)</option>
+                      <option value="claude" disabled>Anthropic Claude (Próximamente)</option>
+                      <option value="deepseek" disabled>DeepSeek (Próximamente)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="space-y-1.5 font-sans">
+                    <label className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-bold">Modelo IA</label>
+                    <input
+                      type="text"
+                      value={settings['ai_model'] || 'gpt-4o'}
+                      onChange={(e) => handleInputChange('ai_model', e.target.value)}
+                      placeholder="Ej. gpt-4o"
+                      className="w-full bg-[#0d0d0d] border border-white/10 p-3 text-white focus:border-[var(--primary)] outline-none font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 font-sans">
+                    <label className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-bold">Temperatura (Creatividad)</label>
+                    <select
+                      value={settings['ai_temperature'] || '0.7'}
+                      onChange={(e) => handleInputChange('ai_temperature', e.target.value)}
+                      className="w-full bg-[#0d0d0d] border border-white/10 p-3 text-white focus:border-[var(--primary)] outline-none font-sans cursor-pointer"
+                    >
+                      <option value="0.0">0.0 (Preciso / Factual)</option>
+                      <option value="0.3">0.3 (Conservador)</option>
+                      <option value="0.7">0.7 (Equilibrado)</option>
+                      <option value="1.0">1.0 (Creativo)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5 font-sans">
+                    <label className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-bold">Máximo de Tokens de Respuesta</label>
+                    <input
+                      type="number"
+                      value={settings['ai_max_tokens'] || '2048'}
+                      onChange={(e) => handleInputChange('ai_max_tokens', e.target.value)}
+                      placeholder="Ej. 2048"
+                      className="w-full bg-[#0d0d0d] border border-white/10 p-3 text-white focus:border-[var(--primary)] outline-none font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 font-sans">
+                  <label className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-bold">API Key del Proveedor (Encriptada en Tránsito)</label>
+                  <input
+                    type="password"
+                    value={settings['ai_api_key'] || ''}
+                    onChange={(e) => handleInputChange('ai_api_key', e.target.value)}
+                    placeholder={settings['ai_api_key'] ? '••••••••••••••••••••••••••••••••' : 'Introduce la API Key'}
+                    className="w-full bg-[#0d0d0d] border border-white/10 p-3 text-white focus:border-[var(--primary)] outline-none font-mono"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-4">
+                    <div className="space-y-0.5 font-sans">
+                      <span className="font-bold text-[#f5f5f0]">Historial de Conversaciones</span>
+                      <p className="text-[8px] text-[var(--muted)] leading-relaxed">Permite guardar y continuar conversaciones en la base de datos.</p>
+                    </div>
+                    <select
+                      value={settings['ai_history_enabled'] || 'true'}
+                      onChange={(e) => handleInputChange('ai_history_enabled', e.target.value)}
+                      className="bg-[#0d0d0d] border border-white/10 p-2 text-white font-bold cursor-pointer font-sans"
+                    >
+                      <option value="true">🟢 Activo</option>
+                      <option value="false">🔴 Desactivado</option>
+                    </select>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-4">
+                    <div className="space-y-0.5 font-sans">
+                      <span className="font-bold text-[#f5f5f0]">Detección de Contexto de Ruta</span>
+                      <p className="text-[8px] text-[var(--muted)] leading-relaxed">Analiza automáticamente la sección actual que ves para ayudar mejor.</p>
+                    </div>
+                    <select
+                      value={settings['ai_context_auto'] || 'true'}
+                      onChange={(e) => handleInputChange('ai_context_auto', e.target.value)}
+                      className="bg-[#0d0d0d] border border-white/10 p-2 text-white font-bold cursor-pointer font-sans"
+                    >
+                      <option value="true">🟢 Activo</option>
+                      <option value="false">🔴 Desactivado</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-3 font-sans">
+                  <label className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-bold block border-b border-white/5 pb-1">Herramientas Habilitadas (Capabilities)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Orders Tool</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Consultar pedidos en tiempo real.</p>
+                      </div>
+                      <select
+                        value={settings['ai_tool_orders'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_tool_orders', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Customers Tool</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Buscar clientes y waitlists.</p>
+                      </div>
+                      <select
+                        value={settings['ai_tool_customers'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_tool_customers', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Finance Tool</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Revisar ingresos y beneficios.</p>
+                      </div>
+                      <select
+                        value={settings['ai_tool_finance'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_tool_finance', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Health Tool</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Ver score de salud e infraestructura.</p>
+                      </div>
+                      <select
+                        value={settings['ai_tool_health'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_tool_health', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Notifications Tool</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Alertas de incidencias del sistema.</p>
+                      </div>
+                      <select
+                        value={settings['ai_tool_notifications'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_tool_notifications', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Mission Control Tool</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Resumen general consolidado.</p>
+                      </div>
+                      <select
+                        value={settings['ai_tool_mission_control'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_tool_mission_control', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* NUEVO: Motores de Alpha Core */}
+                <div className="space-y-3 font-sans border-t border-white/5 pt-4">
+                  <label className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-bold block border-b border-white/5 pb-1">Motores de Alpha Core (Coordinación Cerebro)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Alpha Core</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Cerebro coordinador central.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Personality Engine</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Tono y comportamiento elegante.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_personality_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_personality_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Context Engine</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Contexto dinámico de ruta.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_context_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_context_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Memory Engine</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Historial de conversaciones.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_memory_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_memory_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Security Layer</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Sanitización y control de fugas.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_security_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_security_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Logging Engine</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Registro inalterable de auditorías.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_logging_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_logging_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Skill Manager</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Filtro y despacho de habilidades.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_skills_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_skills_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Event Engine</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Gestor de eventos internos.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_events_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_events_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Scheduler</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Tareas programadas y anomalías.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_scheduler_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_scheduler_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* NUEVO: Reasoning Engine Settings */}
+                <div className="space-y-3 font-sans border-t border-white/5 pt-4">
+                  <label className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-bold block border-b border-white/5 pb-1">Motor de Razonamiento (Reasoning Engine)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Reasoning Engine</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Activar motor de razonamiento lógico.</p>
+                      </div>
+                      <select
+                        value={settings['ai_reasoning_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_reasoning_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Planner Routing</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Selección de herramientas dinámicas.</p>
+                      </div>
+                      <select
+                        value={settings['ai_reasoning_planner_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_reasoning_planner_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Cache Engine</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Reutilización de respuestas para ahorrar tokens.</p>
+                      </div>
+                      <select
+                        value={settings['ai_reasoning_cache_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_reasoning_cache_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Confidence Engine</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Cálculo de fiabilidad de datos.</p>
+                      </div>
+                      <select
+                        value={settings['ai_reasoning_confidence_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_reasoning_confidence_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Debug Mode</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Detalles técnicos en las respuestas.</p>
+                      </div>
+                      <select
+                        value={settings['ai_reasoning_debug_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_reasoning_debug_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Timeout per Tool</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Cancelación de herramientas lentas.</p>
+                      </div>
+                      <select
+                        value={settings['ai_reasoning_timeout_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_reasoning_timeout_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Tool Chaining</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Resolución de dependencias complejas.</p>
+                      </div>
+                      <select
+                        value={settings['ai_reasoning_chaining_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_reasoning_chaining_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* NUEVO: Alpha Academy / Knowledge Base Viva Settings */}
+                <div className="space-y-3 font-sans border-t border-white/5 pt-4">
+                  <label className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-bold block border-b border-white/5 pb-1">Base de Conocimiento Viva (Alpha Academy)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Alpha Academy</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Activar base de pautas y directrices.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_academy_enabled'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_academy_enabled', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-white/[0.01] border border-white/5 p-3">
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#f5f5f0] text-[10px]">Autodetectar Aprendizaje</span>
+                        <p className="text-[8px] text-[var(--muted)] leading-relaxed">Sugerir lecciones desde el chat.</p>
+                      </div>
+                      <select
+                        value={settings['ai_core_academy_autodetect'] || 'true'}
+                        onChange={(e) => handleInputChange('ai_core_academy_autodetect', e.target.value)}
+                        className="bg-[#0d0d0d] border border-white/10 p-1.5 text-white font-bold cursor-pointer text-[10px]"
+                      >
+                        <option value="true">🟢 ON</option>
+                        <option value="false">🔴 OFF</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

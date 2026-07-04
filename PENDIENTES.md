@@ -914,6 +914,45 @@ Se ha implementado el Communication Center y el sistema de consentimiento RGPD/L
 
 ---
 
+## 🧠 Alpha Intelligence v1 Foundation
+
+*   **Identidad**: ✅ Completada (Configurado el system prompt de la identidad "Alpha", con un tono humano, tranquilo, elegante y útil).
+*   **AI Provider Layer**: ✅ Completada (Creada la abstracción `IAiProvider` y la implementación de cliente HTTP nativo `OpenAiProvider` con medición de latencia y fábrica dinámica).
+*   **Conector Operativo**: ✅ Completada (Creado `AlphaAddictionConnector` de solo lectura y sanitizador de privacidad recursivo que oculta secretos y datos personales sensibles).
+*   **Detector de Contexto**: ✅ Completada (Creado `RouteContextDetector` para extraer contextos de pedidos y tickets de soporte basados en la URL activa).
+*   **Persistencia de Historial**: ✅ Completada (Creadas las tablas en Neon Postgres y el gestor `DbMemoryManager` para guardar y eliminar conversaciones de administradores).
+*   **Floating Chat Drawer**: ✅ Completada (Desplegado el botón flotante con indicador de salud del sistema, panel lateral deslizante de lujo con glassmorphism y atajo `Ctrl + I`).
+*   **Centro de Configuración**: ✅ Completada (Pestaña "Alpha Intelligence" agregada al panel de configuración global para cambiar modelos, temperatura y API key).
+*   **Health Center**: ✅ Completada (Tarjeta integrada para diagnosticar el estado del asistente, modelo, latencia y errores).
+
+Archivos creados:
+*   `src/modules/alpha-intelligence/types/index.ts` (Modelos e interfaces de tipos)
+*   `src/modules/alpha-intelligence/providers/base-provider.ts` (Interfaz abstracta IA)
+*   `src/modules/alpha-intelligence/providers/openai-provider.ts` (Implementación cliente HTTP de OpenAI)
+*   `src/modules/alpha-intelligence/providers/gemini-provider.ts` (Implementación cliente HTTP de Google Gemini)
+*   `src/modules/alpha-intelligence/providers/factory.ts` (Fábrica estática de proveedores de IA)
+*   `src/modules/alpha-intelligence/connectors/alpha-addiction-connector.ts` (Conector de lectura seguro de base de datos)
+*   `src/modules/alpha-intelligence/utils/sanitizer.ts` (Utilidad recursiva de sanitización de privacidad)
+*   `src/modules/alpha-intelligence/context/detector.ts` (Detector dinámico de rutas del panel admin)
+*   `src/modules/alpha-intelligence/memory/db-memory.ts` (Gestor de historial y mensajes de chat)
+*   `src/modules/alpha-intelligence/core/orchestrator.ts` (Orquestador central, prompts y saludos dinámicos)
+*   `src/modules/alpha-intelligence/ui/alpha-chat-drawer.tsx` (Componente UI drawer lateral y atajo Ctrl+I)
+*   `src/app/api/admin/ai/conversations/route.ts` (API de conversaciones)
+*   `src/app/api/admin/ai/chat/route.ts` (API de chat y consultas de IA)
+*   `ALPHA_INTELLIGENCE.md` (Documentación arquitectónica detallada)
+
+Archivos modificados:
+*   `prisma/schema.prisma` (Tablas `AiConversation` y `AiMessage`)
+*   `src/components/admin/header.tsx` (Inyección global del drawer en el layout admin)
+*   `src/app/admin/settings/page.tsx` (Configuraciones de IA)
+*   `src/app/admin/monitoring/page.tsx` (Visualización de estado en Health Center)
+*   `src/app/api/admin/system/health/route.ts` (Monitoreo e integración de analíticas de IA)
+*   `src/modules/alpha-intelligence/providers/factory.ts` (Agregado soporte para GeminiProvider)
+*   `src/modules/alpha-intelligence/core/orchestrator.ts` (Carga dinámica de claves según proveedor activo)
+*   `.env.example` (Variables de entorno de IA de plantilla con Gemini key)
+
+---
+
 ## ✅ Checklist antes del lanzamiento
  
 - [ ] **PayPal Sandbox & Webhooks**: Validar el entorno completo en Sandbox con compras de prueba y registrar los webhooks automáticos de PayPal.
@@ -930,3 +969,17 @@ Se ha implementado el Communication Center y el sistema de consentimiento RGPD/L
 - [x] **Pruebas end-to-end**: Realizar simulaciones completas de pedidos de extremo a extremo.
 - [x] **Backups de Neon**: Configurar programaciones periódicas de copias de seguridad de la base de datos relacional.
 - [x] **Monitorización de errores**: Integrar Sentry para registrar errores y excepciones en producción.
+
+---
+
+## 🤖 Alpha Intelligence (Alpha)
+
+*   **Proveedor OpenAI**: ✅ Completada (Llamadas HTTP directas a GPT-4o con telemetría de latencia).
+*   **Proveedor Google Gemini**: ✅ Completada (Llamadas HTTP directas a Gemini-2.5-flash con control de errores completo, cuotas y cifrado de claves).
+*   **Historial Postgres**: ✅ Completada (Persistencia cifrada y control de limpieza lógica en base de datos).
+*   **Detector de Contexto**: ✅ Completada (Enriquecimiento automático del system prompt en base a la ruta actual del administrador).
+*   **Drawer Lateral**: ✅ Completada (Interfaz premium animada de chat de administración accesible mediante atajo o botón flotante).
+*   **Capabilities / Tool Registry**: ✅ Completada (Orquestador extensible de herramientas independientes que impiden respuestas falsas y consultan el OMS y la base de datos).
+*   **Auditoría e Historial de Herramientas**: ✅ Completada (Logs inalterables de telemetría de ejecución de herramientas en AuditLog).
+*   **Configuración y Toggles**: ✅ Completada (Selector de proveedores, modelos, temperatura y switches ON/OFF granulares para cada herramienta en Ajustes).
+*   **Salud y Métricas**: ✅ Completada (Diagnóstico integrado de herramientas, errores de ejecución, últimas herramientas usadas y latencias en el Health Center).

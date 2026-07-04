@@ -20,6 +20,11 @@ import {
   FileText,
   HelpCircle,
   Mail,
+  Bot,
+  Cpu,
+  Brain,
+  Network,
+  GraduationCap,
 } from 'lucide-react';
 
 interface SystemHealthData {
@@ -152,6 +157,71 @@ interface SystemHealthData {
       message: string;
       createdAt: string;
     } | null;
+  };
+  ai?: {
+    enabled: boolean;
+    provider: string;
+    model: string;
+    temperature: number;
+    totalConversations: number;
+    totalMessages: number;
+    avgLatencyMs: number;
+    recentErrorsCount: number;
+    totalToolsCount?: number;
+    activeToolsCount?: number;
+    lastUsedTool?: string | null;
+    lastUsedAt?: string | null;
+    avgToolLatencyMs?: number;
+    toolErrorsCount?: number;
+  };
+  aiCore?: {
+    enabled: boolean;
+    status: 'healthy' | 'degraded' | 'disabled';
+    activeModulesCount: number;
+    totalModulesCount: number;
+    avgLatencyMs: number;
+    errorsCount: number;
+    lastExecution: string;
+    activeModulesList: string[];
+  };
+  aiReasoning?: {
+    enabled: boolean;
+    status: 'healthy' | 'degraded' | 'disabled';
+    avgLatencyMs: number;
+    avgConfidence: number;
+    totalSkillsExecuted: number;
+    cacheHitRate: number;
+    errorsCount: number;
+  };
+  aiMemory?: {
+    enabled: boolean;
+    status: 'healthy' | 'degraded' | 'disabled';
+    totalMemories: number;
+    activeMemories: number;
+    expiredMemories: number;
+    avgSearchTimeMs: number;
+    consolidationsCount: number;
+    errorsCount: number;
+  };
+  aiBrain?: {
+    enabled: boolean;
+    status: 'healthy' | 'degraded' | 'disabled';
+    totalEntities: number;
+    totalRelationships: number;
+    conflictsCount: number;
+    avgConfidence: number;
+    avgSearchTimeMs: number;
+    errorsCount: number;
+  };
+  aiAcademy?: {
+    enabled: boolean;
+    status: 'healthy' | 'degraded' | 'disabled';
+    totalCourses: number;
+    totalLessons: number;
+    outdatedCount: number;
+    overallCoverage: number;
+    avgSearchTimeMs: number;
+    errorsCount: number;
   };
 }
 
@@ -742,6 +812,285 @@ export default function HealthCenterPage() {
                 <span className="text-white font-sans mt-0.5 leading-normal truncate max-w-[130px]" title={data.notifications?.lastCriticalError?.message || 'Ninguno'}>
                   {data.notifications?.lastCriticalError ? `[${new Date(data.notifications.lastCriticalError.createdAt).toLocaleTimeString('es-ES')}] ${data.notifications.lastCriticalError.title}` : 'Ninguno'}
                 </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Alpha Intelligence Card */}
+        <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col justify-between font-mono">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-semibold">Alpha Intelligence</span>
+              <span className={`p-2 rounded ${
+                data.ai?.enabled ? 'bg-[#d4af37]/10 text-[#d4af37]' : 'bg-white/5 text-white/30'
+              }`}>
+                <Bot className="w-4 h-4" />
+              </span>
+            </div>
+            <h3 className="text-lg font-serif font-bold text-[#f5f5f0] uppercase tracking-wider">
+              {data.ai?.enabled ? '🟢 ACTIVO' : '🔴 INACTIVO'}
+            </h3>
+            <div className="text-[9px] text-[var(--muted)] mt-4 space-y-1.5 leading-relaxed">
+              <div className="flex justify-between">
+                <span>Proveedor:</span>
+                <span className="text-[#f5f5f0] uppercase">{data.ai?.provider || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Modelo:</span>
+                <span className="text-[#f5f5f0] font-sans text-[8px] truncate max-w-[100px]" title={data.ai?.model || 'N/A'}>{data.ai?.model || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Conversaciones:</span>
+                <span className="text-[#f5f5f0]">{data.ai?.totalConversations || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Mensajes:</span>
+                <span className="text-[#f5f5f0]">{data.ai?.totalMessages || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Latencia Media:</span>
+                <span className="text-white">{data.ai?.avgLatencyMs || 0} ms</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Errores Recientes:</span>
+                <span className={`font-bold ${(data.ai?.recentErrorsCount || 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                  {data.ai?.recentErrorsCount || 0}
+                </span>
+              </div>
+              
+              <div className="border-t border-white/5 my-2 pt-2 flex justify-between font-sans">
+                <span className="text-[7px] uppercase tracking-wider text-[var(--muted)] font-bold">Capabilities (Tools)</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Herramientas Activas:</span>
+                <span className="text-white">{data.ai?.activeToolsCount ?? 0} / {data.ai?.totalToolsCount ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Última Tool:</span>
+                <span className="text-[#f5f5f0] text-[8px] truncate max-w-[120px]" title={data.ai?.lastUsedTool || 'Ninguna'}>{data.ai?.lastUsedTool || 'Ninguna'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Latencia Tool:</span>
+                <span className="text-white">{data.ai?.avgToolLatencyMs ?? 0} ms</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Errores Tool:</span>
+                <span className={`font-bold ${(data.ai?.toolErrorsCount || 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                  {data.ai?.toolErrorsCount ?? 0}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Alpha Core Health Card */}
+        <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col justify-between font-mono">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-semibold">Alpha Core</span>
+              <span className={`p-2 rounded ${
+                data.aiCore?.status === 'healthy' ? 'bg-green-500/10 text-green-400' :
+                data.aiCore?.status === 'degraded' ? 'bg-amber-500/10 text-amber-400 animate-pulse' :
+                'bg-white/5 text-white/30'
+              }`}>
+                <Layers className="w-4 h-4" />
+              </span>
+            </div>
+            <h3 className="text-lg font-serif font-bold text-[#f5f5f0] uppercase tracking-wider">
+              {data.aiCore?.status === 'healthy' ? '🟢 OPERATIVO' :
+               data.aiCore?.status === 'degraded' ? '🟡 DEGRADADO' : '🔴 INACTIVO'}
+            </h3>
+            <div className="text-[9px] text-[var(--muted)] mt-4 space-y-1.5 leading-relaxed">
+              <div className="flex justify-between">
+                <span>Motores Activos:</span>
+                <span className="text-white">{data.aiCore?.activeModulesCount ?? 0} / {data.aiCore?.totalModulesCount ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Latencia Media:</span>
+                <span className="text-white">{data.aiCore?.avgLatencyMs ?? 0} ms</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Errores Core:</span>
+                <span className={`font-bold ${(data.aiCore?.errorsCount || 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                  {data.aiCore?.errorsCount ?? 0}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Último Ejecute:</span>
+                <span className="text-white text-[8px] truncate max-w-[120px]" title={data.aiCore?.lastExecution || 'Ninguno'}>{data.aiCore?.lastExecution || 'Ninguno'}</span>
+              </div>
+              <div className="pt-1.5 border-t border-white/5 flex flex-col text-[8px] text-[var(--muted)] font-sans">
+                <span>Motores Activos:</span>
+                <span className="text-white mt-0.5 leading-normal truncate max-w-[140px]" title={data.aiCore?.activeModulesList?.join(', ') || 'Ninguno'}>
+                  {data.aiCore?.activeModulesList?.join(', ') || 'Ninguno'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Reasoning Engine Health Card */}
+        <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col justify-between font-mono">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-semibold">Reasoning Engine</span>
+              <span className={`p-2 rounded ${
+                data.aiReasoning?.enabled ? 'bg-green-500/10 text-green-400' :
+                'bg-white/5 text-white/30'
+              }`}>
+                <Cpu className="w-4 h-4" />
+              </span>
+            </div>
+            <h3 className="text-lg font-serif font-bold text-[#f5f5f0] uppercase tracking-wider">
+              {data.aiReasoning?.enabled ? '🟢 ACTIVO' : '🔴 INACTIVO'}
+            </h3>
+            <div className="text-[9px] text-[var(--muted)] mt-4 space-y-1.5 leading-relaxed">
+              <div className="flex justify-between">
+                <span>Latencia Media:</span>
+                <span className="text-white">{data.aiReasoning?.avgLatencyMs ?? 0} ms</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Confianza Media:</span>
+                <span className="text-white">{data.aiReasoning?.avgConfidence ?? 0}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Cache Hit Rate:</span>
+                <span className="text-white">{data.aiReasoning?.cacheHitRate ?? 0}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Fallas Parciales:</span>
+                <span className={`font-bold ${(data.aiReasoning?.errorsCount || 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                  {data.aiReasoning?.errorsCount ?? 0}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Skills Ejecutadas:</span>
+                <span className="text-white">{data.aiReasoning?.totalSkillsExecuted ?? 0}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Memory Engine Health Card */}
+        <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col justify-between font-mono">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-semibold">Memory Engine</span>
+              <span className={`p-2 rounded ${
+                data.aiMemory?.enabled ? 'bg-green-500/10 text-green-400' :
+                'bg-white/5 text-white/30'
+              }`}>
+                <Brain className="w-4 h-4" />
+              </span>
+            </div>
+            <h3 className="text-lg font-serif font-bold text-[#f5f5f0] uppercase tracking-wider">
+              {data.aiMemory?.enabled ? '🟢 ACTIVO' : '🔴 INACTIVO'}
+            </h3>
+            <div className="text-[9px] text-[var(--muted)] mt-4 space-y-1.5 leading-relaxed">
+              <div className="flex justify-between">
+                <span>Total Memorias:</span>
+                <span className="text-white">{data.aiMemory?.totalMemories ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Memorias Activas:</span>
+                <span className="text-white">{data.aiMemory?.activeMemories ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Memorias Expiradas:</span>
+                <span className="text-white">{data.aiMemory?.expiredMemories ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tiempo Búsqueda:</span>
+                <span className="text-white">{data.aiMemory?.avgSearchTimeMs ?? 0} ms</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Consolidaciones:</span>
+                <span className="text-white">{data.aiMemory?.consolidationsCount ?? 0}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Knowledge Engine Health Card */}
+        <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col justify-between font-mono">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-semibold">Knowledge Engine</span>
+              <span className={`p-2 rounded ${
+                data.aiBrain?.enabled ? 'bg-green-500/10 text-green-400' :
+                'bg-white/5 text-white/30'
+              }`}>
+                <Network className="w-4 h-4" />
+              </span>
+            </div>
+            <h3 className="text-lg font-serif font-bold text-[#f5f5f0] uppercase tracking-wider">
+              {data.aiBrain?.enabled ? '🟢 ACTIVO' : '🔴 INACTIVO'}
+            </h3>
+            <div className="text-[9px] text-[var(--muted)] mt-4 space-y-1.5 leading-relaxed">
+              <div className="flex justify-between">
+                <span>Total Entidades:</span>
+                <span className="text-white">{data.aiBrain?.totalEntities ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Total Relaciones:</span>
+                <span className="text-white">{data.aiBrain?.totalRelationships ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Conflictos Nodos:</span>
+                <span className={`font-bold ${(data.aiBrain?.conflictsCount || 0) > 0 ? 'text-amber-400 animate-pulse' : 'text-green-400'}`}>
+                  {data.aiBrain?.conflictsCount ?? 0}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Confianza Media:</span>
+                <span className="text-white">{data.aiBrain?.avgConfidence ?? 50}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tiempo Búsqueda:</span>
+                <span className="text-white">{data.aiBrain?.avgSearchTimeMs ?? 0} ms</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Alpha Academy Health Card */}
+        <div className="bg-[#121212] border border-white/5 p-6 shadow-sm flex flex-col justify-between font-mono">
+          <div>
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-[10px] tracking-[0.2em] text-[var(--muted)] uppercase font-semibold">Alpha Academy</span>
+              <span className={`p-2 rounded ${
+                data.aiAcademy?.enabled ? 'bg-green-500/10 text-green-400' :
+                'bg-white/5 text-white/30'
+              }`}>
+                <GraduationCap className="w-4 h-4" />
+              </span>
+            </div>
+            <h3 className="text-lg font-serif font-bold text-[#f5f5f0] uppercase tracking-wider">
+              {data.aiAcademy?.enabled ? '🟢 ACTIVO' : '🔴 INACTIVO'}
+            </h3>
+            <div className="text-[9px] text-[var(--muted)] mt-4 space-y-1.5 leading-relaxed">
+              <div className="flex justify-between">
+                <span>Cursos Creados:</span>
+                <span className="text-white">{data.aiAcademy?.totalCourses ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Total Lecciones:</span>
+                <span className="text-white">{data.aiAcademy?.totalLessons ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Por revisar (Obsoletos):</span>
+                <span className={`font-bold ${(data.aiAcademy?.outdatedCount || 0) > 0 ? 'text-amber-400 animate-pulse' : 'text-green-400'}`}>
+                  {data.aiAcademy?.outdatedCount ?? 0}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Índice Cobertura:</span>
+                <span className="text-white">{data.aiAcademy?.overallCoverage ?? 0}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tiempo Búsqueda:</span>
+                <span className="text-white">{data.aiAcademy?.avgSearchTimeMs ?? 0} ms</span>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import AlphaChatDrawer from '@/modules/alpha-intelligence/ui/alpha-chat-drawer';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   AlertOctagon,
@@ -23,6 +24,9 @@ const staticTargets = [
   { title: 'Sentry Logger (Monitorización)', category: 'Sistema', url: '/admin/monitoring' },
   { title: 'Backups de Neon (Copias de Seguridad)', category: 'Sistema', url: '/admin/monitoring' },
   { title: 'Salud del Sistema (Health Center)', category: 'Sistema', url: '/admin/monitoring' },
+  { title: 'Alpha Memory Center (Memoria IA)', category: 'Sistema', url: '/admin/memory' },
+  { title: 'Alpha Knowledge Center (Grafo IA)', category: 'Sistema', url: '/admin/knowledge' },
+  { title: 'Alpha Academy Center (Entrenamiento IA)', category: 'Sistema', url: '/admin/academy' },
   { title: 'Registro de Auditoría (Audit Logs)', category: 'Seguridad', url: '/admin/logs' },
   { title: 'Seguridad y 2FA', category: 'Seguridad', url: '/admin/security' },
   { title: 'Gestión de Cupones / Descuentos', category: 'Comercio', url: '/admin/discounts' },
@@ -654,6 +658,9 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      {/* Alpha Intelligence Chat Drawer */}
+      <AlphaChatDrawer />
     </>
   );
 }
