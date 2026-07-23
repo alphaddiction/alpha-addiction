@@ -13,6 +13,7 @@ Este documento actúa como la bitácora oficial de las decisiones críticas de a
 *   **[ADR-005: Cortafuegos Constitucional y Security OS Segregado](#adr-005-cortafuegos-constitucional-y-security-os-segregado)** (Estado: *Aprobado*)
 *   **[ADR-006: Sintonización y Deriva del Identity System](#adr-006-sintonizacion-y-deriva-del-identity-system)** (Estado: *Aprobado*)
 *   **[ADR-007: Capa de Razonamiento Ético (ERL) y Resolución de Dilemas](#adr-007-capa-de-razonamiento-etico-erl-y-resolucion-de-dilemas)** (Estado: *Aprobado*)
+*   **[ADR-008: Autoconocimiento Reflexivo Mediante el Self Model](#adr-008-autoconocimiento-reflexivo-mediante-el-self-model)** (Estado: *Aprobado*)
 
 ---
 
@@ -166,5 +167,28 @@ Los modelos de IA tradicionales toman decisiones optimizando métricas locales s
     *   Aporta auditabilidad matemática de cada acción autónoma.
 *   **Negativas**:
     *   Introduce un paso secuencial extra en el pipeline de toma de decisiones antes de despachar acciones.
+
+---
+
+## ADR-008: Autoconocimiento Reflexivo Mediante el Self Model
+
+*   **Estado**: Aprobado
+*   **Fecha**: 2026-07-24
+*   **Decisores**: Alber (Administrador), Antigravity (Arquitecto Principal)
+
+### Contexto y Problema
+Los agentes de IA convencionales carecen de introspección sobre su propio estado operativo (latencias de API, timeouts de bases de datos, límites de tokens o degradación del prompt). Esto causa fallos catastróficos cuando intentan ejecutar capacidades inaccesibles o proponen planes inconsistentes lógicamente entre turnos de conversación.
+
+### Decisión
+1.  Crear **SELF_MODEL.md** definiendo conceptualmente las áreas de autoconsciencia, límites de tolerancia a la incertidumbre y monitoreo de salud técnica de integraciones externas (PayPal, Printful, Resend).
+2.  Definir en [`core/seed/self-model.ts`](file:///c:/Users/alber/alpha-addiction/core/seed/self-model.ts) las interfaces lógicas `ISelfModel` e `ISelfModelManager` para estructurar la telemetría introspectiva en el `CognitiveState` del Cognitive Bus.
+
+### Consecuencias
+*   **Positivas**:
+    *   Alpha evita proponer planes irrealizables desactivando temporalmente capacidades rotas en el registro.
+    *   Detección preventiva de inconsistencias factuales y de inyección semántica.
+*   **Negativas**:
+    *   Requiere computar métricas de salud técnica periódicas (latencias) y evaluar tokens en tiempo real, sumando sobrecarga de procesamiento local.
+
 
 

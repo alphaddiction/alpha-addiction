@@ -9,16 +9,17 @@ El diseño arquitectónico se divide en los siguientes capítulos conceptuales:
 1.  **[Visión y Filosofía (VISION.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/VISION.md)**: El manifiesto operativo de Alpha. La acumulación de experiencia versus memoria, comprensión de contexto y toma de iniciativa.
 2.  **[Identidad del Sistema (IDENTITY.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/IDENTITY.md)**: La definición de quién es Alpha. Core values, estilo de comunicación, Identity Vector e Identity Drift Protection.
 3.  **[Sistema Ético (ETHICS.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/ETHICS.md)**: El marco de toma de decisiones, jerarquía de principios y capa de razonamiento ético (ERL).
-4.  **[La Constitución (CONSTITUTION.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/CONSTITUTION.md)**: Ley de comportamiento inmutable dictada al sistema. Criterios de explicabilidad y transparencia.
-5.  **[Brain OS y Cognitive Bus (BRAIN_OS.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/BRAIN_OS.md)**: El sistema operativo cognitivo de Alpha. Coordinación del pipeline de toma de decisiones mediante un bus de mensajería desacoplado.
-6.  **[Perception Engine (PERCEPTION.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/PERCEPTION.md)**: Mapeo y traducción de múltiples canales de entrada sensoriales a representaciones estructuradas comunes.
-7.  **[Experience Engine (EXPERIENCE_ENGINE.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/EXPERIENCE_ENGINE.md)**: El flujo evolutivo del conocimiento a largo plazo y la especificación del Grafo de Conocimiento (Knowledge Graph RAG).
-8.  **[User Model (USER_MODEL.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/USER_MODEL.md)**: Perfilado dinámico y consolidación de observaciones, hábitos y estilos del usuario.
-9.  **[Capability Registry (CAPABILITIES.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/CAPABILITIES.md)**: Registro centralizado de habilidades autorizadas de Alpha.
-10. **[Security OS (SECURITY.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/SECURITY.md)**: Subdivisión de seguridad en capas: Acceso (Identity), Datos (Data) y Cortafuegos Constitucional (Behavior).
-11. **[Evolution Engine (EVOLUTION.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/EVOLUTION.md)**: Procesamiento offline asíncrono para fortalecimiento de patrones, aprendizaje y poda de información irrelevante.
-12. **[AI Abstraction Layer (AI_ABSTRACTION.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/AI_ABSTRACTION.md)**: Desacoplamiento completo de los proveedores LLM para independencia tecnológica.
-13. **[Registro de Decisiones (ARCHITECTURE_DECISIONS.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/ARCHITECTURE_DECISIONS.md)**: Bitácora de decisiones críticas de diseño técnico y justificaciones.
+4.  **[Modelo de Sí Mismo (SELF_MODEL.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/SELF_MODEL.md)**: La autoconciencia operativa, limitaciones funcionales, salud técnica y autorreflexión lógica de Alpha.
+5.  **[La Constitución (CONSTITUTION.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/CONSTITUTION.md)**: Ley de comportamiento inmutable dictada al sistema. Criterios de explicabilidad y transparencia.
+6.  **[Brain OS y Cognitive Bus (BRAIN_OS.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/BRAIN_OS.md)**: El sistema operativo cognitivo de Alpha. Coordinación del pipeline de toma de decisiones mediante un bus de mensajería desacoplado.
+7.  **[Perception Engine (PERCEPTION.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/PERCEPTION.md)**: Mapeo y traducción de múltiples canales de entrada sensoriales a representaciones estructuradas comunes.
+8.  **[Experience Engine (EXPERIENCE_ENGINE.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/EXPERIENCE_ENGINE.md)**: El flujo evolutivo del conocimiento a largo plazo y la especificación del Grafo de Conocimiento (Knowledge Graph RAG).
+9.  **[User Model (USER_MODEL.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/USER_MODEL.md)**: Perfilado dinámico y consolidación de observaciones, hábitos y estilos del usuario.
+10. **[Capability Registry (CAPABILITIES.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/CAPABILITIES.md)**: Registro centralizado de habilidades autorizadas de Alpha.
+11. **[Security OS (SECURITY.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/SECURITY.md)**: Subdivisión de seguridad en capas: Acceso (Identity), Datos (Data) y Cortafuegos Constitucional (Behavior).
+12. **[Evolution Engine (EVOLUTION.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/EVOLUTION.md)**: Procesamiento offline asíncrono para fortalecimiento de patrones, aprendizaje y poda de información irrelevante.
+13. **[AI Abstraction Layer (AI_ABSTRACTION.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/AI_ABSTRACTION.md)**: Desacoplamiento completo de los proveedores LLM para independencia tecnológica.
+14. **[Registro de Decisiones (ARCHITECTURE_DECISIONS.md)](file:///c:/Users/alber/alpha-addiction/docs/PROJECT_GENESIS/ARCHITECTURE_DECISIONS.md)**: Bitácora de decisiones críticas de diseño técnico y justificaciones.
 
 ---
 
