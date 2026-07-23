@@ -1,6 +1,7 @@
 import { IPerceivedEvent } from './perception';
 import { IUserProfile } from '../user-model/user-profile';
 import { IActionJustification } from '../seed/constitution';
+import { IIdentityVector } from '../seed/identity';
 
 /**
  * Estado Cognitivo Unificado en un Turno Conversacional de Alpha.
@@ -21,6 +22,7 @@ export interface ICognitiveState {
   // Enriquecimientos cognitivos de subsistemas
   experienceContext?: string; // Datos cargados por Experience/Knowledge Graph
   userModelContext?: Partial<IUserProfile>; // Modelo dinámico del usuario
+  identityVector?: IIdentityVector; // Vector dinámico de identidad activa
   
   // Plan de acción propuesto por el Planner
   proposedPlan?: ICognitivePlan;
