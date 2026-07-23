@@ -1,5 +1,5 @@
-import { getPrintfulProducts, getPrintfulProductVariants } from '@/lib/printful';
-import { products as localProducts } from '@/lib/products';
+import { getPrintfulProducts, getPrintfulProductVariants } from '@/backend/api/printful';
+import { products as localProducts } from '@/shared/models/products';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';

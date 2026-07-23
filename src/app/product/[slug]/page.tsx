@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
-import { getDbProductBySlug } from '@/lib/products';
-import { getDynamicProduct } from '@/lib/products-server';
+import { getDbProductBySlug } from '@/shared/models/products';
+import { getDynamicProduct } from '@/shared/models/products-server';
 import ProductDetailClient from '@/components/product/product-detail-client';
 import type { Metadata } from 'next';
 

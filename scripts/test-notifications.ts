@@ -1,8 +1,8 @@
 import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
 
-import { db } from '../src/lib/db';
-import { createNotification, markAsRead, archiveNotification, getUnreadCount } from '../src/lib/notifications/service';
+import { db } from '@/backend/database/db';
+import { createNotification, markAsRead, archiveNotification, getUnreadCount } from '@/backend/notifications/service';
 
 async function main() {
   console.log('🧪 Iniciando pruebas del Centro de Notificaciones...');

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { verifyPayPalWebhook } from '@/lib/paypal';
-import { PayPalWebhookEvent } from '@/types/paypal';
-import { dispatchEvent } from '@/lib/events/dispatcher';
-import { recordDiscountRedemption } from '@/lib/discounts';
-import { createNotification } from '@/lib/notifications/service';
+import { db } from '@/backend/database/db';
+import { verifyPayPalWebhook } from '@/backend/api/paypal';
+import { PayPalWebhookEvent } from '@/shared/types/paypal';
+import { dispatchEvent } from '@/backend/events/dispatcher';
+import { recordDiscountRedemption } from '@/shared/models/discounts';
+import { createNotification } from '@/backend/notifications/service';
 
 export async function POST(req: Request) {
   try {

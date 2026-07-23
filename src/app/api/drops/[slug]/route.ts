@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { transitionDropStatuses } from '@/lib/drops';
+import { db } from '@/backend/database/db';
+import { transitionDropStatuses } from '@/shared/models/drops';
 
 interface Props {
   params: Promise<{

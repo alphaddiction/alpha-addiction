@@ -1,4 +1,4 @@
-import { saveCustomerConsent } from '@/lib/email/consents';
+import { saveCustomerConsent } from '@/backend/notifications/email/consents';
 
 export async function GET(req: Request) {
   try {

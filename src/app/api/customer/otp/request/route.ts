@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { sendPortalOtpEmail } from '@/lib/email/send-email';
+import { db } from '@/backend/database/db';
+import { sendPortalOtpEmail } from '@/backend/notifications/email/send-email';
 
 interface RateLimitEntry {
   attempts: number;

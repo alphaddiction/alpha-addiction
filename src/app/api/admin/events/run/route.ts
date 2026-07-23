@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifySessionToken } from '@/lib/auth-tokens';
-import { runScheduledTasks } from '@/lib/events/scheduler';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
+import { runScheduledTasks } from '@/backend/events/scheduler';
 
 async function checkAdminAuth() {
   const cookieStore = await cookies();

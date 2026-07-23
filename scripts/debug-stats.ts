@@ -1,7 +1,7 @@
 import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
 
-import { db } from '../src/lib/db';
+import { db } from '@/backend/database/db';
 import fs from 'fs';
 import path from 'path';
 

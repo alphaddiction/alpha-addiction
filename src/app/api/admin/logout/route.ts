@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { verifySessionToken } from '@/lib/auth-tokens';
-import { destroySessionRecord, logAuditEvent } from '@/lib/auth-node';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
+import { destroySessionRecord, logAuditEvent } from '@/backend/auth/auth-node';
 
 /**
  * POST /api/admin/logout

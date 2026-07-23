@@ -11,8 +11,8 @@ import {
   ArrowUpRight,
   TrendingDown,
 } from 'lucide-react';
-import { Order } from '@/types/order';
-import { formatPrice } from '@/lib/utils';
+import { Order } from '@/shared/types/order';
+import { formatPrice } from '@/shared/utils/utils';
 
 export default function FinancePage() {
   const [orders, setOrders] = useState<Order[]>([]);

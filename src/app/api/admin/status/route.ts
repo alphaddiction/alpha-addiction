@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
-import { checkEnvVar } from '@/lib/env/admin-env';
+import db from '@/backend/database/db';
+import { checkEnvVar } from '@/config/env/admin-env';
 
 export const dynamic = 'force-dynamic';
 

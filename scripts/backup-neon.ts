@@ -141,7 +141,7 @@ async function main() {
       console.error('❌ Error crítico: Falló tanto pg_dump como la consulta de fallback:', fallbackErr.message);
       
       try {
-        const { createNotification } = await import('../src/lib/notifications/service');
+        const { createNotification } = await import('@/backend/notifications/service');
         await createNotification({
           type: 'backup_failed',
           title: 'Fallo crítico de Backup',
@@ -176,7 +176,7 @@ async function main() {
       console.error('❌ Error de cifrado:', cryptErr.message);
       
       try {
-        const { createNotification } = await import('../src/lib/notifications/service');
+        const { createNotification } = await import('@/backend/notifications/service');
         await createNotification({
           type: 'backup_failed',
           title: 'Fallo de Cifrado en Backup',
@@ -207,7 +207,7 @@ async function main() {
 main().catch(async err => {
   console.error('❌ Error inesperado ejecutando backup:', err);
   try {
-    const { createNotification } = await import('../src/lib/notifications/service');
+    const { createNotification } = await import('@/backend/notifications/service');
     await createNotification({
       type: 'backup_failed',
       title: 'Error inesperado en proceso de Backup',

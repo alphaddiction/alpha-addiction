@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { 
   Ticket, Plus, Trash2, Edit3, Save, Calendar, Eye, RefreshCw, X, Check, Power, AlertCircle
 } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/shared/utils/utils';
 
 interface Drop {
   id: string;

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { db } from '@/lib/db';
-import { verifySessionToken } from '@/lib/auth-tokens';
-import { ensureInitialDropsSeeded } from '@/lib/drops';
+import { db } from '@/backend/database/db';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
+import { ensureInitialDropsSeeded } from '@/shared/models/drops';
 
 export const dynamic = 'force-dynamic';
 

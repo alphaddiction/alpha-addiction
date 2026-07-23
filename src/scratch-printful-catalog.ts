@@ -1,4 +1,4 @@
-import { getPrintfulProducts } from './lib/printful';
+import { getPrintfulProducts } from '@/backend/api/printful';
 
 async function main() {
   console.log('🔍 Buscando productos en la cuenta de Printful...');

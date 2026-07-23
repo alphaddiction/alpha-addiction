@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { sendSupportTicketReceived } from '@/lib/email/send-email';
+import { db } from '@/backend/database/db';
+import { sendSupportTicketReceived } from '@/backend/notifications/email/send-email';
 
 // Interface para el control de rate limit en memoria
 interface RateLimitEntry {

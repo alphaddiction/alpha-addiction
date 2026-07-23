@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifySessionToken } from '@/lib/auth-tokens';
-import { DbMemoryManager } from '@/modules/alpha-intelligence/memory/db-memory';
-import { AlphaIntelligenceOrchestrator } from '@/modules/alpha-intelligence/core/orchestrator';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
+import { DbMemoryManager } from '@/core/memory/db-memory';
+import { AlphaIntelligenceOrchestrator } from '@/core/orchestrator';
 
 async function checkAdminAuth() {
   const cookieStore = await cookies();

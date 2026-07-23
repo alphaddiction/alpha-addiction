@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifySessionToken, signSessionToken } from '@/lib/auth-tokens';
+import { verifySessionToken, signSessionToken } from '@/backend/auth/auth-tokens';
 
 /**
  * Proxy de Next.js 16 (Middleware) para la protección de rutas administrativas y endurecimiento de seguridad.

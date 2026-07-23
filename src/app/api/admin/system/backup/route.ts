@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifySessionToken } from '@/lib/auth-tokens';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 

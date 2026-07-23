@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { AcademyManager } from '@/modules/alpha-intelligence/academy/academy-manager';
+import { db } from '@/backend/database/db';
+import { AcademyManager } from '@/core/knowledge/academy-manager';
 
 /**
  * GET /api/admin/ai/academy

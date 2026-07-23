@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getLogs } from '@/lib/logger';
-import { db } from '@/lib/db';
+import { getLogs } from '@/shared/utils/logger';
+import { db } from '@/backend/database/db';
 
 export const dynamic = 'force-dynamic';
 

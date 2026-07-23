@@ -21,8 +21,8 @@ import {
   FileText,
   Layers,
 } from 'lucide-react';
-import { Order, OrderStatus } from '@/types/order';
-import { formatPrice } from '@/lib/utils';
+import { Order, OrderStatus } from '@/shared/types/order';
+import { formatPrice } from '@/shared/utils/utils';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);

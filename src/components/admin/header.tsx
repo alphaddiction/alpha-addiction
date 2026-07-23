@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import AlphaChatDrawer from '@/modules/alpha-intelligence/ui/alpha-chat-drawer';
+import AlphaChatDrawer from '@/apps/admin/components/alpha-chat-drawer';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   AlertOctagon,

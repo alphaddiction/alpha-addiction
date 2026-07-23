@@ -4,8 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, Package, Truck, ArrowRight, Loader2 } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
-import { Order } from '@/types/order';
+import { formatPrice } from '@/shared/utils/utils';
+import { Order } from '@/shared/types/order';
 
 function SuccessContent() {
   const searchParams = useSearchParams();

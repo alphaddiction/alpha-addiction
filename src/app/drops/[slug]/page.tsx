@@ -1,7 +1,7 @@
-import { db } from '@/lib/db';
-import { transitionDropStatuses } from '@/lib/drops';
+import { db } from '@/backend/database/db';
+import { transitionDropStatuses } from '@/shared/models/drops';
 import { redirect } from 'next/navigation';
-import { getDynamicProduct } from '@/lib/products-server';
+import { getDynamicProduct } from '@/shared/models/products-server';
 import DropDetailClient from '@/components/drops/drop-detail-client';
 
 interface Props {

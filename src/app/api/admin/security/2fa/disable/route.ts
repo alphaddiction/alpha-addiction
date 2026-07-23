@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { db } from '@/lib/db';
-import { verifySessionToken } from '@/lib/auth-tokens';
-import { verifyPassword, logAuditEvent } from '@/lib/auth-node';
-import { decryptSecret, verifyTotpToken, hashRecoveryCode } from '@/lib/auth-2fa';
+import { db } from '@/backend/database/db';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
+import { verifyPassword, logAuditEvent } from '@/backend/auth/auth-node';
+import { decryptSecret, verifyTotpToken, hashRecoveryCode } from '@/backend/auth/auth-2fa';
 
 async function checkAdminAuth() {
   const cookieStore = await cookies();

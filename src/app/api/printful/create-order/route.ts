@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { createPrintfulOrderFromInternalOrder } from '@/lib/printful';
+import { db } from '@/backend/database/db';
+import { createPrintfulOrderFromInternalOrder } from '@/backend/api/printful';
 
 export async function POST(req: Request) {
   try {

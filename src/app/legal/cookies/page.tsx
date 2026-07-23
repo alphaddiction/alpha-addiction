@@ -1,4 +1,4 @@
-import { db } from '@/lib/db';
+import { db } from '@/backend/database/db';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {

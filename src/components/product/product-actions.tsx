@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Loader2, Check } from 'lucide-react';
-import { type Product } from '@/lib/products';
+import { type Product } from '@/shared/models/products';
 import { useCart } from '@/context/cart-context';
 
 const USE_CONFIRMATION_PAGE = true;

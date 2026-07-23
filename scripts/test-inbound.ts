@@ -4,8 +4,8 @@ import path from 'path';
 // Cargar variables de entorno del directorio raíz
 loadEnvConfig(process.cwd());
 
-import { processInboundEmail } from '../src/lib/email/inbound-processor';
-import { db } from '../src/lib/db';
+import { processInboundEmail } from '@/backend/notifications/email/inbound-processor';
+import { db } from '@/backend/database/db';
 
 async function runTest() {
   console.log('🚀 Iniciando pruebas de Inbound Email Webhook...');

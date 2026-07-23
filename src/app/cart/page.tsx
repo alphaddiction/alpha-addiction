@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/shared/utils/utils';
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react';
 
 export default function CartPage() {

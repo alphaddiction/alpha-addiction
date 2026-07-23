@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
-import { verifySessionToken } from '@/lib/auth-tokens';
+import db from '@/backend/database/db';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
 import { cookies } from 'next/headers';
-import { createPrintfulOrderFromInternalOrder } from '@/lib/printful';
+import { createPrintfulOrderFromInternalOrder } from '@/backend/api/printful';
 import crypto from 'crypto';
 
 export async function POST(req: Request) {

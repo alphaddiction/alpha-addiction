@@ -1,4 +1,4 @@
-import { getPrintfulProducts, getPrintfulProductVariants } from '@/lib/printful';
+import { getPrintfulProducts, getPrintfulProductVariants } from '@/backend/api/printful';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';

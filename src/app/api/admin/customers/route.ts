@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db } from '@/backend/database/db';
 import { cookies } from 'next/headers';
-import { verifySessionToken } from '@/lib/auth-tokens';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
 
 export async function GET(req: Request) {
   try {

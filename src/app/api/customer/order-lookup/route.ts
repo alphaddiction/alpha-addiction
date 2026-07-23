@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { signLookupToken, checkLookupRateLimit } from '@/lib/lookup-auth';
+import { db } from '@/backend/database/db';
+import { signLookupToken, checkLookupRateLimit } from '@/backend/auth/lookup-auth';
 
 export async function POST(req: Request) {
   try {

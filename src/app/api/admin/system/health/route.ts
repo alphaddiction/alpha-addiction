@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { printfulFetch } from '@/lib/printful';
+import { db } from '@/backend/database/db';
+import { printfulFetch } from '@/backend/api/printful';
 import fs from 'fs';
 import path from 'path';
 
@@ -1000,7 +1000,7 @@ export async function GET() {
       aiBrainStats.enabled = brainSetting?.value !== 'false';
       aiBrainStats.status = aiBrainStats.enabled ? 'healthy' : 'disabled';
 
-      const { KnowledgeManager } = await import('@/modules/alpha-intelligence/brain/knowledge-manager');
+      const { KnowledgeManager } = await import('@/core/knowledge/knowledge-manager');
       const [totalEntities, totalRelationships, conflicts] = await Promise.all([
         db.aiEntity.count(),
         db.aiRelationship.count(),
@@ -1059,7 +1059,7 @@ export async function GET() {
       aiAcademyStats.enabled = academySetting?.value !== 'false';
       aiAcademyStats.status = aiAcademyStats.enabled ? 'healthy' : 'disabled';
 
-      const { AcademyManager } = await import('@/modules/alpha-intelligence/academy/academy-manager');
+      const { AcademyManager } = await import('@/core/knowledge/academy-manager');
       const [totalCourses, totalLessons, reviewCount, coverage] = await Promise.all([
         db.aiCourse.count(),
         db.aiLesson.count(),

@@ -39,8 +39,8 @@ import {
   Network,
   GraduationCap
 } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
-import { Order } from '@/types/order';
+import { formatPrice } from '@/shared/utils/utils';
+import { Order } from '@/shared/types/order';
 
 interface WidgetPreference {
   key: string;

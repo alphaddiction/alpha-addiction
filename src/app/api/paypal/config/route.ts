@@ -1,7 +1,7 @@
-import { getEnv } from '@/lib/validations';
-import { db } from '@/lib/db';
+import { getEnv } from '@/shared/utils/validations';
+import { db } from '@/backend/database/db';
 import { cookies } from 'next/headers';
-import { verifySessionToken } from '@/lib/auth-tokens';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
 
 export async function GET() {
   try {

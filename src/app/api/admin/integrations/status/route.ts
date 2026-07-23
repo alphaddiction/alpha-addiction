@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getIntegrationsStatus } from '@/lib/integrations';
+import { getIntegrationsStatus } from '@/backend/api/integrations';
 
 export const dynamic = 'force-dynamic';
 

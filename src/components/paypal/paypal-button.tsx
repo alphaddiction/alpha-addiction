@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { CartItem } from '@/context/cart-context';
-import { ShippingAddress } from '@/types/order';
+import { ShippingAddress } from '@/shared/types/order';
 import { Loader2 } from 'lucide-react';
 
 interface PayPalButtonProps {

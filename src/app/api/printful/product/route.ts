@@ -1,5 +1,5 @@
-import { printfulFetch } from '@/lib/printful';
-import { PrintfulProductDetails } from '@/types/printful';
+import { printfulFetch } from '@/backend/api/printful';
+import { PrintfulProductDetails } from '@/shared/types/printful';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**

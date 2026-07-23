@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { createPayPalOrder } from '@/lib/paypal';
-import { OrderItem } from '@/types/order';
+import { db } from '@/backend/database/db';
+import { createPayPalOrder } from '@/backend/api/paypal';
+import { OrderItem } from '@/shared/types/order';
 import { cookies } from 'next/headers';
-import { verifySessionToken } from '@/lib/auth-tokens';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
 
 export async function POST(req: Request) {
   try {

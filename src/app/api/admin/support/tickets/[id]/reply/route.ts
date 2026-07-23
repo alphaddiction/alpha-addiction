@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { db } from '@/lib/db';
-import { verifySessionToken } from '@/lib/auth-tokens';
-import { sendSupportTicketReplied } from '@/lib/email/send-email';
+import { db } from '@/backend/database/db';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
+import { sendSupportTicketReplied } from '@/backend/notifications/email/send-email';
 
 async function checkAdminAuth() {
   const cookieStore = await cookies();

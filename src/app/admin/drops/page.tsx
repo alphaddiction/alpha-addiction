@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { 
   Layers, Plus, Trash2, Edit3, Save, Calendar, Eye, EyeOff, Sparkles, Check, RefreshCw, ChevronRight
 } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/shared/utils/utils';
 
 interface Product {
   id: string;

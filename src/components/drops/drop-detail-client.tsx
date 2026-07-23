@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Clock, Mail, CheckCircle2, ArrowRight, ArrowUpRight } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/shared/utils/utils';
 
 interface DropDetailClientProps {
   drop: {

@@ -5,8 +5,8 @@ import crypto from 'crypto';
 // Cargar variables de entorno del archivo raíz
 loadEnvConfig(process.cwd());
 
-import { db } from '../src/lib/db';
-import { sendOrderReceived } from '../src/lib/email/send-email';
+import { db } from '@/backend/database/db';
+import { sendOrderReceived } from '@/backend/notifications/email/send-email';
 
 async function main() {
   console.log('📩 Iniciando envío de correo de prueba de compra para desttex98@gmail.com...');

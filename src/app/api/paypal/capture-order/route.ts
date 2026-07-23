@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { capturePayPalOrder } from '@/lib/paypal';
-import { dispatchEvent } from '@/lib/events/dispatcher';
-import { decrementVirtualStock } from '@/lib/products';
-import { recordDiscountRedemption } from '@/lib/discounts';
+import { db } from '@/backend/database/db';
+import { capturePayPalOrder } from '@/backend/api/paypal';
+import { dispatchEvent } from '@/backend/events/dispatcher';
+import { decrementVirtualStock } from '@/shared/models/products';
+import { recordDiscountRedemption } from '@/shared/models/discounts';
 
 export async function POST(req: Request) {
   try {

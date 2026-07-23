@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifySessionToken } from '@/lib/auth-tokens';
-import { db } from '@/lib/db';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
+import { db } from '@/backend/database/db';
 import fs from 'fs';
 import path from 'path';
 

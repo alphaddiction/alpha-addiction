@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { db } from '@/lib/db';
-import { verifyPortalSessionToken } from '@/lib/portal-auth';
-import { maskEmail, maskPhone, maskAddress } from '@/lib/lookup-auth';
+import { db } from '@/backend/database/db';
+import { verifyPortalSessionToken } from '@/backend/auth/portal-auth';
+import { maskEmail, maskPhone, maskAddress } from '@/backend/auth/lookup-auth';
 
 export async function GET() {
   try {

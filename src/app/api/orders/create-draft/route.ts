@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
-import { products } from '@/lib/products';
-import { validateDiscountCode, recordDiscountRedemption } from '@/lib/discounts';
-import { dispatchEvent } from '@/lib/events/dispatcher';
+import db from '@/backend/database/db';
+import { products } from '@/shared/models/products';
+import { validateDiscountCode, recordDiscountRedemption } from '@/shared/models/discounts';
+import { dispatchEvent } from '@/backend/events/dispatcher';
 
 // Resolver coste de producción unitario estimado según la categoría
 function getProductionCost(category: string): number {
@@ -20,9 +20,9 @@ function getProductionCost(category: string): number {
 }
 
 import { cookies } from 'next/headers';
-import { verifySessionToken } from '@/lib/auth-tokens';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
 
-import { saveCustomerConsent } from '@/lib/email/consents';
+import { saveCustomerConsent } from '@/backend/notifications/email/consents';
 
 export async function POST(req: Request) {
   try {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/shared/utils/utils';
 import {
   Activity,
   Server,

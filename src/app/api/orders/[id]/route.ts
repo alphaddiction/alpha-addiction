@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
-import { getOrderById, updateOrder, deleteOrder } from '@/lib/orders';
-import { verifySessionToken } from '@/lib/auth-tokens';
-import { logAuditEvent } from '@/lib/auth-node';
+import db from '@/backend/database/db';
+import { getOrderById, updateOrder, deleteOrder } from '@/shared/models/orders';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
+import { logAuditEvent } from '@/backend/auth/auth-node';
 import { cookies } from 'next/headers';
 
 async function checkAdminAuth() {

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { verifyPrintfulWebhookSignature } from '@/lib/printful';
-import { PrintfulWebhookEvent } from '@/types/printful';
-import { sendOrderInProduction, sendOrderShipped } from '@/lib/email/send-email';
-import { createNotification } from '@/lib/notifications/service';
+import { db } from '@/backend/database/db';
+import { verifyPrintfulWebhookSignature } from '@/backend/api/printful';
+import { PrintfulWebhookEvent } from '@/shared/types/printful';
+import { sendOrderInProduction, sendOrderShipped } from '@/backend/notifications/email/send-email';
+import { createNotification } from '@/backend/notifications/service';
 
 export async function POST(req: Request) {
   try {

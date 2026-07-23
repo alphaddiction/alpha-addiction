@@ -1,4 +1,4 @@
-import { getActiveDrop } from '@/lib/drops';
+import { getActiveDrop } from '@/shared/models/drops';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { Metadata } from 'next';

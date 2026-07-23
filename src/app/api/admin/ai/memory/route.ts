@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { MemoryManager, MemoryType } from '@/modules/alpha-intelligence/memory/memory-manager';
+import { db } from '@/backend/database/db';
+import { MemoryManager, MemoryType } from '@/core/memory/memory-manager';
 
 /**
  * GET /api/admin/ai/memory

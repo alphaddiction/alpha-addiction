@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Product } from '@/lib/products';
+import { Product } from '@/shared/models/products';
 
 export interface CartItem {
     cartItemId: string; // combination of slug, color and size, e.g. "product-slug-navy-M"

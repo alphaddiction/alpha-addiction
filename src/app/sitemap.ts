@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { db } from '@/lib/db';
+import { db } from '@/backend/database/db';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const domainSetting = await db.systemSetting.findUnique({

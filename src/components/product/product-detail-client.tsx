@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, ArrowRight, Loader2, Check } from 'lucide-react';
-import { type Product, ProductMockup } from '@/lib/products';
+import { type Product, ProductMockup } from '@/shared/models/products';
 import { useCart } from '@/context/cart-context';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/shared/utils/utils';
 
 const USE_CONFIRMATION_PAGE = true;
 

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { db } from '@/lib/db';
-import { dispatchEvent } from '@/lib/events/dispatcher';
-import { saveCustomerConsent } from '@/lib/email/consents';
+import { db } from '@/backend/database/db';
+import { dispatchEvent } from '@/backend/events/dispatcher';
+import { saveCustomerConsent } from '@/backend/notifications/email/consents';
 
 // Interface para el control de rate limit en memoria
 interface RateLimitEntry {

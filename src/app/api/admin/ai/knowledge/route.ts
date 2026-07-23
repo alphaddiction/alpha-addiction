@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { KnowledgeManager } from '@/modules/alpha-intelligence/brain/knowledge-manager';
+import { db } from '@/backend/database/db';
+import { KnowledgeManager } from '@/core/knowledge/knowledge-manager';
 
 /**
  * GET /api/admin/ai/knowledge

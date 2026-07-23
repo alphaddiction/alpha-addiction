@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db } from '@/backend/database/db';
 import { cookies } from 'next/headers';
-import { verifySessionToken } from '@/lib/auth-tokens';
-import { markAllAsRead, markAsRead, archiveNotification, getUnreadCount } from '@/lib/notifications/service';
+import { verifySessionToken } from '@/backend/auth/auth-tokens';
+import { markAllAsRead, markAsRead, archiveNotification, getUnreadCount } from '@/backend/notifications/service';
 
 // GET: Obtener listado filtrado y paginado de notificaciones
 export async function GET(req: Request) {

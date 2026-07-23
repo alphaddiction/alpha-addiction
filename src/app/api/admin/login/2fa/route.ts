@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { db } from '@/lib/db';
-import { verifyTemporary2faToken, signSessionToken } from '@/lib/auth-tokens';
-import { decryptSecret, verifyTotpToken, hashRecoveryCode } from '@/lib/auth-2fa';
-import { createSessionRecord, logAuditEvent } from '@/lib/auth-node';
+import { db } from '@/backend/database/db';
+import { verifyTemporary2faToken, signSessionToken } from '@/backend/auth/auth-tokens';
+import { decryptSecret, verifyTotpToken, hashRecoveryCode } from '@/backend/auth/auth-2fa';
+import { createSessionRecord, logAuditEvent } from '@/backend/auth/auth-node';
 
 export async function POST(req: Request) {
   try {

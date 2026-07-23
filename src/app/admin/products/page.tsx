@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { 
   Shirt, Edit3, Save, Layers, RefreshCw, AlertTriangle, ArrowRight, ShieldCheck, Box
 } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/shared/utils/utils';
 
 interface Drop {
   id: string;

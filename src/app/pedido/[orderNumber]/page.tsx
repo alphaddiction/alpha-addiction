@@ -2,10 +2,10 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { db } from '@/lib/db';
-import { verifyLookupToken, maskEmail, maskPhone, maskAddress } from '@/lib/lookup-auth';
-import { verifyPortalSessionToken, verifySecureOrderToken } from '@/lib/portal-auth';
-import { formatPrice, formatDate } from '@/lib/email/helpers';
+import { db } from '@/backend/database/db';
+import { verifyLookupToken, maskEmail, maskPhone, maskAddress } from '@/backend/auth/lookup-auth';
+import { verifyPortalSessionToken, verifySecureOrderToken } from '@/backend/auth/portal-auth';
+import { formatPrice, formatDate } from '@/backend/notifications/email/helpers';
 import OrderActionsClient from '@/components/pedido/order-actions-client';
 import {
   Package,

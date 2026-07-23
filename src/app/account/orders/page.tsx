@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, Loader2, Package, ArrowRight, ExternalLink } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
-import { Order } from '@/types/order';
+import { formatPrice } from '@/shared/utils/utils';
+import { Order } from '@/shared/types/order';
 
 export default function AccountOrdersPage() {
   const [emailSearch, setEmailSearch] = useState('');

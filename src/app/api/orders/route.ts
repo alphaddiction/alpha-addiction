@@ -1,4 +1,4 @@
-import { getOrders, getOrderById, saveOrder, generateLocalOrderId } from '@/lib/orders';
+import { getOrders, getOrderById, saveOrder, generateLocalOrderId } from '@/shared/models/orders';
 
 export async function GET(req: Request) {
   try {

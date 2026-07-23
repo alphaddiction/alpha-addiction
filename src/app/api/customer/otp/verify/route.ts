@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { signPortalSessionToken } from '@/lib/portal-auth';
+import { db } from '@/backend/database/db';
+import { signPortalSessionToken } from '@/backend/auth/portal-auth';
 
 interface RateLimitEntry {
   attempts: number;

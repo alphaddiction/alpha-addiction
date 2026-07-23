@@ -1,4 +1,4 @@
-import { getPrintfulProductVariants } from './lib/printful';
+import { getPrintfulProductVariants } from '@/backend/api/printful';
 
 async function main() {
   const productId = 443083427;

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { products } from '@/lib/products';
+import { products } from '@/shared/models/products';
 
 // Define the path to the data directory and waitlist file
 const DATA_DIR = path.join(process.cwd(), 'data');

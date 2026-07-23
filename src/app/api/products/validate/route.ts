@@ -1,4 +1,4 @@
-import { products } from '@/lib/products';
+import { products } from '@/shared/models/products';
 import { NextResponse } from 'next/server';
 
 /**

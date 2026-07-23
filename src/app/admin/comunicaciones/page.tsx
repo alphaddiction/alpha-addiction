@@ -27,7 +27,7 @@ import {
   FileText,
   TrendingUp
 } from 'lucide-react';
-import { formatDate } from '@/lib/email/helpers';
+import { formatDate } from '@/backend/notifications/email/helpers';
 
 interface EmailLog {
   id: string;

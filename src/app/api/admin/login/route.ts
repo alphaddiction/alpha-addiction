@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { validateUserCredentials, createSessionRecord, logAuditEvent } from '@/lib/auth-node';
-import { signSessionToken, signTemporary2faToken } from '@/lib/auth-tokens';
-import { db } from '@/lib/db';
+import { validateUserCredentials, createSessionRecord, logAuditEvent } from '@/backend/auth/auth-node';
+import { signSessionToken, signTemporary2faToken } from '@/backend/auth/auth-tokens';
+import { db } from '@/backend/database/db';
 
 // POST /api/admin/login (Recargado para limpiar rate-limits de login en memoria)
 const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();

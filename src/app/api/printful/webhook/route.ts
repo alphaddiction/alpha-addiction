@@ -1,6 +1,6 @@
-import { verifyPrintfulWebhookSignature } from '@/lib/printful';
-import { getOrderById, updateOrder } from '@/lib/orders';
-import { PrintfulWebhookEvent } from '@/types/printful';
+import { verifyPrintfulWebhookSignature } from '@/backend/api/printful';
+import { getOrderById, updateOrder } from '@/shared/models/orders';
+import { PrintfulWebhookEvent } from '@/shared/types/printful';
 
 export async function POST(req: Request) {
   try {

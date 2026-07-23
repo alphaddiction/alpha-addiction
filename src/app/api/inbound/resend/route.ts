@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { processInboundEmail, InboundEmailPayload } from '@/lib/email/inbound-processor';
+import { processInboundEmail, InboundEmailPayload } from '@/backend/notifications/email/inbound-processor';
 
 // Helper para extraer nombre y correo del formato "Nombre <email@example.com>"
 function parseFromHeader(fromStr: string): { name?: string; email: string } {

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getDbProducts } from '@/lib/products';
-import { formatPrice } from '@/lib/utils';
+import { getDbProducts } from '@/shared/models/products';
+import { formatPrice } from '@/shared/utils/utils';
 import { ArrowUpRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';

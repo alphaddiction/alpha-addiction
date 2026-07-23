@@ -5,7 +5,7 @@ import {
   TrendingUp, ShoppingCart, Tag, Package, Users, Award, 
   AlertCircle, Calendar, DollarSign, Activity, RefreshCw, Hash 
 } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/shared/utils/utils';
 
 interface DropItem {
   id: string;

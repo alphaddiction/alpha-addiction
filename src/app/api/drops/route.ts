@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDbDrops } from '@/lib/drops';
+import { getDbDrops } from '@/shared/models/drops';
 
 export const dynamic = 'force-dynamic';
 
