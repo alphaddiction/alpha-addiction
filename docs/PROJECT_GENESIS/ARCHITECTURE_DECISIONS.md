@@ -12,6 +12,7 @@ Este documento actúa como la bitácora oficial de las decisiones críticas de a
 *   **[ADR-004: Modelo Dinámico de Usuario Basado en Observaciones](#adr-004-modelo-dinamico-de-usuario-basado-en-observaciones)** (Estado: *Aprobado*)
 *   **[ADR-005: Cortafuegos Constitucional y Security OS Segregado](#adr-005-cortafuegos-constitucional-y-security-os-segregado)** (Estado: *Aprobado*)
 *   **[ADR-006: Sintonización y Deriva del Identity System](#adr-006-sintonizacion-y-deriva-del-identity-system)** (Estado: *Aprobado*)
+*   **[ADR-007: Capa de Razonamiento Ético (ERL) y Resolución de Dilemas](#adr-007-capa-de-razonamiento-etico-erl-y-resolucion-de-dilemas)** (Estado: *Aprobado*)
 
 ---
 
@@ -143,4 +144,27 @@ La identidad de Alpha (personalidad, tono y comportamiento) corre el riesgo de d
     *   Permite calibrar la personalidad de Alpha sin alterar sus cimientos (The Seed).
 *   **Negativas**:
     *   Requiere un paso adicional de auditoría de deriva semántica en el ciclo de salida, aumentando el coste de tokens del buffer de control.
+
+---
+
+## ADR-007: Capa de Razonamiento Ético (ERL) y Resolución de Dilemas
+
+*   **Estado**: Aprobado
+*   **Fecha**: 2026-07-24
+*   **Decisores**: Alber (Administrador), Antigravity (Arquitecto Principal)
+
+### Contexto y Problema
+Los modelos de IA tradicionales toman decisiones optimizando métricas locales sin considerar consecuencias éticas, lo que puede inducir a tácticas comerciales de alta presión, inyecciones semánticas maliciosas o gasto descontrolado de presupuestos. El sistema necesita un intérprete intermedio que evalúe y justifique las decisiones complejas con una jerarquía de prioridades explícita.
+
+### Decisión
+1.  Crear **ETHICS.md** definiendo principios fundamentales (Honestidad, Transparencia, Prudencia) y una jerarquía inmutable de prioridades éticas.
+2.  Diseñar la **Ethical Reasoning Layer (ERL)** en [`core/seed/ethics.ts`](file:///c:/Users/alber/alpha-addiction/core/seed/ethics.ts) para auditar los planes lógicos de la IA estimando su alineamiento ético (`EAI`) y emitiendo justificaciones criptográficas (`IEthicalDecisionLog`).
+
+### Consecuencias
+*   **Positivas**:
+    *   Previene la manipulación y la pérdida de control financiero.
+    *   Aporta auditabilidad matemática de cada acción autónoma.
+*   **Negativas**:
+    *   Introduce un paso secuencial extra en el pipeline de toma de decisiones antes de despachar acciones.
+
 
