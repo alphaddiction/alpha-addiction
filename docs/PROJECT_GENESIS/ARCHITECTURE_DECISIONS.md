@@ -11,6 +11,7 @@ Este documento actúa como la bitácora oficial de las decisiones críticas de a
 *   **[ADR-003: Segregación Sensorial y Asíncrona (Perception & Evolution Engines)](#adr-003-segregacion-sensorial-y-asincrona-perception-evolution-engines)** (Estado: *Aprobado*)
 *   **[ADR-004: Modelo Dinámico de Usuario Basado en Observaciones](#adr-004-modelo-dinamico-de-usuario-basado-en-observaciones)** (Estado: *Aprobado*)
 *   **[ADR-005: Cortafuegos Constitucional y Security OS Segregado](#adr-005-cortafuegos-constitucional-y-security-os-segregado)** (Estado: *Aprobado*)
+*   **[ADR-006: Sintonización y Deriva del Identity System](#adr-006-sintonizacion-y-deriva-del-identity-system)** (Estado: *Aprobado*)
 
 ---
 
@@ -119,3 +120,27 @@ Separar la seguridad en tres áreas independientes con privilegios mínimos (Zer
 ### Consecuencias
 *   **Positivas**:
     *   Incluso si un atacante elude las directivas del prompt de LLM de terceros (Jailbreak exitoso), el plan propuesto será abortado de forma local por `BehaviorSecurity` antes de tocar el sistema físico.
+
+---
+
+## ADR-006: Sintonización y Deriva del Identity System
+
+*   **Estado**: Aprobado
+*   **Fecha**: 2026-07-24
+*   **Decisores**: Alber (Administrador), Antigravity (Arquitecto Principal)
+
+### Contexto y Problema
+La identidad de Alpha (personalidad, tono y comportamiento) corre el riesgo de degradarse por jailbreaks, mimetismo de adulación al usuario (sycophancy) o sesgos durante conversaciones prolongadas a lo largo de los años. Necesitamos una definición consistente que el sistema use de guía y un mecanismo para alertar y revertir cualquier desalineación cognitiva.
+
+### Decisión
+1.  Crear **IDENTITY.md** como la fuente de verdad inmutable de Alpha (misión, invariants, estilo).
+2.  Modelar el **Identity Vector** parametrizado con métricas de rasgo sintonizables (curiosidad, humildad, precisión, empatía, creatividad, paciencia, iniciativa).
+3.  Diseñar conceptualmente el **Identity Drift Protection**: un subsistema en `BehaviorSecurity` que extrae el vector semántico del output de Alpha, evalúa desviaciones contra el perfil base, y genera alertas o resetea el vector de identidad si la deriva supera el 25%.
+
+### Consecuencias
+*   **Positivas**:
+    *   Garantiza coherencia conductual en Alpha a lo largo de décadas.
+    *   Permite calibrar la personalidad de Alpha sin alterar sus cimientos (The Seed).
+*   **Negativas**:
+    *   Requiere un paso adicional de auditoría de deriva semántica en el ciclo de salida, aumentando el coste de tokens del buffer de control.
+
